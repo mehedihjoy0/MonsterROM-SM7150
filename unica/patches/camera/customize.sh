@@ -16,25 +16,6 @@ LOG_MISSING_PATCHES()
 SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
 
-LOG_STEP_IN "- Adding A53 camera provider libs"
-A53_CAMERA_PROVIDER_LIBS="
-android.hardware.camera.provider@2.4.so
-android.hardware.camera.provider@2.5.so
-android.hardware.camera.provider@2.6.so
-vendor.samsung.hardware.camera.provider@4.0.so
-vendor.samsung.hardware.camera.provider@4.0-legacy.so
-"
-for lib in $A53_CAMERA_PROVIDER_LIBS
-do
-    ADD_TO_WORK_DIR "a53xnaxx" "vendor" "lib64/$lib" 0 0 644 "u:object_r:vendor_file:s0"
-
-    if [ -f "$SRC_DIR/prebuilts/samsung/a53/vendor/lib/$lib" ]; then
-        ADD_TO_WORK_DIR "a53xnaxx" "vendor" "lib/$lib" 0 0 644 "u:object_r:vendor_file:s0"
-    fi
-done
-unset A53_CAMERA_PROVIDER_LIBS
-LOG_STEP_OUT
-
 DELETE_FROM_WORK_DIR "system" "system/cameradata/portrait_data"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/cameradata/portrait_data" 0 0 755 "u:object_r:system_file:s0"
 if [ -f "$SRC_DIR/target/$TARGET_CODENAME/camera/singletake/service-feature.xml" ]; then
@@ -331,6 +312,37 @@ if [ -f "$WORK_DIR/system/system/lib64/libImageSegmenter_v1.camera.samsung.so" ]
     DELETE_FROM_WORK_DIR "system" "system/lib64/libImageSegmenter_v1.camera.samsung.so"
 fi
 
+# Patch libvpl unload path for One UI 8.5 camera stability
+PATCH_LIBVPL_UNLOAD()
+{
+    local FILE="$1"
+    local FROM="$2"
+    local TO="$3"
+
+    if [ ! -f "$FILE" ]; then
+        LOGW "File not found: ${FILE//$WORK_DIR/}"
+        return 0
+    fi
+
+    if xxd -p -c 0 "$FILE" | grep -q "$TO"; then
+        LOG "- libvpl unload already patched in ${FILE//$WORK_DIR/}"
+    elif xxd -p -c 0 "$FILE" | grep -q "$FROM"; then
+        HEX_PATCH "$FILE" "$FROM" "$TO"
+    else
+        _LOG "No known libvpl unload patch available for ${FILE//$WORK_DIR/}"
+    fi
+}
+
+LOG_STEP_IN "- Patching libvpl unload"
+PATCH_LIBVPL_UNLOAD "$WORK_DIR/vendor/lib/libvpl.so" \
+    "b0b524490420244a79447a4424f016ee224c01207c44d4e8" \
+    "704700bf0420244a79447a4424f016ee224c01207c44d4e8"
+PATCH_LIBVPL_UNLOAD "$WORK_DIR/vendor/lib64/libvpl.so" \
+    "fd7bbca9f70b00f9f65702a9f44f03a9fd03009141fefff0" \
+    "c0035fd6f70b00f9f65702a9f44f03a9fd03009141fefff0"
+LOG_STEP_OUT
+unset -f PATCH_LIBVPL_UNLOAD
+
 # Fix object capture
 if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "essi" ]]; then
     if {
@@ -371,8 +383,8 @@ if [ -f "$WORK_DIR/vendor/lib64/libDualCamBokehCapture.camera.samsung.so" ]; the
         HEX_PATCH "$WORK_DIR/vendor/lib64/liblivefocus_preview_engine.so" \
             "726f2e70726f647563742e6e616d6500" "726f2e756e6963612e63616d65726100"
         LOG "- Patching /system/system/etc/selinux/plat_property_contexts"
-        EVAL "echo \"ro.unica.camera u:object_r:build_prop:s0 exact string\"  >> \"$WORK_DIR/system/system/etc/selinux/plat_property_contexts\""
-        SET_PROP "system" "ro.unica.camera" "$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.product.system.name")"
+        EVAL "echo \"ro.monsterrom.camera u:object_r:build_prop:s0 exact string\"  >> \"$WORK_DIR/system/system/etc/selinux/plat_property_contexts\""
+        SET_PROP "system" "ro.monsterrom.camera" "$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.product.system.name")"
     fi
 fi
 
