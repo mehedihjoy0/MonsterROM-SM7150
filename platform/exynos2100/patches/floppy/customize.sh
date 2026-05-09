@@ -180,6 +180,33 @@ if old in text:
     text = text.replace(old, new, 1)
 
 text = text.replace(
+    '    MAKE_JOBS="-j$(nproc --all)"\n',
+    '''    if [ -n "$FLOPPY_MAKE_JOBS" ]; then
+        if [[ "$FLOPPY_MAKE_JOBS" == -j* ]]; then
+            MAKE_JOBS="$FLOPPY_MAKE_JOBS"
+        else
+            MAKE_JOBS="-j$FLOPPY_MAKE_JOBS"
+        fi
+    else
+        MAKE_JOBS="-j$(awk -v cpu="$(nproc --all)" '/MemTotal/ {
+            jobs = int($2 / 6291456);
+            if (jobs < 1) {
+                jobs = 1;
+            }
+            if (jobs > cpu) {
+                jobs = cpu;
+            }
+            if (jobs > 8) {
+                jobs = 8;
+            }
+            print jobs;
+        }' /proc/meminfo)"
+    fi
+''',
+    1,
+)
+
+text = text.replace(
     '    rm -f "$OUT_KERNEL"\n',
     '    rm -f "$OUT_KERNEL" "$OUT_KERNEL.gz"\n',
     1,
@@ -196,7 +223,7 @@ text = text.replace(
         INSTALL_MOD_STRIP="--strip-debug --keep-section=.ARM.attributes" \\
         INSTALL_MOD_PATH="$MOD_OUTDIR" modules_install
 ''',
-    '''    run_make $MAKE_JOBS "${MAKE_COMMON_ARGS[@]}"
+    '''    run_make $MAKE_JOBS "${MAKE_COMMON_ARGS[@]}" Image
     run_make $MAKE_JOBS "${MAKE_COMMON_ARGS[@]}" dtbs
     run_make $MAKE_JOBS "${MAKE_COMMON_ARGS[@]}" \\
         INSTALL_MOD_STRIP="--strip-debug --keep-section=.ARM.attributes" \\
