@@ -2,33 +2,30 @@
   <img loading="lazy" src="readme-res/banner.png"/>
 </h1>
 <p align="center">
-  <a href="https://github.com/salvogiangri/UN1CA/blob/sixteen/LICENSE"><img loading="lazy" src="https://img.shields.io/github/license/salvogiangri/UN1CA?style=for-the-badge&logo=github"/></a>
-  <a href="https://github.com/salvogiangri/UN1CA/commits/sixteen"><img loading="lazy" src="https://img.shields.io/github/last-commit/salvogiangri/UN1CA/sixteen?style=for-the-badge"/></a>
-  <a href="https://github.com/salvogiangri/UN1CA/stargazers"><img loading="lazy" src="https://img.shields.io/github/stars/salvogiangri/UN1CA?style=for-the-badge"/></a>
-  <a href="https://github.com/salvogiangri/UN1CA/actions/workflows/build.yml"><img loading="lazy" src="https://img.shields.io/github/actions/workflow/status/salvogiangri/UN1CA/build.yml?style=for-the-badge"/></a>
-  <a href="https://crowdin.com/project/UN1CA"><img loading="lazy" src="https://img.shields.io/badge/Crowdin-263238?style=for-the-badge&logo=crowdin"/></a>
+  <a href="https://github.com/devcore94/MonsterROM-REBORN/blob/sixteenQPR2/LICENSE"><img loading="lazy" src="https://img.shields.io/github/license/devcore94/MonsterROM-REBORN?style=for-the-badge&logo=github"/></a>
+  <a href="https://github.com/devcore94/MonsterROM-REBORN/commits/sixteenQPR2"><img loading="lazy" src="https://img.shields.io/github/last-commit/devcore94/MonsterROM-REBORN/sixteenQPR2?style=for-the-badge"/></a>
+  <a href="https://github.com/devcore94/MonsterROM-REBORN/stargazers"><img loading="lazy" src="https://img.shields.io/github/stars/devcore94/MonsterROM-REBORN?style=for-the-badge"/></a>
+  <a href="https://github.com/devcore94/MonsterROM-REBORN/actions/workflows/build.yml"><img loading="lazy" src="https://img.shields.io/github/actions/workflow/status/devcore94/MonsterROM-REBORN/build.yml?branch=sixteenQPR2&style=for-the-badge"/></a>
 </p>
-<p align="center">UN1CA <i>(/ˈu.ni.ka/)</i> is a work-in-progress custom firmware for Samsung Galaxy devices.</p>
+<p align="center">MonsterROM-REBORN is a One UI 8.5 custom firmware project based on the Galaxy S26+ SM-S947B firmware.</p>
 
 <p align="center">
-  <a href="https://github.com/salvogiangri/UN1CA/discussions">🚀 Discussions</a>
-  •
-  <a href="https://t.me/unicarom">💬 Telegram</a>
+  <a href="https://github.com/devcore94/MonsterROM-REBORN/discussions">Discussions</a>
 </p>
 
-# What is UN1CA?
-UN1CA is a work-in-progress custom firmware for Samsung Galaxy devices, designed to provide a refined, optimized and more rich One UI experience.
-It is based on the latest and greatest iteration of Samsung's UX and it integrates numerous improvements, optimizations and exclusive features.
+# What is MonsterROM-REBORN?
+MonsterROM-REBORN is a work-in-progress custom firmware for Samsung Galaxy devices, designed to provide a refined, optimized and more feature-rich One UI experience.
+This branch is based on Samsung's One UI 8.5 / Android 16 QPR2 firmware for the Galaxy S26+ SM-S947B on the Exynos SSI path and inherits the upstream build system, patch framework and feature set. Snapdragon targets keep the inherited `qssi.sh` SM-S948B donor.
 
-The UN1CA build system automatically builds the required tools, downloads and extracts firmware components, applies the required patches and generates a flashable zip for the target device.
+The build system automatically builds the required tools, downloads and extracts firmware components, applies platform, device and ROM patches, then generates a target-files or flashable zip for the selected target device.
 
-The goal is to deliver a fast, smooth and modern UX while offering additional tools, modifications and system‑level enhancements tailored for power users.
+The goal is to deliver a fast, smooth and modern UX while keeping S947B as the Exynos donor firmware and preserving compatibility with inherited scripts and smali hooks.
 
 Any form of contribution, suggestions, bug report or feature request for the project will be welcome.
 
 # Features
 ### Core features:
-- Based on the latest stable Galaxy S22 firmware
+- Based on Galaxy S26+ SM-S947B One UI 8.5 firmware
 - EROFS powered
 - Galaxy S25 wallpapers/sounds included
 - Galaxy AI support
@@ -67,8 +64,8 @@ Any form of contribution, suggestions, bug report or feature request for the pro
 \* Not available on MediaTek devices<br>
 \*\* DeX via HDMI not available for devices without USB-C DP support
 
-### UN1CA-exclusive features:
-- Integrated OTA updates app
+### MonsterROM-REBORN features:
+- Integrated MonsterROM-REBORN OTA updates app
 - Native/live blur toggle
 - One UI Home animations option
 - Vulkan renderer toggle
@@ -94,7 +91,7 @@ This project is licensed under the terms of the [GNU General Public License v3.0
 - [platform_build](https://android.googlesource.com/platform/build/) (ext4_utils, f2fs_utils, signapk), licensed under the [Apache License 2.0](https://source.android.com/docs/setup/about/licenses)
 
 # Contributors
-<a href="https://github.com/salvogiangri/UN1CA/graphs/contributors"><img loading="lazy" src="https://contrib.rocks/image?repo=salvogiangri/UN1CA"/></a>
+<a href="https://github.com/devcore94/MonsterROM-REBORN/graphs/contributors"><img loading="lazy" src="https://contrib.rocks/image?repo=devcore94/MonsterROM-REBORN"/></a>
 
 # Credits
 A special thanks goes to the following for their invaluable contributions in no particular order:
@@ -106,7 +103,7 @@ A special thanks goes to the following for their invaluable contributions in no 
 - **[Fede2782](https://github.com/Fede2782)** for his contributions and help with Exynos/MTK support
 - **[iDrinkCoffee](https://github.com/iDrinkCoffee-TG)** and **[RisenID](https://github.com/RisenID)** for their support
 - **[LineageOS Team](https://www.lineageos.org/)** for their original [OTA updater implementation](https://github.com/LineageOS/android_packages_apps_Updater)
-- *All the UN1CA project forks, contributors, testers and users ❤️*
+- *All upstream project contributors, fork maintainers, testers and users*
 
 # Stargazers over time
-[![Stargazers over time](https://starchart.cc/salvogiangri/UN1CA.svg)](https://starchart.cc/salvogiangri/UN1CA)
+[![Stargazers over time](https://starchart.cc/devcore94/MonsterROM-REBORN.svg)](https://starchart.cc/devcore94/MonsterROM-REBORN)
