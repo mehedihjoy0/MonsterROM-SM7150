@@ -88,6 +88,7 @@ run_cmd()
     fi
 }
 
+alias monsterrom=run_cmd
 alias unica=run_cmd
 # ]
 
