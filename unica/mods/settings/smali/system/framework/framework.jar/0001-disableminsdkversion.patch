@@ -1,7 +1,7 @@
 From ed85a11ef3791f78f4b2d628f6dda46a4c44a23e Mon Sep 17 00:00:00 2001
 From: ditternation <ditternation@outlook.com>
 Date: Tue, 14 Apr 2026 11:24:52 +0200
-Subject: [PATCH] Respect UN1CA target SDK bypass toggle
+Subject: [PATCH] Respect MonsterROM-REBORN target SDK bypass toggle
 
 ---
  PackageParser.smali                        | 15 ++++++++++++++-

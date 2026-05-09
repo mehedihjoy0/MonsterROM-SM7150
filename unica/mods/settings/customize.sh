@@ -1,5 +1,8 @@
+if [ ! "$(GET_PROP "system" "ro.monsterrom.version")" ]; then
+    SET_PROP "system" "ro.monsterrom.version" "$ROM_VERSION"
+fi
 if [ ! "$(GET_PROP "system" "ro.unica.version")" ]; then
-    SET_PROP "system" "ro.unica.version" "$ROM_VERSION"
+    SET_PROP "system" "ro.unica.version" "$(GET_PROP "system" "ro.monsterrom.version")"
 fi
 
 SMALI_PATCH "system" "system/framework/framework.jar" \
@@ -58,7 +61,7 @@ SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     'ro.product.model' \
     'ro.boot.em.model'
 
-LOG_STEP_IN "- Adding UN1CA Settings"
+LOG_STEP_IN "- Adding MonsterROM-REBORN Settings"
 
 # Dynamically patch SecSettings
 # - Add missing/non-xml files in place
@@ -88,7 +91,7 @@ while IFS= read -r f; do
     fi
 done < <(find "$MODPATH/SecSettings.apk" -type f)
 
-# Mark UN1CA Settings fragments as "valid"
+# Mark MonsterROM-REBORN Settings fragments as "valid"
 _ADD_VALID_SETTINGS_FRAGMENT()
 {
     local FRAGMENT="$1"
@@ -143,17 +146,17 @@ fi
 
 LOG "- Patching \"${SETTINGS_GATEWAY_PATH#$SECSETTINGS_APK_DIR/}\" in /system/system/priv-app/SecSettings.apk"
 ADDED_SETTINGS_FRAGMENTS=0
-_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.unica.settings.UnicaSettingsFragment" "$SETTINGS_GATEWAY_PATH"
-_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.unica.settings.extra.ExtraSettingsFragment" "$SETTINGS_GATEWAY_PATH"
-_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.unica.settings.hma.HideMyApplistFragment" "$SETTINGS_GATEWAY_PATH"
-_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.unica.settings.spoof.HideDeveloperStatusFragment" "$SETTINGS_GATEWAY_PATH"
-_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.unica.settings.spoof.SpoofSettingsFragment" "$SETTINGS_GATEWAY_PATH"
-_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.unica.settings.ui.UISettingsFragment" "$SETTINGS_GATEWAY_PATH"
+_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.monsterromreborn.settings.MonsterROMRebornSettingsFragment" "$SETTINGS_GATEWAY_PATH"
+_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.monsterromreborn.settings.extra.ExtraSettingsFragment" "$SETTINGS_GATEWAY_PATH"
+_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.monsterromreborn.settings.hma.HideMyApplistFragment" "$SETTINGS_GATEWAY_PATH"
+_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.monsterromreborn.settings.spoof.HideDeveloperStatusFragment" "$SETTINGS_GATEWAY_PATH"
+_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.monsterromreborn.settings.spoof.SpoofSettingsFragment" "$SETTINGS_GATEWAY_PATH"
+_ADD_VALID_SETTINGS_FRAGMENT "io.mesalabs.monsterromreborn.settings.ui.UISettingsFragment" "$SETTINGS_GATEWAY_PATH"
 
 LOG "- Patching \"${SETTINGS_ACTIVITY_PATH#$SECSETTINGS_APK_DIR/}\" in /system/system/priv-app/SecSettings.apk"
 _BUMP_VALID_SETTINGS_LIMIT "$ADDED_SETTINGS_FRAGMENTS" "$SETTINGS_ACTIVITY_PATH"
 
-# Add UN1CA Settings SearchIndexDataProvider(s)
+# Add MonsterROM-REBORN Settings SearchIndexDataProvider(s)
 _ADD_SEARCH_INDEX_PROVIDER()
 {
     local FRAGMENT="$1"
@@ -185,10 +188,10 @@ if [ ! "$SEARCH_PROVIDER_PATH" ]; then
 fi
 
 LOG "- Patching \"${SEARCH_PROVIDER_PATH#$SECSETTINGS_APK_DIR/}\" in /system/system/priv-app/SecSettings.apk"
-_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/unica/settings/UnicaSettingsFragment" "$SEARCH_PROVIDER_PATH"
-_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/unica/settings/extra/ExtraSettingsFragment" "$SEARCH_PROVIDER_PATH"
-_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/unica/settings/spoof/SpoofSettingsFragment" "$SEARCH_PROVIDER_PATH"
-_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/unica/settings/ui/UISettingsFragment" "$SEARCH_PROVIDER_PATH"
+_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/monsterromreborn/settings/MonsterROMRebornSettingsFragment" "$SEARCH_PROVIDER_PATH"
+_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/monsterromreborn/settings/extra/ExtraSettingsFragment" "$SEARCH_PROVIDER_PATH"
+_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/monsterromreborn/settings/spoof/SpoofSettingsFragment" "$SEARCH_PROVIDER_PATH"
+_ADD_SEARCH_INDEX_PROVIDER "io/mesalabs/monsterromreborn/settings/ui/UISettingsFragment" "$SEARCH_PROVIDER_PATH"
 
 DECODE_APK "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk"
 _ADD_TOP_LEVEL_KEY()
@@ -221,7 +224,7 @@ if [ ! "$TOP_LEVEL_KEYS_COLLECTOR_PATH" ]; then
 fi
 
 LOG "- Patching \"${TOP_LEVEL_KEYS_COLLECTOR_PATH#$SETTINGS_INTELLIGENCE_APK_DIR/}\" in /system/system/priv-app/SecSettingsIntelligence.apk"
-_ADD_TOP_LEVEL_KEY "top_level_unica" "$TOP_LEVEL_KEYS_COLLECTOR_PATH"
+_ADD_TOP_LEVEL_KEY "top_level_monsterrom_reborn" "$TOP_LEVEL_KEYS_COLLECTOR_PATH"
 
 # Show Vulkan renderer toggle if required
 if [[ "$(GET_PROP "ro.hwui.use_vulkan")" != "true" ]]; then
@@ -234,7 +237,8 @@ unset PATCH_INST CONTENT SECSETTINGS_APK_DIR SETTINGS_GATEWAY_PATH SETTINGS_ACTI
     MODEL_NAME_GETTER_PATH MODEL_NAME_GETTER_SMALI \
     ADDED_SETTINGS_FRAGMENTS SETTINGS_FRAGMENT SETTINGS_FRAGMENT_COUNT \
     SEARCH_PROVIDER_PATH SETTINGS_SEARCH_BLOCK \
-    SETTINGS_INTELLIGENCE_APK_DIR TOP_LEVEL_KEYS_COLLECTOR_PATH SETTINGS_TOP_LEVEL_KEY
+    SETTINGS_INTELLIGENCE_APK_DIR TOP_LEVEL_KEYS_COLLECTOR_PATH SETTINGS_TOP_LEVEL_KEY \
+    MULTISOUND_APK_DIR MULTISOUND_SELECT_FRAGMENT MULTISOUND_LIMIT_COUNT
 unset -f _ADD_VALID_SETTINGS_FRAGMENT _BUMP_VALID_SETTINGS_LIMIT _ADD_SEARCH_INDEX_PROVIDER _ADD_TOP_LEVEL_KEY
 
 LOG_STEP_OUT
