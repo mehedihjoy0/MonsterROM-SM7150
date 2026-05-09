@@ -1,7 +1,7 @@
 # Copyright (c) 2025 Salvo Giangreco
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-# UN1CA configuration file for Snapdragon devices (qssi)
+# MonsterROM-REBORN configuration file for Snapdragon devices (qssi)
 
 # Galaxy S26 Ultra (Snapdragon) (One UI 9.0)
 SOURCE_FIRMWARE="SM-S948B/EUX/356580791345060"
