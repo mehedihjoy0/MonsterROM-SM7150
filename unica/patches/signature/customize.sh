@@ -1,4 +1,5 @@
 CERT_PREFIX="aosp"
+$ROM_IS_OFFICIAL && CERT_PREFIX="monsterrom"
 
 if [ ! -f "$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem" ]; then
     ABORT "File not found: security/${CERT_PREFIX}_platform.x509.pem"
