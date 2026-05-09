@@ -1,0 +1,68 @@
+SKIPUNZIP=1
+
+if [ ! "$(GET_PROP "system" "ro.monsterrom.version")" ]; then
+    SET_PROP "system" "ro.monsterrom.version" "$ROM_VERSION"
+fi
+if [ ! "$(GET_PROP "system" "ro.monsterrom.timestamp")" ]; then
+    SET_PROP "system" "ro.monsterrom.timestamp" "$ROM_BUILD_TIMESTAMP"
+fi
+if [ ! "$(GET_PROP "system" "ro.monsterrom.device")" ]; then
+    SET_PROP "system" "ro.monsterrom.device" "$TARGET_CODENAME"
+fi
+if [ ! "$(GET_PROP "system" "ro.unica.version")" ]; then
+    SET_PROP "system" "ro.unica.version" "$(GET_PROP "system" "ro.monsterrom.version")"
+fi
+if [ ! "$(GET_PROP "system" "ro.unica.timestamp")" ]; then
+    SET_PROP "system" "ro.unica.timestamp" "$(GET_PROP "system" "ro.monsterrom.timestamp")"
+fi
+if [ ! "$(GET_PROP "system" "ro.unica.device")" ]; then
+    SET_PROP "system" "ro.unica.device" "$(GET_PROP "system" "ro.monsterrom.device")"
+fi
+
+ADD_TO_WORK_DIR "$MODPATH" "system" "." 0 0 755 "u:object_r:system_file:s0"
+
+LOG "- Keeping stock /system/system/etc/security/otacerts.zip"
+
+DECODE_APK "system" "system/priv-app/SecSettings/SecSettings.apk"
+
+# Disable stock OTA references
+CHOIDUJOUR_SECSETTINGS_DIR="$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk"
+CHOIDUJOUR_SOFTWARE_UPDATE_UTILS_PATH="$(find "$CHOIDUJOUR_SECSETTINGS_DIR" -type f -path "*/com/samsung/android/settings/softwareupdate/SoftwareUpdateUtils.smali" | sort | head -n 1)"
+if [ "$CHOIDUJOUR_SOFTWARE_UPDATE_UTILS_PATH" ]; then
+    SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+        "${CHOIDUJOUR_SOFTWARE_UPDATE_UTILS_PATH#$CHOIDUJOUR_SECSETTINGS_DIR/}" "return" \
+        "isOTAUpgradeAllowed(Landroid/content/Context;)Z" "false"
+else
+    ABORT "SoftwareUpdateUtils.smali not found in SecSettings"
+fi
+
+# Dynamically patch SecSettings
+# - Add missing/non-xml files in place
+# - Patch existing files
+#   - Use the first line of the file to tell sed how to apply the rest of the content
+#   - Exception made for files under *res/values* where the "resources" tag gets nuked
+while IFS= read -r f; do
+    f="${f//$MODPATH\/SecSettings.apk\//}"
+
+    if [ ! -f "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/$f" ] || \
+            [[ "$f" != *".xml" ]]; then
+        LOG "- Adding \"$f\" to /system/system/priv-app/SecSettings.apk"
+        EVAL "mkdir -p \"$(dirname "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/$f")\""
+        EVAL "cp -a \"$MODPATH/SecSettings.apk/${f//\$/\\$}\" \"$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/${f//\$/\\$}\""
+    else
+        LOG "- Patching \"$f\" in /system/system/priv-app/SecSettings.apk"
+        if [[ "$f" == *"res/values"* ]]; then
+            PATCH_INST="/<\/resources>/i"
+            CONTENT="$(sed -e "/?xml/d" -e "/resources>/d" "$MODPATH/SecSettings.apk/$f")"
+        else
+            PATCH_INST="$(head -n 1 "$MODPATH/SecSettings.apk/$f")"
+            CONTENT="$(tail -n +2 "$MODPATH/SecSettings.apk/$f")"
+        fi
+        CONTENT="$(sed -e "s/\"/\\\\\"/g" -e "s/\\$/\\\\$/g" -e "s/ /\\\ /g" -e "s/\\\\n/\\\\\\\\\n/g" <<< "$CONTENT")"
+        CONTENT="$(sed -E ':a;N;$!ba;s/\r{0,1}\n/\\n/g' <<< "$CONTENT")"
+        EVAL "sed -i \"$PATCH_INST $CONTENT\" \"$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/$f\""
+    fi
+done < <(find "$MODPATH/SecSettings.apk" -type f)
+
+unset CERT_NAME PATCH_INST CONTENT CHOIDUJOUR_SECSETTINGS_DIR \
+    CHOIDUJOUR_SOFTWARE_UPDATE_UTILS_PATH
