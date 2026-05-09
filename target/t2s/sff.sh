@@ -9,6 +9,9 @@ SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_AOD_ITEM=activeclock=7,aodversion=7,clockt
 # Rainbow LED Cover level
 SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NFC_LED_COVER_LEVEL=100
 
+# Enable Samsung navigation bar implementation
+SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NAVIGATION_BAR_THEME=SupportLightNavigationBar|SupportCustomBgColor|SupportNaviBarRemoteView
+
 # Enable extra brightness feature
 SEC_FLOATING_FEATURE_LCD_SUPPORT_EXTRA_BRIGHTNESS=TRUE
 
