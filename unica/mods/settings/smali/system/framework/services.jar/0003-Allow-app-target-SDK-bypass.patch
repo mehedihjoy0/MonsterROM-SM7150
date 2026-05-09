@@ -1,0 +1,43 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: utkustnr <utkuustuner@proton.me>
+Date: Fri, 24 Oct 2025 15:11:39 +0200
+Subject: [PATCH] Allow app target SDK bypass
+
+Adapted for One UI 8.5 services.jar.
+---
+ smali_classes2/com/android/server/pm/InstallPackageHelper.smali | 17 ++++++++++++++++-
+ 1 file changed, 16 insertions(+), 1 deletion(-)
+
+diff --git a/smali_classes2/com/android/server/pm/InstallPackageHelper.smali b/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
+--- a/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
++++ b/smali_classes2/com/android/server/pm/InstallPackageHelper.smali
+@@ -15618,7 +15618,26 @@
+     goto :goto_11
+ 
+     :cond_16
+-    move v0, v8
++    iget-object v0, v1, Lcom/android/server/pm/InstallPackageHelper;->mContext:Landroid/content/Context;
++
++    invoke-virtual {v0}, Landroid/content/Context;->getContentResolver()Landroid/content/ContentResolver;
++
++    move-result-object v0
++
++    const-string v15, "unica_allow_sdkbypass"
++
++    invoke-static {v0, v15, v8}, Landroid/provider/Settings$System;->getInt(Landroid/content/ContentResolver;Ljava/lang/String;I)I
++
++    move-result v0
++
++    if-eqz v0, :unica_sdkbypass_off
++
++    const/4 v0, 0x1
++
++    goto :goto_11
++
++    :unica_sdkbypass_off
++    move v0, v8
+ 
+     :goto_11
+     if-nez v0, :cond_17
+-- 
+2.51.1
