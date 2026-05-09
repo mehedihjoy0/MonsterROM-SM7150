@@ -50,6 +50,55 @@ REFRESH_RATE_CONFIG_DUMP_PATCH()
         LOG "\033[0;33m! RefreshRateConfig dump value not present, skipping debug-only dump line: $VALUE\033[0m"
     fi
 }
+
+DISABLE_DYNAMIC_RESOLUTION_CONTROL()
+{
+    local CORE_RUNE_SMALI
+    local GAME_DISPLAY_LISTENER_SMALI
+    local RUNE_FLAG
+
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_DYN_RESOLUTION_CONTROL" --delete
+
+    DECODE_APK "system" "system/framework/framework.jar" || return 1
+    CORE_RUNE_SMALI="$APKTOOL_DIR/system/framework/framework.jar/smali_classes6/com/samsung/android/rune/CoreRune.smali"
+    if [ ! -f "$CORE_RUNE_SMALI" ]; then
+        ABORT "CoreRune smali not found for dynamic resolution disable patch"
+    fi
+
+    # S947B CoreRune <clinit>() keeps v4 as the false register.
+    for RUNE_FLAG in \
+            "FW_SUPPORT_MULTI_RESOLUTION" \
+            "FW_MULTI_RESOLUTION_POLICY" \
+            "FW_DYNAMIC_RESOLUTION_CONTROL" \
+            "FW_VRR_RESOLUTION_POLICY" \
+            "FW_VRR_RESOLUTION_POLICY_FOR_SHELL_TRANSITION"; do
+        if grep -q "Lcom/samsung/android/rune/CoreRune;->$RUNE_FLAG:Z" "$CORE_RUNE_SMALI"; then
+            sed -i -E \
+                "s#(sput-boolean )v[0-9]+(, Lcom/samsung/android/rune/CoreRune;->$RUNE_FLAG:Z)#\1v4\2#" \
+                "$CORE_RUNE_SMALI"
+        fi
+    done
+
+    DECODE_APK "system" "system/framework/gamemanager.jar" || return 1
+    GAME_DISPLAY_LISTENER_SMALI="$APKTOOL_DIR/system/framework/gamemanager.jar/smali/com/samsung/android/game/display/GameDisplayListener.smali"
+    if [ -f "$GAME_DISPLAY_LISTENER_SMALI" ] && \
+            grep -q "invoke-virtual {v0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z" "$GAME_DISPLAY_LISTENER_SMALI"; then
+        sed -i \
+            's#    invoke-virtual {v0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z#    const-string v1, ""\
+\
+    invoke-virtual {v0, v1}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z#' \
+            "$GAME_DISPLAY_LISTENER_SMALI"
+    fi
+
+    SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+        "smali_classes5/com/samsung/android/settings/display/controller/ScreenResolutionPreferenceController.smali" "return" \
+        "getAvailabilityStatus()I" \
+        "3"
+    SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+        "smali_classes5/com/samsung/android/settings/display/controller/SecScreenResolutionSingleChoiceController.smali" "return" \
+        "getAvailabilityStatus()I" \
+        "3"
+}
 # ]
 
 # SEC_PRODUCT_FEATURE_BUILD_MAINLINE_API_LEVEL
@@ -211,8 +260,7 @@ if ! $SOURCE_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL; then
     fi
 else
     if ! $TARGET_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL; then
-        # TODO handle this condition
-        LOG_MISSING_PATCHES "SOURCE_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL" "TARGET_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL"
+        DISABLE_DYNAMIC_RESOLUTION_CONTROL
     fi
 fi
 
