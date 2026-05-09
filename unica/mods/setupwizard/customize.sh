@@ -2,12 +2,14 @@ DECODE_APK "system" "system/priv-app/SecSetupWizard_Global/SecSetupWizard_Global
 
 LOG "- Enabling navigation bar type settings step"
 SETUPWIZARD_APK_DIR="$APKTOOL_DIR/system/priv-app/SecSetupWizard_Global/SecSetupWizard_Global.apk"
+NAVBAR_STEP_CANDIDATES="$(find "$SETUPWIZARD_APK_DIR" -type f -name "*.smali" -exec grep -l -F "navigationbar_setting" {} + || true)"
 while IFS= read -r NAVBAR_STEP_PATH; do
+    [ "$NAVBAR_STEP_PATH" ] || continue
     if grep -q "^\.method.*d(Landroid/content/Context;Z)Ljava/util/ArrayList;" "$NAVBAR_STEP_PATH"; then
         NAVBAR_STEP_SMALI="${NAVBAR_STEP_PATH#$SETUPWIZARD_APK_DIR/}"
         break
     fi
-done < <(find "$SETUPWIZARD_APK_DIR" -type f -name "*.smali" -exec grep -l -F "navigationbar_setting" {} +)
+done <<< "$NAVBAR_STEP_CANDIDATES"
 
 if [ ! "$NAVBAR_STEP_SMALI" ]; then
     ABORT "Could not find setup wizard navigation bar step smali"
@@ -78,4 +80,5 @@ while IFS= read -r f; do
 done < <(find "$MODPATH/SecSetupWizard_Global.apk" -type f)
 
 unset PATCH_INST CONTENT SETUPWIZARD_APK_DIR NAVBAR_STEP_PATH NAVBAR_STEP_SMALI \
-    SETUPWIZARD_ACTIVITY_SMALI SETUPWIZARD_ACTIVITY_PATH NAVBAR_ACTIVITY_METHOD LINE
+    NAVBAR_STEP_CANDIDATES SETUPWIZARD_ACTIVITY_SMALI SETUPWIZARD_ACTIVITY_PATH \
+    NAVBAR_ACTIVITY_METHOD LINE
