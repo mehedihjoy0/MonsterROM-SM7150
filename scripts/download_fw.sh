@@ -7,12 +7,8 @@ source "$SRC_DIR/scripts/utils/firmware_utils.sh" || exit 1
 source "$TOOLS_DIR/venv/bin/activate" || exit 1
 
 FORCE=false
-JOBS="${DOWNLOAD_FW_JOBS:-1}"
-SAMLOADER_JOBS="${SAMLOADER_DOWNLOAD_JOBS:-16}"
 
 FIRMWARES=()
-QUEUE_FIRMWARES=()
-QUEUE_LABELS=()
 MODEL=""
 CSC=""
 IMEI=""
@@ -29,26 +25,6 @@ PREPARE_SCRIPT()
     while [ "$#" != 0 ]; do
         if [[ "$1" == "--force" ]] || [[ "$1" == "-f" ]]; then
             FORCE=true
-        elif [[ "$1" == "--jobs" ]] || [[ "$1" == "-j" ]]; then
-            shift
-            if [ ! "$1" ]; then
-                LOGE "No jobs value supplied"
-                PRINT_USAGE
-                exit 1
-            fi
-            JOBS="$1"
-        elif [[ "$1" == "--jobs="* ]]; then
-            JOBS="${1#*=}"
-        elif [[ "$1" == "--samloader-jobs" ]]; then
-            shift
-            if [ ! "$1" ]; then
-                LOGE "No samloader jobs value supplied"
-                PRINT_USAGE
-                exit 1
-            fi
-            SAMLOADER_JOBS="$1"
-        elif [[ "$1" == "--samloader-jobs="* ]]; then
-            SAMLOADER_JOBS="${1#*=}"
         elif [[ "$1" == "--ignore-source" ]]; then
             IGNORE_SOURCE=true
         elif [[ "$1" == "--ignore-target" ]]; then
@@ -92,8 +68,6 @@ PRINT_USAGE()
     echo "Usage: download_fw [options] <firmware>" >&2
     echo " --ignore-source : Skip parsing source firmware flags" >&2
     echo " --ignore-target : Skip parsing target firmware flags" >&2
-    echo " -j, --jobs <n> : Number of firmwares to process in parallel (default: ${DOWNLOAD_FW_JOBS:-1})" >&2
-    echo " --samloader-jobs <n> : Number of ranged samloader connections per firmware (default: ${SAMLOADER_DOWNLOAD_JOBS:-16})" >&2
     echo " -f, --force : Force firmware download" >&2
 }
 
@@ -119,80 +93,30 @@ VERIFY_ODIN_PACKAGES()
         STORED_HASH="$(tail -c "$LENGTH" "$f" | cut -d " " -f 1 -s)"
         if [ ! "$STORED_HASH" ] || [[ "${#STORED_HASH}" != "32" ]]; then
             LOG "\033[0;31m! Expected hash could not be parsed\033[0m"
-            return 1
+            exit 1
         fi
 
         CALCULATED_HASH="$(head -c-$LENGTH "$f" | md5sum | cut -d " " -f 1 -s)"
 
         if [[ "$STORED_HASH" != "$CALCULATED_HASH" ]]; then
             LOG "\033[0;31m! File is damaged\033[0m"
-            return 1
+            exit 1
         fi
 
         LOG_STEP_OUT
     done < <(find "$ODIN_DIR/${MODEL}_${CSC}" -type f -name "*.md5")
-
-    return 0
 }
+# ]
 
-PREPARE_DOWNLOAD_QUEUE()
-{
-    local i
-    local KEY
-    local SEEN_KEYS=""
+PREPARE_SCRIPT "$@"
 
-    if [[ ! "$JOBS" =~ ^[0-9]+$ ]] || [ "$JOBS" -lt 1 ]; then
-        LOGE "Invalid jobs value: $JOBS"
-        return 1
-    fi
-    if [[ ! "$SAMLOADER_JOBS" =~ ^[0-9]+$ ]] || [ "$SAMLOADER_JOBS" -lt 1 ]; then
-        LOGE "Invalid samloader jobs value: $SAMLOADER_JOBS"
-        return 1
-    fi
-
-    for i in "${FIRMWARES[@]}"; do
-        MODEL=""
-        CSC=""
-        IMEI=""
-        SERIAL_NO=""
-
-        PARSE_FIRMWARE_STRING "$i" || return 1
-
-        KEY="${MODEL}_${CSC}"
-        if grep -qxF "$KEY" <<< "$SEEN_KEYS"; then
-            LOGW "Duplicate firmware target skipped: $MODEL/$CSC"
-            continue
-        fi
-
-        SEEN_KEYS+="${KEY}"$'\n'
-        QUEUE_FIRMWARES+=("$i")
-        QUEUE_LABELS+=("$MODEL/$CSC")
-    done
-
-    if [ "${#QUEUE_FIRMWARES[@]}" -gt 0 ] && [ "$JOBS" -gt "${#QUEUE_FIRMWARES[@]}" ]; then
-        JOBS="${#QUEUE_FIRMWARES[@]}"
-    fi
-}
-
-PROCESS_FIRMWARE()
-{
-    local FIRMWARE="$1"
-    local SAMLOADER_WORK_DIR
-    local SAMLOADER_DOWNLOAD_ARGS=()
-
-    MODEL=""
-    CSC=""
-    IMEI=""
-    SERIAL_NO=""
-    LATEST_FIRMWARE=""
-    ZIP_FILE=""
-
-    PARSE_FIRMWARE_STRING "$FIRMWARE" || return 1
+for i in "${FIRMWARES[@]}"; do
+    PARSE_FIRMWARE_STRING "$i" || exit 1
 
     LATEST_FIRMWARE="$(GET_LATEST_FIRMWARE "$MODEL" "$CSC")"
     if [ ! "$LATEST_FIRMWARE" ]; then
         LOGE "Latest available firmware could not be fetched"
-        return 1
+        exit 1
     fi
 
     LOG_STEP_IN "- Processing $MODEL firmware with $CSC CSC"
@@ -208,7 +132,7 @@ PROCESS_FIRMWARE()
             if COMPARE_SEC_BUILD_VERSION "$(cat "$FW_DIR/${MODEL}_${CSC}/.extracted")" "$LATEST_FIRMWARE"; then
                 LOG "\033[0;33m! This firmware has already been extracted, skipping\033[0m"
                 LOG_STEP_OUT; LOG_STEP_OUT
-                return 0
+                continue
             fi
         fi
 
@@ -220,144 +144,35 @@ PROCESS_FIRMWARE()
                 LOG "\033[0;33m! This firmware has already been downloaded\033[0m"
             fi
             LOG_STEP_OUT; LOG_STEP_OUT
-            return 0
+            continue
         fi
     fi
 
     LOG "- Downloading firmware..."
     [ -f "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" ] && rm -rf "$ODIN_DIR/${MODEL}_${CSC}"
     mkdir -p "$ODIN_DIR/${MODEL}_${CSC}"
-
-    # Anan's samloader stores logs in the current working directory. Keep each
-    # parallel downloader isolated so jobs do not overwrite each other's logs.
-    SAMLOADER_WORK_DIR="$OUT_DIR/tmp/samloader/${MODEL}_${CSC}"
-    rm -rf "$SAMLOADER_WORK_DIR"
-    mkdir -p "$SAMLOADER_WORK_DIR"
-    if samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download --help 2>&1 | grep -q -- "--jobs"; then
-        SAMLOADER_DOWNLOAD_ARGS=(-j "$SAMLOADER_JOBS")
-        LOG "- Using $SAMLOADER_JOBS parallel samloader connection(s)"
-    elif [ "$SAMLOADER_JOBS" -gt 1 ]; then
-        LOGW "Installed samloader does not support parallel ranged downloads; run build_dependencies to update it"
-    fi
+    # shellcheck disable=SC2164
+    # Anan's samloader stores its logs in the current working directory, let's move into OUT_DIR just for this time
     (
-    cd "$SAMLOADER_WORK_DIR" || exit 1
-    samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download "${SAMLOADER_DOWNLOAD_ARGS[@]}" -O "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
-    ) || return 1
+    cd "$OUT_DIR"
+    samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download -O "$ODIN_DIR/${MODEL}_${CSC}" 1> /dev/null || exit 1
+    )
 
     ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
     if [ ! "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
         LOG "\033[0;31m! Download failed\033[0m"
-        return 1
+        exit 1
     fi
 
     LOG "- Extracting $(basename "$ZIP_FILE")..."
-    EVAL "unzip -o \"$ZIP_FILE\" -d \"$ODIN_DIR/${MODEL}_${CSC}\" && rm -rf \"$ZIP_FILE\"" || return 1
+    EVAL "unzip -o \"$ZIP_FILE\" -d \"$ODIN_DIR/${MODEL}_${CSC}\" && rm -rf \"$ZIP_FILE\"" || exit 1
 
-    VERIFY_ODIN_PACKAGES || return 1
+    VERIFY_ODIN_PACKAGES
 
     echo -n "$LATEST_FIRMWARE" > "$ODIN_DIR/${MODEL}_${CSC}/.downloaded"
 
     LOG_STEP_OUT; LOG_STEP_OUT
-}
-
-START_DOWNLOAD_JOB()
-{
-    local INDEX="$1"
-    local LOG_DIR="$OUT_DIR/logs/download_fw"
-    local LOG_FILE="$LOG_DIR/${QUEUE_LABELS[$INDEX]//\//_}.log"
-
-    mkdir -p "$LOG_DIR"
-    : > "$LOG_FILE"
-
-    LOG "- Starting ${QUEUE_LABELS[$INDEX]}"
-    (
-    PROCESS_FIRMWARE "${QUEUE_FIRMWARES[$INDEX]}"
-    ) > "$LOG_FILE" 2>&1 &
-
-    RUNNING_PIDS+=("$!")
-    RUNNING_LOGS+=("$LOG_FILE")
-    RUNNING_LABELS+=("${QUEUE_LABELS[$INDEX]}")
-}
-
-REAP_DOWNLOAD_JOB()
-{
-    local DONE_PID
-    local STATUS
-    local i
-    local LOG_FILE
-    local LABEL
-
-    wait -n -p DONE_PID
-    STATUS="$?"
-
-    for i in "${!RUNNING_PIDS[@]}"; do
-        if [[ "${RUNNING_PIDS[$i]}" == "$DONE_PID" ]]; then
-            LOG_FILE="${RUNNING_LOGS[$i]}"
-            LABEL="${RUNNING_LABELS[$i]}"
-            unset 'RUNNING_PIDS[i]' 'RUNNING_LOGS[i]' 'RUNNING_LABELS[i]'
-            RUNNING_PIDS=("${RUNNING_PIDS[@]}")
-            RUNNING_LOGS=("${RUNNING_LOGS[@]}")
-            RUNNING_LABELS=("${RUNNING_LABELS[@]}")
-            break
-        fi
-    done
-
-    [ -f "$LOG_FILE" ] && cat "$LOG_FILE"
-
-    if [ "$STATUS" != "0" ]; then
-        LOGE "Download job failed for $LABEL (exit code $STATUS)"
-        return "$STATUS"
-    fi
-
-    return 0
-}
-
-RUN_DOWNLOAD_QUEUE()
-{
-    local NEXT_JOB=0
-    local EXIT_CODE=0
-    RUNNING_PIDS=()
-    RUNNING_LOGS=()
-    RUNNING_LABELS=()
-
-    if [ "${#QUEUE_FIRMWARES[@]}" -eq 0 ]; then
-        LOGW "No firmware downloads requested"
-        return 0
-    fi
-
-    LOG "- Running ${#QUEUE_FIRMWARES[@]} firmware download(s) with $JOBS parallel job(s)"
-
-    if [ "$JOBS" -eq 1 ]; then
-        while [ "$NEXT_JOB" -lt "${#QUEUE_FIRMWARES[@]}" ]; do
-            LOG "- Starting ${QUEUE_LABELS[$NEXT_JOB]}"
-            PROCESS_FIRMWARE "${QUEUE_FIRMWARES[$NEXT_JOB]}" || return "$?"
-            NEXT_JOB="$((NEXT_JOB + 1))"
-        done
-
-        return 0
-    fi
-
-    while [ "$NEXT_JOB" -lt "${#QUEUE_FIRMWARES[@]}" ] || [ "${#RUNNING_PIDS[@]}" -gt 0 ]; do
-        while [ "$EXIT_CODE" = "0" ] && \
-                [ "$NEXT_JOB" -lt "${#QUEUE_FIRMWARES[@]}" ] && \
-                [ "${#RUNNING_PIDS[@]}" -lt "$JOBS" ]; do
-            START_DOWNLOAD_JOB "$NEXT_JOB"
-            NEXT_JOB="$((NEXT_JOB + 1))"
-        done
-
-        if [ "${#RUNNING_PIDS[@]}" -gt 0 ]; then
-            REAP_DOWNLOAD_JOB || EXIT_CODE="$?"
-        fi
-    done
-
-    return "$EXIT_CODE"
-}
-# ]
-
-PREPARE_SCRIPT "$@"
-PREPARE_DOWNLOAD_QUEUE || exit 1
-
-RUN_DOWNLOAD_QUEUE || exit 1
+done
 
 deactivate
 

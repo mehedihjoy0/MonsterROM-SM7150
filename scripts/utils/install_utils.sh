@@ -175,9 +175,9 @@ PRINT_HEADER()
     echo    'ui_print(" ");'
     PRINT_SEPARATOR
     echo -n 'ui_print("'
-    echo -n "MonsterROM $ROM_VERSION for $TARGET_NAME"
+    echo -n "MonsterROM-REBORN $ROM_VERSION for $TARGET_NAME"
     echo    '");'
-    echo    'ui_print("Based on UN1CA by salvo_giangri");'
+    echo    'ui_print("Built by MonsterROM-REBORN");'
     PRINT_SEPARATOR
     echo -n 'ui_print("'
     echo -n "One UI version: $ONEUI_VERSION"

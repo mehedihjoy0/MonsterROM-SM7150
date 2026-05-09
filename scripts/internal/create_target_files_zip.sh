@@ -58,6 +58,9 @@ GENERATE_BUILD_INFO()
     local TARGET_FIRMWARE_PATH
     local SOURCE_FINGERPRINT
     local TARGET_FINGERPRINT
+    local ROM_DEVICE
+    local ROM_BUILD_VERSION
+    local ROM_TIMESTAMP
 
     SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
     TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
@@ -67,15 +70,24 @@ GENERATE_BUILD_INFO()
     TARGET_FINGERPRINT="$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.system.build.fingerprint")"
     TARGET_FINGERPRINT="${TARGET_FINGERPRINT//$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.build.product")/$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/vendor/build.prop" "ro.product.vendor.device")}"
 
+    ROM_DEVICE="$(GET_PROP "system" "ro.monsterrom.device")"
+    [ "$ROM_DEVICE" ] || ROM_DEVICE="$(GET_PROP "system" "ro.unica.device")"
+    [ "$ROM_DEVICE" ] || ROM_DEVICE="$TARGET_CODENAME"
+
+    ROM_BUILD_VERSION="$(GET_PROP "system" "ro.monsterrom.version")"
+    [ "$ROM_BUILD_VERSION" ] || ROM_BUILD_VERSION="$(GET_PROP "system" "ro.unica.version")"
+    [ "$ROM_BUILD_VERSION" ] || ROM_BUILD_VERSION="$ROM_VERSION"
+
+    ROM_TIMESTAMP="$(GET_PROP "system" "ro.monsterrom.timestamp")"
+    [ "$ROM_TIMESTAMP" ] || ROM_TIMESTAMP="$(GET_PROP "system" "ro.unica.timestamp")"
+    [ "$ROM_TIMESTAMP" ] || ROM_TIMESTAMP="$ROM_BUILD_TIMESTAMP"
+
     {
-        echo -n "device="
-        [ "$(GET_PROP "system" "ro.unica.device")" ] && GET_PROP "system" "ro.unica.device" || echo "$TARGET_CODENAME"
+        echo "device=$ROM_DEVICE"
         [ "$TARGET_ASSERT_MODEL" ] && echo "model=${TARGET_ASSERT_MODEL//:/;}"
         echo "name=$TARGET_NAME"
-        echo -n "version="
-        [ "$(GET_PROP "system" "ro.unica.version")" ] && GET_PROP "system" "ro.unica.version" || echo "$ROM_VERSION"
-        echo -n "timestamp="
-        [ "$(GET_PROP "system" "ro.unica.timestamp")" ] && GET_PROP "system" "ro.unica.timestamp" || echo "$ROM_BUILD_TIMESTAMP"
+        echo "version=$ROM_BUILD_VERSION"
+        echo "timestamp=$ROM_TIMESTAMP"
         echo "os_version=$(GET_PROP "system" "ro.build.version.release")"
         echo "oneui_version=$(GET_PROP "system" "ro.build.version.oneui")"
         echo "build_incremental=$(GET_PROP "system" "ro.build.version.incremental")"
@@ -159,6 +171,6 @@ GENERATE_BUILD_INFO
 
 LOG "- Creating zip"
 rm -f "$OUTPUT_FILE"
-EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=0 -mmt=off -mtc=off -mtm=off \"$OUTPUT_FILE\" -r *" || exit 1
+EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=3 -mmt=$(nproc) -mtc=off -mtm=off \"$OUTPUT_FILE\" -r *" || exit 1
 
 exit 0

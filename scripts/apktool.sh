@@ -43,17 +43,10 @@ BUILD()
 
     if [[ "$INPUT_FILE" == *".apk" ]]; then
         local CERT_PREFIX="aosp"
-        $ROM_IS_OFFICIAL && CERT_PREFIX="aosp"
-        local PUBLIC_KEY="$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem"
-        local PRIVATE_KEY="$SRC_DIR/security/${CERT_PREFIX}_platform.pk8"
-
-        if [ ! -f "$PUBLIC_KEY" ] || [ ! -f "$PRIVATE_KEY" ]; then
-            LOGE "Signing keys not found: security/${CERT_PREFIX}_platform.x509.pem / security/${CERT_PREFIX}_platform.pk8"
-            exit 1
-        fi
+        $ROM_IS_OFFICIAL && CERT_PREFIX="unica"
 
         LOG "- Signing ${INPUT_FILE//$WORK_DIR/}"
-        EVAL "signapk -a 4 \"$PUBLIC_KEY\" \"$PRIVATE_KEY\" \"$OUTPUT_PATH/dist/$FILE_NAME\" \"$OUTPUT_PATH/dist/temp.apk\"" || exit 1
+        EVAL "signapk \"$SRC_DIR/security/${CERT_PREFIX}_platform.x509.pem\" \"$SRC_DIR/security/${CERT_PREFIX}_platform.pk8\" \"$OUTPUT_PATH/dist/$FILE_NAME\" \"$OUTPUT_PATH/dist/temp.apk\"" || exit 1
         mv -f "$OUTPUT_PATH/dist/temp.apk" "$OUTPUT_PATH/dist/$FILE_NAME"
     else
         LOG "- Zipaligning ${INPUT_FILE//$WORK_DIR/}"
