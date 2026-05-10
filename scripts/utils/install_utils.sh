@@ -106,19 +106,14 @@ PRINT_ASSERTIONS()
     fi
 }
 
-# PRINT_BUILD_INFO <info> [info]
+# PRINT_BUILD_INFO <info>
 # Returns the text to be used in the build_info.txt file.
-# Both source and target info can be passed for incremental zips.
 PRINT_BUILD_INFO()
 {
-    local SOURCE_BUILD_INFO
     local TARGET_BUILD_INFO
 
     if [[ "$#" == "1" ]]; then
         TARGET_BUILD_INFO="$1"
-    elif [[ "$#" == "2" ]]; then
-        SOURCE_BUILD_INFO="$1"
-        TARGET_BUILD_INFO="$2"
     else
         _CHECK_NON_EMPTY_PARAM "BUILD_INFO" "$1"
         return 1
@@ -133,11 +128,7 @@ PRINT_BUILD_INFO()
     echo -n "security_patch_version="
     grep "^security_patch" <<< "$TARGET_BUILD_INFO" | cut -d "=" -f 2 -s
     echo -n "incremental="
-    if [ "$SOURCE_BUILD_INFO" ]; then
-        grep "^timestamp" <<< "$SOURCE_BUILD_INFO" | cut -d "=" -f 2 -s
-    else
-        echo "0"
-    fi
+    echo "0"
 }
 
 # PRINT_HEADER <info>

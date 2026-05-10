@@ -19,8 +19,6 @@ fi
 PRIVATE_KEY_PATH+=".pk8"
 PUBLIC_KEY_PATH+=".x509.pem"
 
-trap 'rm -rf "$TMP_DIR"' EXIT INT
-
 # https://android.googlesource.com/platform/build/+/refs/tags/android-15.0.0_r1/tools/releasetools/common.py#4042
 GENERATE_OP_LIST()
 {
@@ -208,31 +206,47 @@ GENERATE_UPDATER_SCRIPT()
 # ]
 
 if [ "$#" != "2" ]; then
-    echo "Usage: build_full_ota_zip <file> <output>" >&2
+    echo "Usage: build_full_ota_zip <file|directory> <output>" >&2
     exit 1
 fi
 
 TARGET_ZIP="$1"
 OUTPUT_FILE="$2"
+TARGET_IS_DIRECTORY=false
 
-if ! unzip -l "$TARGET_ZIP" | grep -q "build_info.txt" || unzip -l "$TARGET_ZIP" | grep -q "META-INF"; then
-    LOGE "File not valid: ${TARGET_ZIP//$SRC_DIR\//}"
-    exit 1
+if [ -d "$TARGET_ZIP" ]; then
+    TARGET_IS_DIRECTORY=true
+    TMP_DIR="$TARGET_ZIP"
+    [ -f "$TMP_DIR/build_info.txt" ] || {
+        LOGE "File not found: ${TMP_DIR//$SRC_DIR\//}/build_info.txt"
+        exit 1
+    }
+else
+    if ! unzip -l "$TARGET_ZIP" | grep -q "build_info.txt" || unzip -l "$TARGET_ZIP" | grep -q "META-INF"; then
+        LOGE "File not valid: ${TARGET_ZIP//$SRC_DIR\//}"
+        exit 1
+    fi
+
+    [ -d "$TMP_DIR" ] && rm -rf "$TMP_DIR"
+    mkdir -p "$TMP_DIR"
 fi
 
-[ -d "$TMP_DIR" ] && rm -rf "$TMP_DIR"
+trap 'rm -rf "$TMP_DIR"' EXIT INT
+
 mkdir -p "$TMP_DIR/META-INF/com/google/android"
 cp -a "$SRC_DIR/prebuilts/bootable/deprecated-ota/updater" "$TMP_DIR/META-INF/com/google/android/update-binary"
 
-LOG "- Extracting target files"
-EVAL "unzip -o \"$TARGET_ZIP\" -d \"$TMP_DIR\"" || exit 1
+if ! $TARGET_IS_DIRECTORY; then
+    LOG "- Extracting target files"
+    EVAL "unzip -o \"$TARGET_ZIP\" -d \"$TMP_DIR\"" || exit 1
+fi
 
 BUILD_INFO="$(cat "$TMP_DIR/build_info.txt")"
 rm -f "$TMP_DIR/build_info.txt"
 
 TARGET_CODENAME="$(grep "^device" <<< "$BUILD_INFO" | cut -d "=" -f 2 -s)"
-if [ ! -d "$SRC_DIR/target/$DEVICE" ]; then
-    LOGE "Folder not found: target/$DEVICE"
+if [ ! -d "$SRC_DIR/target/$TARGET_CODENAME" ]; then
+    LOGE "Folder not found: target/$TARGET_CODENAME"
     exit 1
 fi
 
