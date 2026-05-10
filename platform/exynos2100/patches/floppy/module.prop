@@ -1,4 +1,4 @@
-id=floppy
-name=FloppyKernel
-author=FlopKernel-Series
-description=Builds the latest FloppyKernel from floppy-main and adds it to the ROM.
+id=extremekrnl
+name=ExtremeKRNL Kernel support
+author=ExtremeXT, androidartisan
+description=Adds ExtremeKRNL in ROM.

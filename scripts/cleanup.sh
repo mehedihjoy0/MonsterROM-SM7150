@@ -11,6 +11,7 @@ PRINT_USAGE()
     echo " - all ($OUT_DIR)" >&2
     echo " - odin ($ODIN_DIR)" >&2
     echo " - fw ($FW_DIR)" >&2
+    echo " - kernel ($KERNEL_DIR)" >&2
     echo " - work_dir ($WORK_DIR)" >&2
     echo " - logs ($OUT_DIR/**.log)" >&2
     echo " - tools ($TOOLS_DIR)" >&2
@@ -36,6 +37,10 @@ while [ "$#" != 0 ]; do
         "fw")
             LOG "- Cleaning extracted firmwares dir..."
             rm -rf "$FW_DIR"
+            ;;
+        "kernel")
+            LOG "- Cleaning kernel dir..."
+            rm -rf "$KERNEL_DIR"
             ;;
         "work_dir")
             LOG "- Cleaning ROM work dir..."
