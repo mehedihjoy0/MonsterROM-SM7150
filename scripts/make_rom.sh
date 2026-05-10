@@ -9,6 +9,7 @@ FORCE=false
 BUILD_ROM=false
 BUILD_TARGET_FILES=true
 BUILD_FLASHABLE_ZIP=false
+DEBUG=false
 
 START_TIME="$(date +%s)"
 
@@ -32,6 +33,9 @@ PREPARE_SCRIPT()
         elif [[ "$1" == "--build-rom-zip" ]] || [[ "$1" == "-z" ]]; then
             BUILD_TARGET_FILES=true
             BUILD_FLASHABLE_ZIP=true
+        elif [[ "$1" == "--debug" ]] || [[ "$1" == "-d" ]]; then
+            DEBUG=true
+	    echo -n -e '\033[0;33m'"DEBUG Build Running\n"
         else
             if [[ "$1" == "-"* ]]; then
                 LOGE "Unknown option: $1"
@@ -67,6 +71,7 @@ PRINT_USAGE()
     echo " -f, --force : Force ROM build" >&2
     echo " -x, --no-target-files : Do not build target-files zip" >&2
     echo " -z, --build-rom-zip : Build flashable zip" >&2
+    echo " -d, --debug : Build debug release" >&2
 }
 # ]
 
@@ -123,6 +128,12 @@ if $BUILD_ROM; then
     if [ -d "$SRC_DIR/unica/patches" ]; then
         LOG_STEP_IN true "Applying ROM patches"
         "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/unica/patches" || exit 1
+        LOG_STEP_OUT
+    fi
+
+    if [ -d "$SRC_DIR/platform/$TARGET_PLATFORM/mods" ]; then
+        LOG_STEP_IN true "Applying platform mods"
+        "$SRC_DIR/scripts/internal/apply_modules.sh" "$SRC_DIR/platform/$TARGET_PLATFORM/mods" || exit 1
         LOG_STEP_OUT
     fi
 

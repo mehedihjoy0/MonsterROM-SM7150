@@ -16,6 +16,25 @@ LOG_MISSING_PATCHES()
 SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
 
+LOG_STEP_IN "- Adding A53 camera provider libs"
+A53_CAMERA_PROVIDER_LIBS="
+android.hardware.camera.provider@2.4.so
+android.hardware.camera.provider@2.5.so
+android.hardware.camera.provider@2.6.so
+vendor.samsung.hardware.camera.provider@4.0.so
+vendor.samsung.hardware.camera.provider@4.0-legacy.so
+"
+for lib in $A53_CAMERA_PROVIDER_LIBS
+do
+    ADD_TO_WORK_DIR "a53xnaxx" "vendor" "lib64/$lib" 0 0 644 "u:object_r:vendor_file:s0"
+
+    if [ -f "$SRC_DIR/prebuilts/samsung/a53/vendor/lib/$lib" ]; then
+        ADD_TO_WORK_DIR "a53xnaxx" "vendor" "lib/$lib" 0 0 644 "u:object_r:vendor_file:s0"
+    fi
+done
+unset A53_CAMERA_PROVIDER_LIBS
+LOG_STEP_OUT
+
 DELETE_FROM_WORK_DIR "system" "system/cameradata/portrait_data"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/cameradata/portrait_data" 0 0 755 "u:object_r:system_file:s0"
 if [ -f "$SRC_DIR/target/$TARGET_CODENAME/camera/singletake/service-feature.xml" ]; then
@@ -41,6 +60,16 @@ elif [[ "$SOURCE_PLATFORM_SDK_VERSION" == "$TARGET_PLATFORM_SDK_VERSION" ]]; the
 else
     _LOG "File not found: $SRC_DIR/target/$TARGET_CODENAME/camera/camera-feature.xml"
 fi
+
+LOG_STEP_IN "- Adding cameramodes"
+CAMERA_CONFIG_VENDOR_LIB_INFO="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO")"
+if [ "$CAMERA_CONFIG_VENDOR_LIB_INFO" ]; then
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "$CAMERA_CONFIG_VENDOR_LIB_INFO"
+else
+    ABORT "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO config not found in source firmware floating_feature.xml"
+fi
+unset CAMERA_CONFIG_VENDOR_LIB_INFO
+LOG_STEP_OUT
 
 LOG_STEP_IN
 if grep -q "DURING_SMARTVIEW" "$WORK_DIR/system/system/cameradata/camera-feature.xml" 2> /dev/null; then
@@ -312,15 +341,15 @@ if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "essi" ]]; then
             [[ "$(GET_PROP "vendor" "ro.product.vendor.device")" != "a56"* ]]
     }; then
         HEX_PATCH "$WORK_DIR/system/system/lib64/libobjectcapture_jni.arcsoft.so" \
-            "e503162a47020094e022009121008052e203162a" "8500805247020094e02200912100805282008052"
+            "fd7bbaa9fc6f01a9fd030091fa6702a9f85f03a9" "8500805247020094e02200912100805282008052"
     elif ! [[ "$(GET_PROP "system" "ro.product.device")" =~ r0|g0|b0 ]] && \
             [[ "$(GET_PROP "vendor" "ro.product.vendor.device")" =~ r0|g0|b0 ]]; then
         HEX_PATCH "$WORK_DIR/system/system/lib64/libobjectcapture_jni.arcsoft.so" \
-            "e503162a47020094e022009121008052e203162a" "4500805247020094e02200912100805242008052"
+            "fd7bbaa9fc6f01a9fd030091fa6702a9f85f03a9" "4500805247020094e02200912100805242008052"
     elif [[ "$(GET_PROP "system" "ro.product.device")" != "a56"* ]] && \
             [[ "$(GET_PROP "vendor" "ro.product.vendor.device")" == "a56"* ]]; then
         HEX_PATCH "$WORK_DIR/system/system/lib64/libobjectcapture_jni.arcsoft.so" \
-            "e503162a47020094e022009121008052e203162a" "c500805247020094e022009121008052c2008052"
+            "fd7bbaa9fc6f01a9fd030091fa6702a9f85f03a9" "c500805247020094e022009121008052c2008052"
     fi
 fi
 

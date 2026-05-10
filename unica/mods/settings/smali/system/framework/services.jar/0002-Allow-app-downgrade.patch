@@ -11,7 +11,12 @@ diff --git a/smali_classes2/com/android/server/pm/PackageManagerService.smali b/
 index 773266ffc..eb0880764 100644
 --- a/smali_classes2/com/android/server/pm/PackageManagerService.smali
 +++ b/smali_classes2/com/android/server/pm/PackageManagerService.smali
-@@ -22001,6 +22001,22 @@
+@@ -22586,11 +22586,27 @@
+     invoke-static {v3, v0}, Lcom/android/server/pm/PackageManagerServiceUtils;->isDowngradePermitted(IZ)Z
+ 
+     move-result v0
+     :try_end_2
+     .catchall {:try_start_2 .. :try_end_2} :catchall_0
  
      if-nez v0, :cond_b
  
@@ -32,8 +37,7 @@ index 773266ffc..eb0880764 100644
 +    if-nez v0, :cond_b
 +
      :try_start_3
-     invoke-interface {v10}, Lcom/android/server/pm/pkg/AndroidPackage;->getLongVersionCode()J
+     invoke-interface {v14}, Lcom/android/server/pm/pkg/AndroidPackage;->getLongVersionCode()J
  
 -- 
 2.51.1
-
