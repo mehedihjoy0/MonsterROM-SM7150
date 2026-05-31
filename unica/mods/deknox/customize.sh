@@ -23,11 +23,9 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ] && \
     LOG_STEP_OUT
 fi
 DELETE_FROM_WORK_DIR "system" "system/bin/dualdard"
-DELETE_FROM_WORK_DIR "system" "system/bin/sdp_cryptod"
 DELETE_FROM_WORK_DIR "system" "system/etc/init/dualdard.rc"
 DELETE_FROM_WORK_DIR "system" "system/etc/init/kpp.init.rc"
 DELETE_FROM_WORK_DIR "system" "system/etc/init/kss.init.rc"
-DELETE_FROM_WORK_DIR "system" "system/etc/init/sdp_cryptod.rc"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.hdmapp.xml"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.kfbp.xml"
@@ -44,28 +42,19 @@ ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/libandroid_servers.so" 0 0 644 "u:
 DELETE_FROM_WORK_DIR "system" "system/lib/libdualdar.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/libepm.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/libhermes_cred.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libkeyutils.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/libknox_filemanager.so"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/libmdf.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib/libmdfpp_req.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/libpersona.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libsdp_crypto.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libsdp_kekm.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libsdp_sdk.so"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/libsqlite.so" 0 0 644 "u:object_r:system_lib_file:s0"
 DELETE_FROM_WORK_DIR "system" "system/lib/vendor.samsung.hardware.tlc.ddar@1.0.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/android.hardware.weaver@1.0.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/hidl_comm_ddar_client.so"
+DELETE_FROM_WORK_DIR "system" "system/lib64/aidl_comm_ddar_client.so"
+DELETE_FROM_WORK_DIR "system" "system/lib64/android.hardware.weaver-V2-ndk.so"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libandroid_servers.so" 0 0 644 "u:object_r:system_lib_file:s0"
 DELETE_FROM_WORK_DIR "system" "system/lib64/libdualdar.so"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libepm.so" 0 0 644 "u:object_r:system_lib_file:s0"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libmdf.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib64/libmdfpp_req.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/libsdp_crypto.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/libsdp_kekm.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/libsdp_sdk.so"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libsqlite.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib64/vendor.samsung.hardware.tlc.ddar@1.0.so"
+DELETE_FROM_WORK_DIR "system" "system/lib64/vendor.samsung.hardware.tlc.ddar-V1-ndk.so"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/HdmApk"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxFrameBufferProvider"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxGuard"
@@ -108,12 +97,7 @@ if [[ "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" != "$TARGET_PRODUCT_SHIPPING_API_LEVE
         > /dev/null
 fi
 
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_SDP
-APPLY_PATCH "system" "system/framework/framework.jar" \
-    "$MODPATH/sdp/framework.jar/0001-Nuke-Knox-SDP.patch"
-APPLY_PATCH "system" "system/framework/services.jar" \
-    "$MODPATH/sdp/services.jar/0001-Nuke-Knox-SDP.patch"
-
+# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_SDP (already nuked in OneUI 8.5 base)
 # SEC_PRODUCT_FEATURE_KNOX_SUPPORT_DUAL_DAR
 APPLY_PATCH "system" "system/app/Traceur/Traceur.apk" \
     "$MODPATH/ddar/Traceur.apk/0001-Nuke-Knox-DualDAR.patch"
@@ -140,113 +124,23 @@ APPLY_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
 
 # SEC_PRODUCT_FEATURE_KNOX_SUPPORT_HDM
 DECODE_APK "system" "system/framework/knoxsdk.jar"
-
-HDM_VERSION="$(grep "const.* - .*\\w\"" "$APKTOOL_DIR/system/framework/knoxsdk.jar/smali/com/samsung/android/knox/hdm/HdmManager.smali" | tr -d "\"" | awk '{print $3}' -)"
-HDM_POLICY_TYPE="$(grep "const.* - .*\\w\"" "$APKTOOL_DIR/system/framework/knoxsdk.jar/smali/com/samsung/android/knox/hdm/HdmManager.smali" | tr -d "\"" | awk '{print $5}' -)"
-
-SMALI_PATCH "system" "system/app/Traceur/Traceur.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_VERSION" \
-    "HDM_VERSION" \
-    > /dev/null
-SMALI_PATCH "system" "system/app/Traceur/Traceur.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_POLICY_TYPE" \
-    "HDM_POLICY_TYPE" \
-    > /dev/null
 APPLY_PATCH "system" "system/app/Traceur/Traceur.apk" \
     "$MODPATH/hdm/Traceur.apk/0001-Nuke-Knox-HDM.patch"
-SMALI_PATCH "system" "system/framework/knoxsdk.jar" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_VERSION" \
-    "HDM_VERSION" \
-    > /dev/null
-SMALI_PATCH "system" "system/framework/knoxsdk.jar" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_POLICY_TYPE" \
-    "HDM_POLICY_TYPE" \
-    > /dev/null
 APPLY_PATCH "system" "system/framework/knoxsdk.jar" \
     "$MODPATH/hdm/knoxsdk.jar/0001-Nuke-Knox-HDM.patch"
-if [[ "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" != "$TARGET_PRODUCT_SHIPPING_API_LEVEL" ]]; then
-    SMALI_PATCH "system" "system/framework/services.jar" \
-        "smali/com/android/server/enterprise/hdm/HdmSakManager.smali" "replace" \
-        "isSupported(Landroid/content/Context;)Z" \
-        "$TARGET_PRODUCT_SHIPPING_API_LEVEL" \
-        "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" \
-        > /dev/null
-    SMALI_PATCH "system" "system/framework/services.jar" \
-        "smali/com/android/server/enterprise/hdm/HdmVendorController.smali" "replace" \
-        "<init>()V" \
-        "$TARGET_PRODUCT_SHIPPING_API_LEVEL" \
-        "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" \
-        > /dev/null
-fi
 # TODO nuke HdmVendorController.smali
 APPLY_PATCH "system" "system/framework/services.jar" \
     "$MODPATH/hdm/services.jar/0001-Nuke-Knox-HDM.patch"
-SMALI_PATCH "system" "system/priv-app/DeviceDiagnostics/DeviceDiagnostics.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_VERSION" \
-    "HDM_VERSION" \
-    > /dev/null
-SMALI_PATCH "system" "system/priv-app/DeviceDiagnostics/DeviceDiagnostics.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_POLICY_TYPE" \
-    "HDM_POLICY_TYPE" \
-    > /dev/null
 APPLY_PATCH "system" "system/priv-app/DeviceDiagnostics/DeviceDiagnostics.apk" \
     "$MODPATH/hdm/DeviceDiagnostics.apk/0001-Nuke-Knox-HDM.patch"
-SMALI_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_VERSION" \
-    "HDM_VERSION" \
-    > /dev/null
-SMALI_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_POLICY_TYPE" \
-    "HDM_POLICY_TYPE" \
-    > /dev/null
 APPLY_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
     "$MODPATH/hdm/ManagedProvisioning.apk/0001-Nuke-Knox-HDM.patch"
-SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes4/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_VERSION" \
-    "HDM_VERSION" \
-    > /dev/null
-SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes4/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_POLICY_TYPE" \
-    "HDM_POLICY_TYPE" \
-    > /dev/null
 APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
     "$MODPATH/hdm/SecSettings.apk/0001-Nuke-Knox-HDM.patch"
-SMALI_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
-    "smali_classes2/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_VERSION" \
-    "HDM_VERSION" \
-    > /dev/null
-SMALI_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
-    "smali_classes2/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_POLICY_TYPE" \
-    "HDM_POLICY_TYPE" \
-    > /dev/null
 APPLY_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
     "$MODPATH/hdm/SecSettingsIntelligence.apk/0001-Nuke-Knox-HDM.patch"
-SMALI_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_VERSION" \
-    "HDM_VERSION" \
-    > /dev/null
-SMALI_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
-    "smali/com/samsung/android/knox/hdm/HdmManager.smali" "replaceall" \
-    "$HDM_POLICY_TYPE" \
-    "HDM_POLICY_TYPE" \
-    > /dev/null
 APPLY_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
     "$MODPATH/hdm/StorageManager.apk/0001-Nuke-Knox-HDM.patch"
-
-unset HDM_VERSION HDM_POLICY_TYPE
 
 # SEC_PRODUCT_FEATURE_KNOX_SUPPORT_BLDP
 SMALI_PATCH "system" "system/app/Traceur/Traceur.apk" \
