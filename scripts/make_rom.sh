@@ -135,6 +135,7 @@ if $BUILD_ROM; then
     if [ -d "$APKTOOL_DIR" ]; then
         LOG_STEP_IN true "Building APKs/JARs"
 
+        APKTOOL_BUILD_JOBS=2
         while IFS= read -r f; do
             f="${f/$APKTOOL_DIR\//}"
             PARTITION="$(cut -d "/" -f 1 -s <<< "$f")"
@@ -143,7 +144,11 @@ if $BUILD_ROM; then
             else
                 "$SRC_DIR/scripts/apktool.sh" b "$PARTITION" "$(cut -d "/" -f 2- -s <<< "$f")" &
             fi
-        done < <(find "$APKTOOL_DIR" -type d \( -name "*.apk" -o -name "*.jar" \))
+
+            if [ "$(jobs -rp | wc -l)" -ge "$APKTOOL_BUILD_JOBS" ]; then
+                wait -n || exit 1
+            fi
+        done < <(find "$APKTOOL_DIR" -type d \( -name "*.apk" -o -name "*.jar" \) -prune -print)
 
         # shellcheck disable=SC2046
         wait $(jobs -p) || exit 1
