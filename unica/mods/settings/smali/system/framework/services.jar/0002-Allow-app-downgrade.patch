@@ -32,8 +32,7 @@ index 773266ffc..eb0880764 100644
 +    if-nez v0, :cond_b
 +
      :try_start_3
-     invoke-interface {v10}, Lcom/android/server/pm/pkg/AndroidPackage;->getLongVersionCode()J
+     invoke-interface {v14}, Lcom/android/server/pm/pkg/AndroidPackage;->getLongVersionCode()J
  
 -- 
 2.51.1
-
