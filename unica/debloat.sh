@@ -83,10 +83,6 @@ system/etc/permissions/privapp-permissions-com.samsung.android.game.gamehome.xml
 system/priv-app/GameHome
 "
 
-ADD_TO_WORK_DIR "pa2qxxx" "system" \
-    "system/etc/permissions/signature-permissions-com.samsung.android.game.gamehome.xml" \
-    0 0 644 "u:object_r:system_file:s0"
-
 # Gemini shortcut
 PRODUCT_DEBLOAT+="
 app/BardShell
@@ -104,12 +100,12 @@ app/AssistantShell
 
 # Google Chrome
 PRODUCT_DEBLOAT+="
-app/Chrome
+app/Chrome64
 "
 
 # Google Duo
 PRODUCT_DEBLOAT+="
-app/DuoStub
+app/Duo
 "
 
 # Google Maps
@@ -175,22 +171,15 @@ system/etc/permissions/privapp-permissions-com.microsoft.skydrive.xml
 system/priv-app/OneDrive_Samsung_v3
 "
 
-# My Galaxy
-SYSTEM_DEBLOAT+="
-system/etc/permissions/privapp-permissions-com.mygalaxy.service.xml
-system/etc/sysconfig/preinstalled-packages-com.mygalaxy.service.xml
-system/priv-app/MyGalaxyService
-"
-
 # Samsung Analytics
 SYSTEM_DEBLOAT+="
 system/app/DsmsAPK
 system/etc/permissions/privapp-permissions-com.samsung.android.dqagent.xml
 system/etc/permissions/privapp-permissions-com.sec.android.diagmonagent.xml
 system/etc/permissions/privapp-permissions-com.sec.android.soagent.xml
-system/priv-app/DeviceQualityAgent36
-system/priv-app/DiagMonAgent95
-system/priv-app/SOAgent76
+system/priv-app/DeviceQualityAgent37
+system/priv-app/DiagMonAgent97
+system/priv-app/SOAgent77
 "
 
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CONTEXTSERVICE_ENABLE_SURVEY_MODE" --delete
@@ -262,9 +251,10 @@ system/priv-app/IpsGeofence
 
 # Samsung Wallet
 SYSTEM_DEBLOAT+="
-system/etc/init/digitalkey_init_ble_tss2.rc
+system/etc/init/digitalkey_init_uwb_tss2.rc
 system/etc/permissions/org.carconnectivity.android.digitalkey.rangingintent.xml
 system/etc/permissions/org.carconnectivity.android.digitalkey.secureelement.xml
+system/etc/permissions/org.carconnectivity.android.digitalkey.timesync.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.carkey.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.dkey.xml
 system/etc/permissions/privapp-permissions-com.samsung.android.spayfw.xml
@@ -279,7 +269,12 @@ system/priv-app/SamsungCarKeyFw
 "
 SYSTEM_EXT_DEBLOAT+="
 framework/org.carconnectivity.android.digitalkey.rangingintent.jar
+framework/org.carconnectivity.android.digitalkey.rangingintent.jar.fsv_meta
 framework/org.carconnectivity.android.digitalkey.secureelement.jar
+framework/org.carconnectivity.android.digitalkey.secureelement.jar.fsv_meta
+framework/org.carconnectivity.android.digitalkey.timesync.jar
+framework/org.carconnectivity.android.digitalkey.timesync.jar.fsv_meta
+priv-app/DckTimeSyncService
 "
 
 # Search engine selector
