@@ -1,4 +1,5 @@
 out/
+*:Zone.Identifier
 
 # Cert
 security/unica_ota.x509.pem
