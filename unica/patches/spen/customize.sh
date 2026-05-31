@@ -31,7 +31,17 @@ if ! $SOURCE_HAS_SPEN; then
     fi
 else
     if ! $TARGET_HAS_SPEN; then
-        ABORT "Missing patch for condition (SOURCE_HAS_SPEN: [$SOURCE_HAS_SPEN], TARGET_HAS_SPEN: [$TARGET_HAS_SPEN]). Aborting"
+        DELETE_FROM_WORK_DIR "system" "system/etc/default-permissions/default-permissions-com.samsung.android.service.aircommand.xml"
+        DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.service.aircommand.xml"
+        DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.service.airviewdictionary.xml"
+        DELETE_FROM_WORK_DIR "system" "system/etc/public.libraries-smps.samsung.txt"
+        DELETE_FROM_WORK_DIR "system" "system/etc/sysconfig/airviewdictionaryservice.xml"
+        DELETE_FROM_WORK_DIR "system" "system/framework/SmpsManager.jar.fsv_meta"
+        DELETE_FROM_WORK_DIR "system" "system/lib64/libsmpsft.smps.samsung.so"
+        DELETE_FROM_WORK_DIR "system" "system/media/audio/pensounds"
+        DELETE_FROM_WORK_DIR "system" "system/priv-app/AirCommand"
+        DELETE_FROM_WORK_DIR "system" "system/priv-app/AirReadingGlass"
+        DELETE_FROM_WORK_DIR "system" "system/priv-app/SmartEye"
     fi
 fi
 
