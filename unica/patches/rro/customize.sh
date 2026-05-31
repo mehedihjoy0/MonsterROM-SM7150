@@ -7,6 +7,8 @@ if [[ "$SOURCE_PRODUCT_NAME" == "$TARGET_PRODUCT_NAME" ]]; then
     return 0
 fi
 
+TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+
 _LOG() { if $DEBUG; then LOGW "$1"; else ABORT "$1"; fi }
 
 while IFS= read -r f; do
@@ -54,5 +56,17 @@ while IFS= read -r f; do
     LOG_STEP_OUT
 done < <(find "$WORK_DIR/product/overlay" -maxdepth 1 -type f -name "*$SOURCE_PRODUCT_NAME*.apk")
 
-unset SOURCE_PRODUCT_NAME TARGET_PRODUCT_NAME
+LOG_STEP_IN "- Adding missing target product overlays"
+while IFS= read -r f; do
+    f="$(basename "$f")"
+    if [ -f "$WORK_DIR/product/overlay/$f" ] || [ -d "$APKTOOL_DIR/product/overlay/$f" ]; then
+        continue
+    fi
+
+    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "product" "overlay/$f" 0 0 644 "u:object_r:system_file:s0"
+    DECODE_APK "product" "overlay/$f"
+done < <(find "$FW_DIR/$TARGET_FIRMWARE_PATH/product/overlay" -maxdepth 1 -type f -name "*$TARGET_PRODUCT_NAME*.apk")
+LOG_STEP_OUT
+
+unset SOURCE_PRODUCT_NAME TARGET_PRODUCT_NAME TARGET_FIRMWARE_PATH
 unset -f _LOG
