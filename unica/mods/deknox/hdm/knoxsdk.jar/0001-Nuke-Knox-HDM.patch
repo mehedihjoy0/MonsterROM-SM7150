@@ -5,11 +5,11 @@ Subject: [PATCH] Nuke Knox HDM
 
 UN1CA: this patch is not complete! Please check unica/mods/deknox/customize.sh for more info.
 ---
- .../samsung/android/knox/hdm/HdmManager.smali | 464 ++----------------
+ .../com/samsung/android/knox/hdm/HdmManager.smali  | 464 +++------------------
  1 file changed, 54 insertions(+), 410 deletions(-)
 
 diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/samsung/android/knox/hdm/HdmManager.smali
-index 9b55c57..d79e443 100644
+index 5da3a6e..074c630 100644
 --- a/smali/com/samsung/android/knox/hdm/HdmManager.smali
 +++ b/smali/com/samsung/android/knox/hdm/HdmManager.smali
 @@ -35,7 +35,7 @@
@@ -41,7 +41,7 @@ index 9b55c57..d79e443 100644
 -
 -    new-instance v2, Ljava/lang/StringBuilder;
 -
--    const-string v3, "HDM_VERSION - "
+-    const-string v3, "2.0 - "
 -
 -    invoke-direct {v2, v3}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
 -
@@ -58,7 +58,7 @@ index 9b55c57..d79e443 100644
 -    return-object v0
 -
 -    :cond_0
--    const-string v0, "HDM_VERSION - HDM_POLICY_TYPE"
+-    const-string v0, "2.0"
 +    const/4 v0, 0x0
  
      return-object v0
@@ -687,4 +687,3 @@ index 9b55c57..d79e443 100644
  
 -- 
 2.51.1
-

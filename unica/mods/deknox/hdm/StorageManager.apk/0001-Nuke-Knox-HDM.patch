@@ -5,23 +5,23 @@ Subject: [PATCH] Nuke Knox HDM
 
 UN1CA: this patch is not complete! Please check unica/mods/deknox/customize.sh for more info.
 ---
- .../samsung/android/knox/hdm/HdmManager.smali | 484 ++----------------
- 1 file changed, 54 insertions(+), 430 deletions(-)
+ .../com/samsung/android/knox/hdm/HdmManager.smali  | 468 +++------------------
+ 1 file changed, 54 insertions(+), 414 deletions(-)
 
 diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/samsung/android/knox/hdm/HdmManager.smali
-index a1c954c..b2ee2f3 100644
+index c24837a..b2ee2f3 100644
 --- a/smali/com/samsung/android/knox/hdm/HdmManager.smali
 +++ b/smali/com/samsung/android/knox/hdm/HdmManager.smali
 @@ -63,7 +63,7 @@
  .end method
  
  .method public static getHdmVersion()Ljava/lang/String;
--    .locals 5
+-    .locals 4
 +    .locals 2
  
      sget-object v0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
  
-@@ -71,60 +71,7 @@
+@@ -71,88 +71,26 @@
  
      invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
  
@@ -37,9 +37,7 @@ index a1c954c..b2ee2f3 100644
 -
 -    move-result v2
 -
--    const-string v3, " - "
--
--    const-string v4, "HDM_VERSION"
+-    const-string v3, "2.0"
 -
 -    if-nez v2, :cond_0
 -
@@ -47,7 +45,9 @@ index a1c954c..b2ee2f3 100644
 -
 -    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
 -
--    invoke-virtual {v2, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    const-string v3, " - "
 -
 -    invoke-virtual {v2, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
 -
@@ -60,30 +60,14 @@ index a1c954c..b2ee2f3 100644
 -    invoke-virtual {v2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 -
 -    move-result-object v0
--
--    return-object v0
--
--    :cond_0
--    new-instance v0, Ljava/lang/StringBuilder;
--
--    invoke-direct {v0}, Ljava/lang/StringBuilder;-><init>()V
--
--    invoke-virtual {v0, v4}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
--
--    invoke-virtual {v0, v3}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
--
--    const-string v1, "HDM_POLICY_TYPE"
--
--    invoke-virtual {v0, v1}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
--
--    invoke-virtual {v0}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
--
--    move-result-object v0
 +    const/4 v0, 0x0
  
      return-object v0
+-
+-    :cond_0
+-    return-object v3
  .end method
-@@ -132,43 +79,18 @@
+ 
  
  # virtual methods
  .method public generateNonce()Ljava/lang/String;
@@ -118,20 +102,20 @@ index a1c954c..b2ee2f3 100644
 -    invoke-interface {v0, p0}, Lcom/samsung/android/knox/hdm/IHdmManager;->generateNonce(Lcom/samsung/android/knox/ContextInfo;)Ljava/lang/String;
 -
 -    move-result-object p0
--
--    return-object p0
 +    sget-object p0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
+ 
+-    return-object p0
++    const-string v0, "generateNonce() on HdmManager.java"
  
 -    :cond_0
 -    const-string p0, "Fail to call generateNonce() using HDM Service on HdmManager.java"
-+    const-string v0, "generateNonce() on HdmManager.java"
- 
+-
 -    invoke-static {v0, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
 +    invoke-static {p0, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
  
      const/4 p0, 0x0
  
-@@ -176,43 +98,18 @@
+@@ -160,43 +98,18 @@
  .end method
  
  .method public getHdmId(Ljava/lang/String;)Ljava/lang/String;
@@ -179,7 +163,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, 0x0
  
-@@ -220,43 +117,18 @@
+@@ -204,43 +117,18 @@
  .end method
  
  .method public getHdmIdB64()Ljava/lang/String;
@@ -227,7 +211,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, 0x0
  
-@@ -264,43 +136,18 @@
+@@ -248,43 +136,18 @@
  .end method
  
  .method public getHdmPolicy(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
@@ -275,7 +259,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, 0x0
  
-@@ -308,43 +155,18 @@
+@@ -292,43 +155,18 @@
  .end method
  
  .method public getRevocationInfo()Ljava/lang/String;
@@ -310,20 +294,20 @@ index a1c954c..b2ee2f3 100644
 -    invoke-interface {v0, p0}, Lcom/samsung/android/knox/hdm/IHdmManager;->getRevocationInfo(Lcom/samsung/android/knox/ContextInfo;)Ljava/lang/String;
 -
 -    move-result-object p0
-+    sget-object p0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
- 
+-
 -    return-object p0
-+    const-string v0, "getRevocationInfo() on HdmManager.java"
++    sget-object p0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
  
 -    :cond_0
 -    const-string p0, "Fail to call getRevocationInfo() using HDM Service on HdmManager.java"
--
++    const-string v0, "getRevocationInfo() on HdmManager.java"
+ 
 -    invoke-static {v0, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
 +    invoke-static {p0, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
  
      const/4 p0, 0x0
  
-@@ -377,43 +199,18 @@
+@@ -361,43 +199,18 @@
  .end method
  
  .method public isNFCBlockedByHDM()Z
@@ -371,7 +355,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, 0x0
  
-@@ -421,43 +218,18 @@
+@@ -405,43 +218,18 @@
  .end method
  
  .method public isSwBlockEnabled()Z
@@ -404,22 +388,22 @@ index a1c954c..b2ee2f3 100644
 -    iget-object p0, p0, Lcom/samsung/android/knox/hdm/HdmManager;->mContextInfo:Lcom/samsung/android/knox/ContextInfo;
 -
 -    invoke-interface {v0, p0}, Lcom/samsung/android/knox/hdm/IHdmManager;->isSwBlockEnabled(Lcom/samsung/android/knox/ContextInfo;)Z
--
--    move-result p0
--
--    return p0
 +    sget-object p0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
  
--    :cond_0
--    const-string p0, "Fail to call isSwBlockEnabled() using HDM Service on HdmManager.java"
+-    move-result p0
 +    const-string v0, "isSwBlockEnabled() on HdmManager.java"
  
+-    return p0
+-
+-    :cond_0
+-    const-string p0, "Fail to call isSwBlockEnabled() using HDM Service on HdmManager.java"
+-
 -    invoke-static {v0, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
 +    invoke-static {p0, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
  
      const/4 p0, 0x0
  
-@@ -465,43 +237,18 @@
+@@ -449,43 +237,18 @@
  .end method
  
  .method public removeRevocationInfo()I
@@ -454,20 +438,20 @@ index a1c954c..b2ee2f3 100644
 -    invoke-interface {v0, p0}, Lcom/samsung/android/knox/hdm/IHdmManager;->removeRevocationInfo(Lcom/samsung/android/knox/ContextInfo;)I
 -
 -    move-result p0
--
--    return p0
 +    sget-object p0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
+ 
+-    return p0
++    const-string v0, "removeRevocationInfo() on HdmManager.java"
  
 -    :cond_0
 -    const-string p0, "Fail to call removeRevocationInfo() using HDM Service on HdmManager.java"
-+    const-string v0, "removeRevocationInfo() on HdmManager.java"
- 
+-
 -    invoke-static {v0, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;)I
 +    invoke-static {p0, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
  
      const/4 p0, -0x1
  
-@@ -509,43 +256,18 @@
+@@ -493,43 +256,18 @@
  .end method
  
  .method public setHdmPolicy(Ljava/lang/String;)Ljava/lang/String;
@@ -515,7 +499,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, 0x0
  
-@@ -553,43 +275,18 @@
+@@ -537,43 +275,18 @@
  .end method
  
  .method public setHdmTaCmd(I)I
@@ -563,7 +547,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, -0x1
  
-@@ -597,43 +294,18 @@
+@@ -581,43 +294,18 @@
  .end method
  
  .method public setSwBlock(Z)Z
@@ -611,7 +595,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, 0x0
  
-@@ -641,43 +313,18 @@
+@@ -625,43 +313,18 @@
  .end method
  
  .method public syncRevocationInfo(Ljava/lang/String;)Ljava/lang/String;
@@ -659,7 +643,7 @@ index a1c954c..b2ee2f3 100644
  
      const/4 p0, 0x0
  
-@@ -685,41 +332,18 @@
+@@ -669,41 +332,18 @@
  .end method
  
  .method public syncSwBlockFromBoot()I
@@ -707,4 +691,3 @@ index a1c954c..b2ee2f3 100644
  
 -- 
 2.51.1
-
