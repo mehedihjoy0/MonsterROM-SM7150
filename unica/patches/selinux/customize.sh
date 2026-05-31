@@ -5,7 +5,7 @@
 # - DO NOT add any parenthesis or statements (eg. "fabriccrypto" and NOT "expanttypeattribute ... (fabriccrypto)")
 # - DO NOT add unnecessary types or remove the existing ones unless they aren't necessary anymore for all devices
 
-# One UI 8.0 additions
+# One UI 8.5 additions
 ENTRIES+="
 heatmap_default
 heatmap_default_exec
@@ -13,6 +13,10 @@ heatmap_default_exec
 
 DUPLICATES+="
 init.svc.vendor.wvkprov_server_hal
+"
+
+SERVICE_DUPLICATES+="
+vendor.samsung.frameworks.codecsolution.ISehCodecSolution/default
 "
 
 # One UI 7.0 additions
@@ -95,9 +99,21 @@ for e in $DUPLICATES; do
     fi
 done
 
+for e in $SERVICE_DUPLICATES; do
+    if grep -q "^$e.*" "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/system_ext_service_contexts"; then
+        # the problematic entry is currently present in system_ext, check if we need to remove it
+        if grep -q "^$e.*" "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts"; then
+            PATCHED=true
+            # the problematic entry is found in target vendor
+            LOG "- \"$e\" SELinux duplicate service found. Removing"
+            sed -i "s|^$e|#SEC_DUPLICATE: $e|g" "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts"
+        fi
+    fi
+done
+
 if ! $PATCHED; then
     LOG "\033[0;33m! Nothing to do\033[0m"
 fi
 
-unset ENTRIES DUPLICATES CIL_NAME PATCHED VENDOR_API_LIST
+unset ENTRIES DUPLICATES SERVICE_DUPLICATES CIL_NAME PATCHED VENDOR_API_LIST
 unset -f GET_SYSTEM_EXT
