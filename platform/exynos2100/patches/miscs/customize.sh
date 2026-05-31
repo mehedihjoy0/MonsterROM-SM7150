@@ -34,16 +34,8 @@ _FOR_EACH_EXYNOS_INIT()
     local SED_EXPR="$1"
     local INIT_RC
 
-    if [ -f "$WORK_DIR/vendor/etc/init/init.exynos2100.rc" ] \
-        && [ ! -f "$WORK_DIR/vendor/etc/init/hw/init.exynos2100.rc" ]; then
-        mkdir -p "$WORK_DIR/vendor/etc/init/hw"
-        cp -a "$WORK_DIR/vendor/etc/init/init.exynos2100.rc" \
-            "$WORK_DIR/vendor/etc/init/hw/init.exynos2100.rc"
-    fi
-
     for INIT_RC in \
-        "$WORK_DIR/vendor/etc/init/init.exynos2100.rc" \
-        "$WORK_DIR/vendor/etc/init/hw/init.exynos2100.rc"; do
+        "$WORK_DIR/vendor/etc/init/init.exynos2100.rc"; do
         _SED_DELETE_IF_EXISTS "$INIT_RC" "$SED_EXPR"
     done
 }
