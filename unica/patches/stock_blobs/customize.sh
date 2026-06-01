@@ -10,6 +10,10 @@ MATCH_TARGET_FEATURES()
     TARGET_FEATURES="$(sort <<< "$TARGET_FEATURES")"
 
     for f in $SOURCE_FEATURES; do
+        if [[ "$f" == "com.sec.feature.spen_usp_level70.xml" ]] && \
+                [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/media/audio/pensounds" ]; then
+            continue
+        fi
         if ! grep -q "$f" <<< "$TARGET_FEATURES"; then
             DELETE_FROM_WORK_DIR "system" "system/etc/permissions/$f"
         fi
@@ -23,6 +27,7 @@ MATCH_TARGET_FEATURES()
 # ]
 
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
 
 MATCH_TARGET_FEATURES
 
@@ -67,6 +72,24 @@ else
     fi
 fi
 
+if [ -d "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/saiv" ]; then
+    DELETE_FROM_WORK_DIR "system" "system/saiv"
+    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/saiv" 0 0 755 "u:object_r:system_file:s0"
+fi
+if [[ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS")" == *"AI_DEWARPING"* ]] && \
+        [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/saiv/image_understanding/db/smartscan_rectifier" ]; then
+    ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" \
+        "system" "system/saiv/image_understanding/db/smartscan_rectifier" 0 0 755 "u:object_r:system_file:s0"
+elif [ -d "$WORK_DIR/system/system/saiv/image_understanding/db/smartscan_rectifier" ]; then
+    DELETE_FROM_WORK_DIR "system" "system/saiv/image_understanding/db/smartscan_rectifier"
+fi
+if [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/saiv/textrecognition" ]; then
+    DELETE_FROM_WORK_DIR "system" "system/saiv/textrecognition"
+    ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" "system/saiv/textrecognition" 0 0 755 "u:object_r:system_file:s0"
+elif [ -d "$WORK_DIR/system/system/saiv/textrecognition" ]; then
+    DELETE_FROM_WORK_DIR "system" "system/saiv/textrecognition"
+fi
+
 if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/usr/share/alsa/alsa.conf" ]; then
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/usr/share/alsa/alsa.conf" 0 0 644 "u:object_r:system_file:s0"
 else
@@ -75,5 +98,18 @@ else
     fi
 fi
 
-unset TARGET_FIRMWARE_PATH
+SOURCE_PRODUCT_API_LEVEL="${SOURCE_PRODUCT_FIRST_API_LEVEL:-${SOURCE_PRODUCT_SHIPPING_API_LEVEL:-0}}"
+TARGET_PRODUCT_API_LEVEL="${TARGET_PRODUCT_FIRST_API_LEVEL:-${TARGET_PRODUCT_SHIPPING_API_LEVEL:-0}}"
+if [[ "$SOURCE_PRODUCT_API_LEVEL" =~ ^[0-9]+$ ]] && \
+        [[ "$TARGET_PRODUCT_API_LEVEL" =~ ^[0-9]+$ ]] && \
+        [[ "$SOURCE_PRODUCT_API_LEVEL" -gt 33 && "$TARGET_PRODUCT_API_LEVEL" -le 33 ]]; then
+    LOG_STEP_IN "- Downgrading ENGMODE JNI"
+    DELETE_FROM_WORK_DIR "system" "system/lib64/vendor.samsung.hardware.security.engmode-V1-ndk.so"
+    ADD_TO_WORK_DIR "r11sxxx" "system" "system/lib64/lib.engmode.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+    ADD_TO_WORK_DIR "r11sxxx" "system" "system/lib64/lib.engmodejni.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
+    ADD_TO_WORK_DIR "r11sxxx" "system" "system/lib64/vendor.samsung.hardware.security.engmode@1.0.so" 0 0 644 "u:object_r:system_lib_file:s0"
+    LOG_STEP_OUT
+fi
+
+unset TARGET_FIRMWARE_PATH SOURCE_FIRMWARE_PATH SOURCE_PRODUCT_API_LEVEL TARGET_PRODUCT_API_LEVEL
 unset -f MATCH_TARGET_FEATURES
