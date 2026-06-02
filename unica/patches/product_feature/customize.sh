@@ -22,6 +22,40 @@ LOG_MISSING_PATCHES()
         ABORT "${MESSAGE}. Aborting"
     fi
 }
+
+SEMWIFI_SERVICE_HAS_80211AX_6GHZ()
+{
+    local SEMWIFI_SERVICE_PATH="$APKTOOL_DIR/system/framework/semwifi-service.jar"
+    local SEMFRAMEWORK_FACADE="$SEMWIFI_SERVICE_PATH/smali/com/samsung/android/server/wifi/SemFrameworkFacade.smali"
+    local SEMWIFI_COEX_MANAGER="$SEMWIFI_SERVICE_PATH/smali/com/samsung/android/server/wifi/SemWifiCoexManager.smali"
+    local WIFI_B2B_POLICY_MANAGER="$SEMWIFI_SERVICE_PATH/smali/com/samsung/android/server/wifi/b2b/WifiB2bPolicyManager.smali"
+
+    grep -A5 -q "const/4 p0, 0x1" <(grep -A5 "\.method public isSupported6Ghz()Z" "$SEMFRAMEWORK_FACADE") && \
+        grep -A40 -q "SemWifiNative;->getWifiUwbCoexMode(Ljava/lang/String;)Ljava/lang/String;" <(grep -A40 "\.method public getWifiUwbCoexMode()Ljava/lang/String;" "$SEMWIFI_COEX_MANAGER") && \
+        grep -q "value of 6ghz secproduct feature :true" "$WIFI_B2B_POLICY_MANAGER"
+}
+
+SECSETTINGS_HAS_80211AX_6GHZ()
+{
+    local SECSETTINGS_PATH="$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk"
+
+    grep -R -q "\.method public final semIsWifi6ENetwork()Z" \
+        "$SECSETTINGS_PATH"/smali_classes*/com/android/wifitrackerlib/WifiEntry.smali 2> /dev/null && \
+        grep -R -q "STATE_WIFI6E_SECURED" \
+            "$SECSETTINGS_PATH"/smali_classes*/com/android/settings/wifi/slice \
+            "$SECSETTINGS_PATH"/smali_classes*/com/samsung/android/settings/wifi 2> /dev/null
+}
+
+SYSTEMUI_HAS_80211AX_6GHZ()
+{
+    local SYSTEMUI_PATH="$APKTOOL_DIR/system_ext/priv-app/SystemUI/SystemUI.apk"
+
+    grep -R -q "ICONS_WIFI6E" \
+        "$SYSTEMUI_PATH"/smali_classes*/com/android/systemui/statusbar/connectivity \
+        "$SYSTEMUI_PATH"/smali_classes*/com/android/systemui/samsung/quicksetting 2> /dev/null && \
+        grep -R -q "\.method public final checkWifi6EStandard(II)Z" \
+            "$SYSTEMUI_PATH"/smali_classes*/com/android/wifitrackerlib/WifiEntry.smali 2> /dev/null
+}
 # ]
 
 # SEC_PRODUCT_FEATURE_BUILD_MAINLINE_API_LEVEL
@@ -802,12 +836,27 @@ if $SOURCE_WLAN_SUPPORT_80211AX; then
     if $TARGET_WLAN_SUPPORT_80211AX; then
         if ! $SOURCE_WLAN_SUPPORT_80211AX_6GHZ; then
             if $TARGET_WLAN_SUPPORT_80211AX_6GHZ; then
-                APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
-                    "$MODPATH/wifi/80211ax_6ghz/semwifi-service.jar/0001-Enable-80211AX_6GHZ-support.patch"
-                APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-                    "$MODPATH/wifi/80211ax_6ghz/SecSettings.apk/0001-Enable-80211AX_6GHZ-support.patch"
-                APPLY_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
-                    "$MODPATH/wifi/80211ax_6ghz/SystemUI.apk/0001-Enable-80211AX_6GHZ-support.patch"
+                DECODE_APK "system" "system/framework/semwifi-service.jar" || return 1
+                if SEMWIFI_SERVICE_HAS_80211AX_6GHZ; then
+                    LOG "- Skipping obsolete 80211AX_6GHZ semwifi-service patch"
+                else
+                    APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
+                        "$MODPATH/wifi/80211ax_6ghz/semwifi-service.jar/0001-Enable-80211AX_6GHZ-support.patch"
+                fi
+                DECODE_APK "system" "system/priv-app/SecSettings/SecSettings.apk" || return 1
+                if SECSETTINGS_HAS_80211AX_6GHZ; then
+                    LOG "- Skipping obsolete 80211AX_6GHZ SecSettings patch"
+                else
+                    APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                        "$MODPATH/wifi/80211ax_6ghz/SecSettings.apk/0001-Enable-80211AX_6GHZ-support.patch"
+                fi
+                DECODE_APK "system_ext" "priv-app/SystemUI/SystemUI.apk" || return 1
+                if SYSTEMUI_HAS_80211AX_6GHZ; then
+                    LOG "- Skipping obsolete 80211AX_6GHZ SystemUI patch"
+                else
+                    APPLY_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
+                        "$MODPATH/wifi/80211ax_6ghz/SystemUI.apk/0001-Enable-80211AX_6GHZ-support.patch"
+                fi
             fi
         else
             if ! $TARGET_WLAN_SUPPORT_80211AX_6GHZ; then
@@ -1148,4 +1197,4 @@ elif $SOURCE_WLAN_SUPPORT_WIFI_TO_CELLULAR && ! $TARGET_WLAN_SUPPORT_WIFI_TO_CEL
 fi
 
 unset TARGET_FIRMWARE_PATH
-unset -f GET_FINGERPRINT_SENSOR_TYPE LOG_MISSING_PATCHES
+unset -f GET_FINGERPRINT_SENSOR_TYPE LOG_MISSING_PATCHES SEMWIFI_SERVICE_HAS_80211AX_6GHZ SECSETTINGS_HAS_80211AX_6GHZ SYSTEMUI_HAS_80211AX_6GHZ
