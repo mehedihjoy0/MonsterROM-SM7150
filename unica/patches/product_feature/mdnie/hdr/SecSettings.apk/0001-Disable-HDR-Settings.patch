@@ -31,7 +31,7 @@ index c412f3e..6a7b56f 100644
 -
 -    move-result-object v1
 -
--    const v2, 0x107008f
+-    const v2, 0x1070090
 -
 -    invoke-virtual {v1, v2}, Landroid/content/res/Resources;->getStringArray(I)[Ljava/lang/String;
 -
@@ -41,7 +41,7 @@ index c412f3e..6a7b56f 100644
 -
 -    move-result-object p0
 -
--    const v2, 0x1070075
+-    const v2, 0x1070076
 -
 -    invoke-virtual {p0, v2}, Landroid/content/res/Resources;->getStringArray(I)[Ljava/lang/String;
 -
@@ -189,7 +189,7 @@ index c412f3e..6a7b56f 100644
 -
 -    move-result-object v1
 -
--    const v2, 0x107008f
+-    const v2, 0x1070090
 -
 -    invoke-virtual {v1, v2}, Landroid/content/res/Resources;->getStringArray(I)[Ljava/lang/String;
 -
@@ -199,7 +199,7 @@ index c412f3e..6a7b56f 100644
 -
 -    move-result-object v2
 -
--    const v3, 0x1070075
+-    const v3, 0x1070076
 -
 -    invoke-virtual {v2, v3}, Landroid/content/res/Resources;->getStringArray(I)[Ljava/lang/String;
 -
