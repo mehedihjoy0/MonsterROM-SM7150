@@ -1117,8 +1117,10 @@ if ! $SOURCE_WLAN_SUPPORT_MOBILEAP_WIFI_CONCURRENCY; then
     fi
 else
     if ! $TARGET_WLAN_SUPPORT_MOBILEAP_WIFI_CONCURRENCY; then
-        # TODO handle this condition
-        LOG_MISSING_PATCHES "SOURCE_WLAN_SUPPORT_MOBILEAP_WIFI_CONCURRENCY" "TARGET_WLAN_SUPPORT_MOBILEAP_WIFI_CONCURRENCY"
+        SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
+            "smali/com/samsung/android/server/wifi/ap/SemSoftApConfiguration.smali" "replaceall" \
+            "SPF_Concurrency=true" \
+            "SPF_Concurrency=false"
     fi
 fi
 
