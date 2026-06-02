@@ -4,37 +4,9 @@ Date: Mon, 8 Sep 2025 22:25:57 +0200
 Subject: [PATCH] Add optical FOD support
 
 ---
- .../BiometricsDisclaimerActivity.smali        |  2 +-
- .../SuwBiometricsDisclaimerActivity.smali     |  2 +-
  .../fingerprint/FingerprintSettings.smali     | 26 +++++++++++++++++++
- 3 files changed, 28 insertions(+), 2 deletions(-)
+ 1 file changed, 26 insertions(+)
 
-diff --git a/smali_classes5/com/samsung/android/settings/biometrics/BiometricsDisclaimerActivity.smali b/smali_classes5/com/samsung/android/settings/biometrics/BiometricsDisclaimerActivity.smali
-index 0b52d68..836cd0c 100644
---- a/smali_classes5/com/samsung/android/settings/biometrics/BiometricsDisclaimerActivity.smali
-+++ b/smali_classes5/com/samsung/android/settings/biometrics/BiometricsDisclaimerActivity.smali
-@@ -1528,7 +1528,7 @@
- 
-     invoke-virtual {v0, v3}, Landroid/widget/TextView;->setText(I)V
- 
--    const v0, 0x7f152762
-+    const v0, 0x7f152760
- 
-     invoke-virtual {v2, v0}, Landroid/widget/TextView;->setText(I)V
- 
-diff --git a/smali_classes5/com/samsung/android/settings/biometrics/SuwBiometricsDisclaimerActivity.smali b/smali_classes5/com/samsung/android/settings/biometrics/SuwBiometricsDisclaimerActivity.smali
-index 225df4a..c1bab57 100644
---- a/smali_classes5/com/samsung/android/settings/biometrics/SuwBiometricsDisclaimerActivity.smali
-+++ b/smali_classes5/com/samsung/android/settings/biometrics/SuwBiometricsDisclaimerActivity.smali
-@@ -598,7 +598,7 @@
- 
-     invoke-virtual {v1, v6}, Landroid/widget/TextView;->setText(I)V
- 
--    const v1, 0x7f152762
-+    const v1, 0x7f152760
- 
-     invoke-virtual {v5, v1}, Landroid/widget/TextView;->setText(I)V
- 
 diff --git a/smali_classes5/com/samsung/android/settings/biometrics/fingerprint/FingerprintSettings.smali b/smali_classes5/com/samsung/android/settings/biometrics/fingerprint/FingerprintSettings.smali
 index 2e5b0dc..f4ba6cf 100644
 --- a/smali_classes5/com/samsung/android/settings/biometrics/fingerprint/FingerprintSettings.smali
