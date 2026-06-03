@@ -1,0 +1,59 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: devcore94 <ditternation@outlook.com>
+Date: Wed, 3 Jun 2026 07:25:00 +0200
+Subject: [PATCH] Disable UCM eSE key wrapping
+
+---
+ .../ucmservice/CredentialManagerService$UcmErcomSpecific.smali |  8 ++++++++
+ .../ucm/ucmservice/CredentialManagerService.smali              | 12 ++++++++++++
+ 2 files changed, 20 insertions(+)
+
+diff --git a/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService$UcmErcomSpecific.smali b/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService$UcmErcomSpecific.smali
+--- a/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService$UcmErcomSpecific.smali
++++ b/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService$UcmErcomSpecific.smali
+@@ -13,6 +13,14 @@
+ .method public final getDekForVoldInternalKey(Ljava/lang/String;[B)Lcom/samsung/android/knox/ucm/core/ucmRetParcelable;
+     .locals 3
+ 
++    const-string/jumbo p0, "UcmService_ercom"
++    const-string/jumbo p1, "getDekForVoldInternalKey. Knox eSE UCM disabled"
++    invoke-static {p0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    new-instance p0, Lcom/samsung/android/knox/ucm/core/ucmRetParcelable;
++    const/16 p1, 0x12
++    const/4 p2, 0x0
++    invoke-direct {p0, p1, p2}, Lcom/samsung/android/knox/ucm/core/ucmRetParcelable;-><init>(I[B)V
++    return-object p0
+     const-string/jumbo v0, "getDekForVoldInternalKey "
+ 
+     const-string/jumbo v1, "UcmService_ercom"
+diff --git a/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService.smali b/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService.smali
+--- a/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService.smali
++++ b/smali_classes2/com/samsung/ucm/ucmservice/CredentialManagerService.smali
+@@ -13617,6 +13617,13 @@
+ .method public final getOdeKey(Ljava/lang/String;[B)Lcom/samsung/android/knox/ucm/core/ucmRetParcelable;
+     .locals 3
+ 
++    const-string/jumbo p0, "UcmService"
++    const-string/jumbo p1, "getOdeKey. Knox eSE UCM disabled"
++    invoke-static {p0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    const/16 p0, 0x18
++    invoke-static {p0}, Lcom/samsung/ucm/ucmservice/CredentialManagerService;->getResponseParcel(I)Lcom/samsung/android/knox/ucm/core/ucmRetParcelable;
++    move-result-object p0
++    return-object p0
+     const-string/jumbo v0, "The exception occurs "
+ 
+     new-instance v1, Ljava/lang/StringBuilder;
+@@ -19596,6 +19603,11 @@
+ .method public final saveTempOdeKey(Ljava/lang/String;)I
+     .locals 8
+ 
++    const-string/jumbo p0, "UcmService"
++    const-string/jumbo p1, "saveTempOdeKey. Knox eSE UCM disabled"
++    invoke-static {p0, p1}, Landroid/util/Log;->i(Ljava/lang/String;Ljava/lang/String;)I
++    const/16 p0, 0x18
++    return p0
+     const-string/jumbo v0, "UcmService"
+ 
+     :try_start_0
+--
+2.49.1
