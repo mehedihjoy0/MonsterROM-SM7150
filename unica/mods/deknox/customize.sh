@@ -75,6 +75,8 @@ _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_sem.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semAidl.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semRil.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semTlc.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libsec_semTlc.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libsec_skpmTlc.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libspictrl.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libspictrl.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.sem-V1-ndk.so"
@@ -95,6 +97,9 @@ _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/android.hardware.weaver@1.0
 # HDM
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/HdmApk"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.hdmapp.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/vendor.samsung.hardware.tlc.hdm@1.0.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/vendor.samsung.hardware.tlc.hdm@1.1.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/vendor.samsung.hardware.tlc.hdm@1.2.so"
 
 # WSM
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/public.libraries-wsm.samsung.txt"
@@ -103,6 +108,9 @@ _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.s
 
 # Knox ZeroTrust
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.zt.framework.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libbpf_bcc.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libbpf_minimal.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libztnativesdk.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxZtFramework"
 
 # Knox Matrix
@@ -137,5 +145,10 @@ _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permiss
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.kpecore.xml"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.pushmanager.xml"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.sandbox.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libhermes_cred.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libknox_filemanager.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libknox_remotedesktopclient.knox.samsung.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libknoxnative_shared.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libmdf.so"
 
 unset -f _DELETE_FROM_WORK_DIR_IF_EXISTS
