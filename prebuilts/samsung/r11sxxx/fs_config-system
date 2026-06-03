@@ -215,7 +215,6 @@ system/lib/libhyperintf.so 0 0 644 capabilities=0x0
 system/lib/android.hardware.sensors-V3-ndk.so 0 0 644 capabilities=0x0
 system/lib/android.frameworks.sensorservice-V1-ndk.so 0 0 644 capabilities=0x0
 system/lib/libsmat.so 0 0 644 capabilities=0x0
-system/lib/libandroid_servers.so 0 0 644 capabilities=0x0
 system/lib/libwatermark.so 0 0 644 capabilities=0x0
 system/lib/android.hardware.power@1.1.so 0 0 644 capabilities=0x0
 system/lib/liblogwrap.so 0 0 644 capabilities=0x0

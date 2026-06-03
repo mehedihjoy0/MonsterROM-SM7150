@@ -214,7 +214,6 @@
 /system/lib/android\.hardware\.sensors-V3-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/android\.frameworks\.sensorservice-V1-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libsmat\.so u:object_r:system_lib_file:s0
-/system/lib/libandroid_servers\.so u:object_r:system_lib_file:s0
 /system/lib/libwatermark\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.power@1\.1\.so u:object_r:system_lib_file:s0
 /system/lib/liblogwrap\.so u:object_r:system_lib_file:s0
