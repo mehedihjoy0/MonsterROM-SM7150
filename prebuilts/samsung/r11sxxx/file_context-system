@@ -619,7 +619,6 @@
 /system/lib/libziparchive\.so u:object_r:system_lib_file:s0
 /system/lib/libtlc_payment_spay\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.biometrics\.fingerprint@2\.1\.so u:object_r:system_lib_file:s0
-/system/lib/libucm_tlc_hidl_api\.so u:object_r:system_lib_file:s0
 /system/lib/libclang_rt\.asan-arm-android\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.common-V2-cpp\.so u:object_r:system_lib_file:s0
 /system/lib/libmedia_quality_include\.so u:object_r:system_lib_file:s0

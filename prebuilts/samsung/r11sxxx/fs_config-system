@@ -620,7 +620,6 @@ system/lib/libvolumemonitor_energy.so 0 0 644 capabilities=0x0
 system/lib/libziparchive.so 0 0 644 capabilities=0x0
 system/lib/libtlc_payment_spay.so 0 0 644 capabilities=0x0
 system/lib/android.hardware.biometrics.fingerprint@2.1.so 0 0 644 capabilities=0x0
-system/lib/libucm_tlc_hidl_api.so 0 0 644 capabilities=0x0
 system/lib/libclang_rt.asan-arm-android.so 0 0 644 capabilities=0x0
 system/lib/android.hardware.common-V2-cpp.so 0 0 644 capabilities=0x0
 system/lib/libmedia_quality_include.so 0 0 644 capabilities=0x0
