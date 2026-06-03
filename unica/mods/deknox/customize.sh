@@ -1,228 +1,266 @@
 SET_PROP_IF_DIFF "vendor" "ro.security.fips.ux" "Disabled"
 
-if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "qssi" ]]; then
-    DONOR="a73xqxx"
-elif [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "essi" ]]; then
-    DONOR="a54xnsxx"
-else
-    ABORT "Unknown SSI: $TARGET_OS_SINGLE_SYSTEM_IMAGE"
-fi
+_DELETE_FROM_WORK_DIR_IF_EXISTS()
+{
+    local PARTITION="$1"
+    local FILE="$2"
+    local FILE_PATH="$WORK_DIR/$PARTITION/$FILE"
 
-DELETE_FROM_WORK_DIR "system" "system/app/BlockchainBasicKit"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/bin/installd" 0 2000 755 "u:object_r:installd_exec:s0"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/bin/vdc" 0 2000 755 "u:object_r:vdc_exec:s0"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/bin/vold" 0 2000 755 "u:object_r:vold_exec:s0"
-# Support legacy sdFAT kernel drivers (pre-API 35)
-# Check unica/patches/legacy/customize.sh for more info.
-if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "35" ] && \
-        grep -q "SDFAT" "$WORK_DIR/kernel/boot.img" && \
-        ! grep -q "bogus directory:" "$WORK_DIR/kernel/boot.img"; then
-    LOG_STEP_IN
-    # ",time_offset=%d" -> "NUL"
-    HEX_PATCH "$WORK_DIR/system/system/bin/vold" "2c74696d655f6f66667365743d2564" "000000000000000000000000000000"
-    LOG_STEP_OUT
-fi
-DELETE_FROM_WORK_DIR "system" "system/bin/dualdard"
-DELETE_FROM_WORK_DIR "system" "system/etc/init/dualdard.rc"
-DELETE_FROM_WORK_DIR "system" "system/etc/init/kpp.init.rc"
-DELETE_FROM_WORK_DIR "system" "system/etc/init/kss.init.rc"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.hdmapp.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.kfbp.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.knnr.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.mpos.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.pushmanager.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.sandbox.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.zt.framework.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/signature-permissions-com.samsung.android.kgclient.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/sysconfig/preinstalled-packages-com.samsung.android.coldwalletservice.xml"
-DELETE_FROM_WORK_DIR "system" "system/lib/android.hardware.weaver@1.0.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/hidl_comm_ddar_client.so"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/libandroid_servers.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib/libdualdar.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libepm.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libhermes_cred.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libknox_filemanager.so"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/libmdf.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib/libpersona.so"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/libsqlite.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib/vendor.samsung.hardware.tlc.ddar@1.0.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/aidl_comm_ddar_client.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/android.hardware.weaver-V2-ndk.so"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libandroid_servers.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib64/libdualdar.so"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libepm.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libmdf.so" 0 0 644 "u:object_r:system_lib_file:s0"
-ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libsqlite.so" 0 0 644 "u:object_r:system_lib_file:s0"
-DELETE_FROM_WORK_DIR "system" "system/lib64/vendor.samsung.hardware.tlc.ddar-V1-ndk.so"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/HdmApk"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxFrameBufferProvider"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxGuard"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxMposAgent"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxNeuralNetworkRuntime"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxPushManager"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxSandbox"
-DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxZtFramework"
+    if [ -e "$FILE_PATH" ] || [ -L "$FILE_PATH" ]; then
+        DELETE_FROM_WORK_DIR "$PARTITION" "$FILE"
+    fi
+}
 
-if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "qssi" ]]; then
-    ADD_TO_WORK_DIR "$DONOR" "system" "system/bin/apexd" 0 2000 755 "u:object_r:apexd_exec:s0"
-    ADD_TO_WORK_DIR "$DONOR" "system" "system/bin/gsid" 0 2000 755 "u:object_r:gsid_exec:s0"
-    ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/service.incremental.so" 0 0 644 "u:object_r:system_lib_file:s0"
-    ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/service.incremental.so" 0 0 644 "u:object_r:system_lib_file:s0"
-fi
+# KnoxGuard
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxGuard"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.kgclient.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/signature-permissions-com.samsung.android.kgclient.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.kg30-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.kg-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.kg30-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.kg-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.tlc.kg-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.kg30-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.kg30-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.kg-V1-ndk_platform.so"
 
-if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "qssi" ]]; then
-    APPLY_PATCH "system" "system/framework/framework.jar" \
-        "$MODPATH/vold/framework.jar/0001-Add-token-argument-in-unlockCeStorage.patch"
-    APPLY_PATCH "system" "system/framework/services.jar" \
-        "$MODPATH/vold/services.jar/0001-Add-token-argument-in-unlockCeStorage.patch"
-fi
+# DualDAR
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/bin/dualdard"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/dualdard.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libdualdar.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/aidl_comm_ddar_client.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.ddar-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.ddar-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.ddar@1.0-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.ddar-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.ddar@1.0-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.tlc.ddar-default.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.tlc.ddar@1.0-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libtlc_comm_ddar_aidl.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libtlc_comm_ddar.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libtlc_direct_comm_ddar_aidl.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libtlc_direct_comm_ddar.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.ddar-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.ddar@1.0-impl.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.ddar@1.0.so"
 
-unset DONOR
-
-DECODE_APK "system" "system/framework/services.jar"
-SOURCE_FILE_ATTR="$(grep -F ".source" "$APKTOOL_DIR/system/framework/services.jar/smali/android/gsi/GsiProgress.smali")"
-SOURCE_FILE_ATTR="${SOURCE_FILE_ATTR//\./\\\.}"
-SOURCE_FILE_ATTR="${SOURCE_FILE_ATTR//\"/\\\"}"
-SOURCE_FILE_ATTR="${SOURCE_FILE_ATTR//\//\\\/}"
-LOG "- Replacing SourceFile attribute in /system/system/framework/services.jar"
-find "$APKTOOL_DIR/system/framework/services.jar" -type f -name "*.smali" -print0 \
-    | xargs -0 -I "{}" -P "$(nproc)" sed -i "s/^\.source.*/\.source \"SourceFile\"/g" "{}"
-if [[ "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" != "$TARGET_PRODUCT_SHIPPING_API_LEVEL" ]]; then
-    SMALI_PATCH "system" "system/framework/services.jar" \
-        "smali/com/android/server/knox/dar/ddar/ta/TAProxy.smali" "replace" \
-        "updateServiceHolder(Z)V" \
-        "$TARGET_PRODUCT_SHIPPING_API_LEVEL" \
-        "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" \
-        > /dev/null
-fi
-
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_SDP (already nuked in OneUI 8.5 base)
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_DUAL_DAR
-APPLY_PATCH "system" "system/app/Traceur/Traceur.apk" \
-    "$MODPATH/ddar/Traceur.apk/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/framework/framework.jar" \
-    "$MODPATH/ddar/framework.jar/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/framework/framework.jar" \
-    "$MODPATH/ddar/framework.jar/0002-Nuke-MDF.patch"
-APPLY_PATCH "system" "system/framework/knoxsdk.jar" \
-    "$MODPATH/ddar/knoxsdk.jar/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/framework/services.jar" \
-    "$MODPATH/ddar/services.jar/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/priv-app/DeviceDiagnostics/DeviceDiagnostics.apk" \
-    "$MODPATH/ddar/DeviceDiagnostics.apk/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/priv-app/KnoxCore/KnoxCore.apk" \
-    "$MODPATH/ddar/KnoxCore.apk/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
-    "$MODPATH/ddar/ManagedProvisioning.apk/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "$MODPATH/ddar/SecSettings.apk/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
-    "$MODPATH/ddar/SecSettingsIntelligence.apk/0001-Nuke-Knox-DualDAR.patch"
-APPLY_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
-    "$MODPATH/ddar/StorageManager.apk/0001-Nuke-Knox-DualDAR.patch"
-
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_HDM
-DECODE_APK "system" "system/framework/knoxsdk.jar"
-APPLY_PATCH "system" "system/app/Traceur/Traceur.apk" \
-    "$MODPATH/hdm/Traceur.apk/0001-Nuke-Knox-HDM.patch"
-APPLY_PATCH "system" "system/framework/knoxsdk.jar" \
-    "$MODPATH/hdm/knoxsdk.jar/0001-Nuke-Knox-HDM.patch"
-# TODO nuke HdmVendorController.smali
-APPLY_PATCH "system" "system/framework/services.jar" \
-    "$MODPATH/hdm/services.jar/0001-Nuke-Knox-HDM.patch"
-APPLY_PATCH "system" "system/priv-app/DeviceDiagnostics/DeviceDiagnostics.apk" \
-    "$MODPATH/hdm/DeviceDiagnostics.apk/0001-Nuke-Knox-HDM.patch"
-APPLY_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
-    "$MODPATH/hdm/ManagedProvisioning.apk/0001-Nuke-Knox-HDM.patch"
-APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "$MODPATH/hdm/SecSettings.apk/0001-Nuke-Knox-HDM.patch"
-APPLY_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
-    "$MODPATH/hdm/SecSettingsIntelligence.apk/0001-Nuke-Knox-HDM.patch"
-APPLY_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
-    "$MODPATH/hdm/StorageManager.apk/0001-Nuke-Knox-HDM.patch"
-
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_BLDP
-SMALI_PATCH "system" "system/app/Traceur/Traceur.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-SMALI_PATCH "system" "system/framework/knoxsdk.jar" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/DeviceDiagnostics/DeviceDiagnostics.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes4/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
-    "smali_classes2/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-SMALI_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-SMALI_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
-    "smali_classes4/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isBldpEventSupported()Z' 'false'
-
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_MPOS
-# TODO add services.jar patch
-SMALI_PATCH "system" "system/app/Traceur/Traceur.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-SMALI_PATCH "system" "system/framework/knoxsdk.jar" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/DeviceDiagnostics/DeviceDiagnostics.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/ManagedProvisioning/ManagedProvisioning.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-    "smali_classes4/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-SMALI_PATCH "system" "system/priv-app/SecSettingsIntelligence/SecSettingsIntelligence.apk" \
-    "smali_classes2/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-SMALI_PATCH "system_ext" "priv-app/StorageManager/StorageManager.apk" \
-    "smali/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-SMALI_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
-    "smali_classes4/com/samsung/android/knox/integrity/EnhancedAttestationPolicy.smali" "return" \
-    'isMposSupported()Z' 'false'
-
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_KNOXGUARD
-APPLY_PATCH "system" "system/framework/services.jar" \
-    "$MODPATH/knoxguard/services.jar/0001-Disable-KnoxGuard.patch"
-
-# SEC_PRODUCT_FEATURE_SECURITY_SUPPORT_KNOX_MATRIX_AI_PRIVACY
-APPLY_PATCH "system" "system/framework/framework.jar" \
-    "$MODPATH/kmxai/framework.jar/0001-Nuke-Knox-Matrix-AI-Privacy.patch"
-
-# SEC_PRODUCT_FEATURE_FRAMEWORK_SUPPORT_BLOCKCHAIN_SERVICE
+# Blockchain
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/app/BlockchainBasicKit"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/service-samsung-blockchain.jar"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/service-samsung-blockchain.jar.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-blockchain.odex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-blockchain.odex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-blockchain.vdex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-blockchain.vdex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/sysconfig/preinstalled-packages-com.samsung.android.coldwalletservice.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_blockchain_comm.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_blockchain_keystore.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_blockchain_direct_comm.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/blockchain_aidl_comm_client.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.blockchain-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.blockchain-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.blockchain@1.0-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.blockchain-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.blockchain@1.0-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.tlc.blockchain-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.blockchain-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.blockchain@1.0-impl.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.blockchain@1.0.so"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_BLOCKCHAIN_SERVICE" --delete
-SMALI_PATCH "system" "system/framework/framework.jar" \
-    "smali_classes6/com/samsung/android/ProductPackagesRune.smali" "replaceall" \
-    "SERVICE_SAMSUNG_BLOCKCHAIN:Z = true" \
-    "SERVICE_SAMSUNG_BLOCKCHAIN:Z = false"
-if [[ "$TARGET_SECURITY_CONFIG_ESE_CHIP_VENDOR" == "none" ]] && [[ "$TARGET_SECURITY_CONFIG_ESE_COS_NAME" == "none" ]]; then
-    APPLY_PATCH "system" "system/framework/services.jar" \
-        "$MODPATH/ese+blockchain/services.jar/0001-Nuke-BlockchainTZService.patch"
-else
-    APPLY_PATCH "system" "system/framework/services.jar" \
-        "$MODPATH/blockchain/services.jar/0001-Nuke-BlockchainTZService.patch"
-fi
 
-# TODO get rid of the following features
-# SEC_PRODUCT_FEATURE_KNOX_SUPPORT_UCS
-# SEC_PRODUCT_FEATURE_FRAMEWORK_SUPPORT_MOBILE_PAYMENT
+# Samsung Payment / MPOS
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/service-samsung-payment.jar"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/service-samsung-payment.jar.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-payment.odex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-payment.odex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-payment.vdex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/service-samsung-payment.vdex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/PaymentFramework"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.mpos.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_payment_direct_comm.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_payment_spay.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_payment_comm.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/payment_aidl_comm_client.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libhidl_comm_mpos_tui_client.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.mpos-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.mpos_tui@1.0.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.payment-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxMposAgent"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.mpos-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.mpos_tui@1.0-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.payment-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.tlc.payment@1.0-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/mpos-default-sec.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.mpos_tui@1.0-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.payment-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.tlc.payment@1.0-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/mpos-default-sec.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.tlc.mpos_tui@1.0-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.tlc.payment-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libtlc_comm_mpos_tui.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libtlc_direct_comm_mpos_tui.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.mpos-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.mpos_tui@1.0-impl.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.mpos_tui@1.0.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.payment-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.payment@1.0-impl.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.tlc.payment@1.0.so"
 
-LOG "- Restoring original SourceFile attribute in /system/system/framework/services.jar"
-find "$APKTOOL_DIR/system/framework/services.jar" -type f -name "*.smali" -print0 \
-    | xargs -0 -I "{}" -P "$(nproc)" sed -i "s/^\.source.*/$SOURCE_FILE_ATTR/g" "{}"
+# eSE / SEM
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/bin/sem_daemon"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/sem_early.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.sem.factoryapp.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_sem.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semAidl.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semRil.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semTlc.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.sem-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/SEMFactoryApp"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.security.sem-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.security.sem@1.0-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.security.sem-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.security.sem@1.0-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.security.sem-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib/libsec_semRil.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libsec_semHalTlc.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libsec_semRil.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libril_sem.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.security.sem-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.security.sem@1.0.so"
 
-unset SOURCE_FILE_ATTR
+# HDM
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/HdmApk"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.hdmapp.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.hdm@1.0.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.hdm@1.1.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.hdm@1.2.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hdm_status.sh"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.khdm-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/khdm-default-sec.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/khdm-default-sec.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.khdm-V2-ndk.so"
+
+# WSM
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/public.libraries-wsm.samsung.txt"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libhal.wsm.samsung.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.wsm.service-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hw/vendor.samsung.hardware.security.wsm-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/vendor.samsung.hardware.security.wsm@1.0-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/wsm-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.security.wsm.service-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libhal.wsm.samsung.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libwsmd_functions.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.security.wsm.service-V1-ndk.so"
+
+# Knox ZeroTrust
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/bin/ztd"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/bin/bpfloader_kzt"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/ztd.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/bpfloader_kzt.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/ztsdk.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.zt.framework.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/ztsdk.jar"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/ztsdk.jar.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/ztsdk.odex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/ztsdk.odex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/ztsdk.vdex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/ztsdk.vdex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libztnativesdk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libzt_binder.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxZtFramework"
+for f in ztdScIoctl.o ztdScClose.o ztdScMount.o ztdScOpen.o ztdScChmod.o ztdPrivEscal.o ztdMdd.o ztdPkt.o ztdScMemfdCreate.o ztdScExecve.o ztdScChown.o ztdFs.o ztdProc.o ztdSk.o; do
+    _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/bpf/$f"
+done
+unset f
+
+# Knox Matrix
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/bin/fabric_crypto"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/fabric_crypto.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/FabricCryptoLib.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.kmxservice.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/vintf/manifest/fabric_crypto_manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/FabricCryptoLib.jar"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/FabricCryptoLib.jar.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/FabricCryptoLib.odex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/FabricCryptoLib.odex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/FabricCryptoLib.vdex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/FabricCryptoLib.vdex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/com.samsung.security.fabric.cryptod-V1-cpp.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.fkeymaster-V1-cpp.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.fkeymaster-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KmxService"
+
+# Knox Analytics / MTD
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/knoxanalytics.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/knoxanalyticssdk.jar"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/knoxanalyticssdk.jar.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/knox_mtd.jar"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/knox_mtd.jar.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knoxanalyticssdk.odex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knoxanalyticssdk.odex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knoxanalyticssdk.vdex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knoxanalyticssdk.vdex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knox_mtd.odex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knox_mtd.odex.fsv_meta"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knox_mtd.vdex"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/oat/arm64/knox_mtd.vdex.fsv_meta"
+
+# VaultKeeper / Hermes
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libhermes_cred.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libhermes_jni.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.hermes-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.vaultkeeper-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/hermesd"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/vaultkeeperd"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/vendor.samsung.hardware.security.vaultkeeper-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "bin/vendor.samsung.hardware.security.vaultkeeper@2.0-service"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/hermesd.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vaultkeeper_common.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/init/vendor.samsung.hardware.security.vaultkeeper-service.rc"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.security.hermes.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vendor.samsung.hardware.security.vaultkeeper-manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "etc/vintf/manifest/vaultkeeper_manifest.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib/libhermes.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libhermes.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libhermes_bdbridge.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libhermes_cred.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/libhwvault.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.security.hermes-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.security.vaultkeeper-V1-ndk.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "vendor" "lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so"
+
+# Other Knox APKs and framework declarations
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/public.libraries-knox.samsung.txt"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/knox_sdk_api_level_40.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/knoxsdk_edm.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/knoxsdk_mdm.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.knox.vpn.proxyhandler.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.analytics.uploader.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.app.networkfilter.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.attestation.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.containercore.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.er.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.kfbp.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.knnr.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.kpecore.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.pushmanager.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.sandbox.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.knox.securefolder.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/signature-permissions-com.sec.enterprise.knox.cloudmdm.smdms.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/default-permissions/default-permissions-com.sec.enterprise.knox.cloudmdm.smdms.xml"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libjni_knoxnwfilterparser.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libknox_filemanager.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libknox_remotedesktopclient.knox.samsung.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libknoxnative_shared.so"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KPECore"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxCore"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxERAgent"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxFrameBufferProvider"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxNetworkFilter"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxNeuralNetworkRuntime"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxPushManager"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxSandbox"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/knoxanalyticsagent"
+_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/knoxvpnproxyhandler"
+
+unset -f _DELETE_FROM_WORK_DIR_IF_EXISTS

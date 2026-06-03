@@ -1,0 +1,32 @@
+From 1150c3bd4bdad7115a1c84f8fa07a64b5f502c76 Mon Sep 17 00:00:00 2001
+From: ExtremeXT <75576145+ExtremeXT@users.noreply.github.com>
+Date: Sat, 21 Jun 2025 20:27:42 +0200
+Subject: [PATCH] Nuke HDMService
+
+Signed-off-by: ExtremeXT <75576145+ExtremeXT@users.noreply.github.com>
+---
+ .../EnterpriseDeviceManagerServiceImpl.smali           | 10 ----------
+ 1 file changed, 10 deletions(-)
+diff --git a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
+--- a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
++++ b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
+@@ -6931,6 +6931,8 @@
+     .line 1896
+     .line 1897
+     .line 1898
++    goto/16 :unica_skip_hdm_service
++
+     const-string/jumbo v3, "hdm_service"
+ 
+     .line 1899
+@@ -7479,6 +7481,7 @@
+     .line 2179
+     .line 2180
+     .line 2181
++    :unica_skip_hdm_service
+     iget-object v0, v1, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
+ 
+     .line 2182
+
+-- 
+2.49.1

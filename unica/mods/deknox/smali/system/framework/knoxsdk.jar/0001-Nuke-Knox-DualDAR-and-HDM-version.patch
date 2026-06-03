@@ -1,0 +1,123 @@
+From e448eb25571cabb6e1625bef11d29ff889f9edd1 Mon Sep 17 00:00:00 2001
+From: ExtremeXT <75576145+ExtremeXT@users.noreply.github.com>
+Date: Sat, 21 Jun 2025 20:10:58 +0200
+Subject: [PATCH] Nuke Knox DualDAR and HDM version
+
+Signed-off-by: ExtremeXT <75576145+ExtremeXT@users.noreply.github.com>
+---
+ .../android/knox/ddar/DualDARPolicy.smali     |  2 +-
+ .../samsung/android/knox/hdm/HdmManager.smali | 37 +------------------
+ 2 files changed, 3 insertions(+), 36 deletions(-)
+diff --git a/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali b/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali
+--- a/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali
++++ b/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali
+@@ -112,7 +112,7 @@
+     .locals 1
+ 
+     .line 1
+-    const-string v0, "1.8.0"
++    const/4 v0, 0x0
+ 
+     .line 2
+     .line 3
+diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/samsung/android/knox/hdm/HdmManager.smali
+--- a/smali/com/samsung/android/knox/hdm/HdmManager.smali
++++ b/smali/com/samsung/android/knox/hdm/HdmManager.smali
+@@ -48,92 +48,10 @@
+ .end method
+ 
+ .method public static greylist getHdmVersion()Ljava/lang/String;
+-    .locals 4
++    .locals 1
+ 
+-    .line 1
+-    sget-object v0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
++    const/4 v0, 0x0
+ 
+-    .line 2
+-    .line 3
+-    const-string v1, "getHdmVersion() on HdmManager.java"
+-
+-    .line 4
+-    .line 5
+-    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
+-
+-    .line 6
+-    .line 7
+-    .line 8
+-    const-string v0, "ro.vendor.hdm.hdm_supported_subsystem"
+-
+-    .line 9
+-    .line 10
+-    const-string v1, "none"
+-
+-    .line 11
+-    .line 12
+-    invoke-static {v0, v1}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+-
+-    .line 13
+-    .line 14
+-    .line 15
+-    move-result-object v2
+-
+-    .line 16
+-    invoke-virtual {v1, v2}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z
+-
+-    .line 17
+-    .line 18
+-    .line 19
+-    move-result v2
+-
+-    .line 20
+-    if-nez v2, :cond_0
+-
+-    .line 21
+-    .line 22
+-    new-instance v2, Ljava/lang/StringBuilder;
+-
+-    .line 23
+-    .line 24
+-    const-string v3, "2.0 - "
+-
+-    .line 25
+-    .line 26
+-    invoke-direct {v2, v3}, Ljava/lang/StringBuilder;-><init>(Ljava/lang/String;)V
+-
+-    .line 27
+-    .line 28
+-    .line 29
+-    invoke-static {v0, v1}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+-
+-    .line 30
+-    .line 31
+-    .line 32
+-    move-result-object v0
+-
+-    .line 33
+-    invoke-virtual {v2, v0}, Ljava/lang/StringBuilder;->append(Ljava/lang/String;)Ljava/lang/StringBuilder;
+-
+-    .line 34
+-    .line 35
+-    .line 36
+-    invoke-virtual {v2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
+-
+-    .line 37
+-    .line 38
+-    .line 39
+-    move-result-object v0
+-
+-    .line 40
+-    return-object v0
+-
+-    .line 41
+-    :cond_0
+-    const-string v0, "2.0"
+-
+-    .line 42
+-    .line 43
+     return-object v0
+ .end method
+ 
+
+-- 
+2.49.1

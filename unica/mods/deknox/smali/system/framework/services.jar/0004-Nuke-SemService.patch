@@ -1,0 +1,62 @@
+From 1804b22cb23920cfa505b571ac92ce622ade5923 Mon Sep 17 00:00:00 2001
+From: ExtremeXT <75576145+ExtremeXT@users.noreply.github.com>
+Date: Sat, 21 Jun 2025 20:22:38 +0200
+Subject: [PATCH] Nuke SemService
+
+Signed-off-by: ExtremeXT <75576145+ExtremeXT@users.noreply.github.com>
+---
+ ...temServer$$ExternalSyntheticLambda10.smali | 24 -------------------
+ 1 file changed, 24 deletions(-)
+diff --git a/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali b/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali
+--- a/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali
++++ b/smali/com/android/server/SystemServer$$ExternalSyntheticLambda10.smali
+@@ -38,46 +38,6 @@
+     move-result-object v1
+ 
+     .line 12
+-    const-string/jumbo v2, "SemService"
+-
+-    .line 13
+-    .line 14
+-    .line 15
+-    invoke-virtual {v1, v2}, Lcom/android/server/utils/TimingsTraceAndSlog;->traceBegin(Ljava/lang/String;)V
+-
+-    .line 16
+-    .line 17
+-    .line 18
+-    :try_start_0
+-    const-class v3, Lcom/android/server/SemService;
+-
+-    .line 19
+-    .line 20
+-    invoke-static {v2, v3}, Landroid/os/ServiceManager;->addService(Ljava/lang/String;Ljava/lang/Class;)V
+-    :try_end_0
+-    .catchall {:try_start_0 .. :try_end_0} :catchall_0
+-
+-    .line 21
+-    .line 22
+-    .line 23
+-    goto :goto_0
+-
+-    .line 24
+-    :catchall_0
+-    move-exception v2
+-
+-    .line 25
+-    const-string v3, "Failure starting SemService"
+-
+-    .line 26
+-    .line 27
+-    invoke-static {v3, v2}, Lcom/android/server/SystemServer;->reportWtf(Ljava/lang/String;Ljava/lang/Throwable;)V
+-
+-    .line 28
+-    .line 29
+-    .line 30
+-    :goto_0
+-    invoke-virtual {v1}, Landroid/util/TimingsTraceLog;->traceEnd()V
+ 
+     .line 31
+     .line 32
+
+-- 
+2.49.1
