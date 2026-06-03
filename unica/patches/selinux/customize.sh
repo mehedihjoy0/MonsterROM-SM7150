@@ -287,11 +287,17 @@ _APPEND_PROP_ALLOW "$SYSTEM_EXT_SEPOLICY" "snap_utility" "cache_status_prop"
 _APPEND_PROCESS_ALLOW "$SYSTEM_EXT_SEPOLICY" "adbd" "self" "setcurrent"
 _APPEND_PROCESS_ALLOW "$SYSTEM_EXT_SEPOLICY" "adbd" "su" "dyntransition"
 _APPEND_PROCESS_ALLOW "$SYSTEM_EXT_SEPOLICY" "adbd" "adbd_tradeinmode" "dyntransition"
+
+VENDOR_SEPOLICY="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+if _TYPE_EXISTS "heatmap_default" && _TYPE_EXISTS "app_efs_file"; then
+    _APPEND_CIL_RULE "$VENDOR_SEPOLICY" "(allow heatmap_default app_efs_file (dir (search open read getattr)))"
+    _APPEND_CIL_RULE "$VENDOR_SEPOLICY" "(allow heatmap_default app_efs_file (file (open read write getattr lock ioctl map)))"
+fi
 LOG_STEP_OUT
 
 if ! $PATCHED; then
     LOG "\033[0;33m! Nothing to do\033[0m"
 fi
 
-unset ENTRIES DUPLICATES SERVICE_DUPLICATES CIL_NAME PATCHED SELINUX_DIRS VENDOR_API_LIST MAPPING_FILE SYSTEM_EXT_SEPOLICY
+unset ENTRIES DUPLICATES SERVICE_DUPLICATES CIL_NAME PATCHED SELINUX_DIRS VENDOR_API_LIST MAPPING_FILE SYSTEM_EXT_SEPOLICY VENDOR_SEPOLICY
 unset -f GET_SYSTEM_EXT _CLEAN_UNDECLARED_MAPPING_ATTRS _TYPE_EXISTS _APPEND_CONTEXT _APPEND_PROP_ALLOW _APPEND_CIL_RULE _APPEND_PROCESS_ALLOW

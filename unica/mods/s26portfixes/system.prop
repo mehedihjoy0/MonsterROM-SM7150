@@ -1,0 +1,12 @@
+# Quiet confirmed S26U framework noise on S21 vendor/boot firmware.
+log.tag.AdbDebuggingManager=SUPPRESS
+log.tag.libbinder.ServiceManagerCppClient=SUPPRESS
+log.tag.KG30.KnoxGuard30Service=SUPPRESS
+log.tag.KG30.KnoxGuard30VendorController=SUPPRESS
+log.tag.KG30.KnoxGuardTA30Native=SUPPRESS
+log.tag.KG30.Utils=SUPPRESS
+log.tag.engmode_client_aidl=SUPPRESS
+log.tag.engmode_client_list=SUPPRESS
+log.tag.engmode_java_manager=SUPPRESS
+log.tag.engmode_jni=SUPPRESS
+log.tag.libc=ERROR
