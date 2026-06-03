@@ -46,8 +46,6 @@
 /system/lib/libsextractorcmn\.so u:object_r:system_lib_file:s0
 /system/lib/libsemmediapostprocessor_jni\.so u:object_r:system_lib_file:s0
 /system/lib/libminui\.so u:object_r:system_lib_file:s0
-/system/lib/libknoxnative_shared\.so u:object_r:system_lib_file:s0
-/system/lib/libsec_skpmTlc\.so u:object_r:system_lib_file:s0
 /system/lib/vendor\.samsung\.hardware\.vibrator-V5-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libaaudio_internal\.so u:object_r:system_lib_file:s0
 /system/lib/libimagecodec\.quram\.so u:object_r:system_lib_file:s0
@@ -62,7 +60,6 @@
 /system/lib/libhypervintf\.so u:object_r:system_lib_file:s0
 /system/lib/libheifregiondec_jni\.so u:object_r:system_lib_file:s0
 /system/lib/libsume_jni\.media\.samsung\.so u:object_r:system_lib_file:s0
-/system/lib/libtlc_blockchain_direct_comm\.so u:object_r:system_lib_file:s0
 /system/lib/dropboxmanager_aidl-cpp\.so u:object_r:system_lib_file:s0
 /system/lib/android\.media\.audiopolicy-aconfig-cc\.so u:object_r:system_lib_file:s0
 /system/lib/libheifcapture\.so u:object_r:system_lib_file:s0
@@ -75,20 +72,16 @@
 /system/lib/libsec_semRil\.so u:object_r:system_lib_file:s0
 /system/lib/spatializer-aidl-cpp\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hidl\.memory@1\.0\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.hdm@1\.2\.so u:object_r:system_lib_file:s0
 /system/lib/libeffectsconfig\.so u:object_r:system_lib_file:s0
 /system/lib/libpolicy-subsystem\.so u:object_r:system_lib_file:s0
 /system/lib/libGLESv1_CM\.so u:object_r:system_lib_file:s0
 /system/lib/libSamsungVAD_v3\.0\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.ucm@2\.0\.so u:object_r:system_lib_file:s0
 /system/lib/vendor\.samsung\.hardware\.security\.vaultkeeper@2\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libwifipackettrackerjni\.so u:object_r:system_lib_file:s0
 /system/lib/android\.system\.net\.netd@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libgatekeeper\.so u:object_r:system_lib_file:s0
 /system/lib/lib\.engmode\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.gnss@2\.0\.so u:object_r:system_lib_file:s0
-/system/lib/hidl_tlc_payment_comm_client\.so u:object_r:system_lib_file:s0
-/system/lib/hidl_tlc_blockchain_comm_client\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hidl\.memory\.token@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libBSD_jni\.so u:object_r:system_lib_file:s0
 /system/lib/libGLESv3\.so u:object_r:system_lib_file:s0
@@ -103,8 +96,6 @@
 /system/lib/libaudio_aidl_conversion_core_ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libharfbuzz_ng\.so u:object_r:system_lib_file:s0
 /system/lib/libsonivox\.so u:object_r:system_lib_file:s0
-/system/lib/libspictrl\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.hdm@1\.1\.so u:object_r:system_lib_file:s0
 /system/lib/libincfs\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hidl\.token@1\.0-utils\.so u:object_r:system_lib_file:s0
 /system/lib/libstatslog_surfaceflinger\.so u:object_r:system_lib_file:s0
@@ -135,7 +126,6 @@
 /system/lib/libmedia_omx_client\.so u:object_r:system_lib_file:s0
 /system/lib/libshmemcompat\.so u:object_r:system_lib_file:s0
 /system/lib/libgraphics\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.blockchain@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libsemnativecarrierfeature\.so u:object_r:system_lib_file:s0
 /system/lib/lib-camera-compatibility-info-api\.so u:object_r:system_lib_file:s0
 /system/lib/libsqlite\.so u:object_r:system_lib_file:s0
@@ -147,12 +137,10 @@
 /system/lib/android\.database\.sqlite-aconfig-cc\.so u:object_r:system_lib_file:s0
 /system/lib/libhardware_legacy\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.tv\.tuner-V3-ndk\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.ddar@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libruntimeproperty\.so u:object_r:system_lib_file:s0
 /system/lib/libpsi\.so u:object_r:system_lib_file:s0
 /system/lib/libaudiomirroring\.so u:object_r:system_lib_file:s0
 /system/lib/audioflinger-aidl-cpp\.so u:object_r:system_lib_file:s0
-/system/lib/hidl_comm_ddar_client\.so u:object_r:system_lib_file:s0
 /system/lib/libion\.so u:object_r:system_lib_file:s0
 /system/lib/vendor\.samsung\.hardware\.security\.drk@2\.0\.so u:object_r:system_lib_file:s0
 /system/lib/librtp_jni\.so u:object_r:system_lib_file:s0
@@ -168,7 +156,6 @@
 /system/lib/android\.hardware\.graphics\.mapper@2\.1\.so u:object_r:system_lib_file:s0
 /system/lib/libpadm\.so u:object_r:system_lib_file:s0
 /system/lib/libspeexresampler\.so u:object_r:system_lib_file:s0
-/system/lib/android\.hardware\.weaver@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libexpresslog\.so u:object_r:system_lib_file:s0
 /system/lib/libz\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.drm@1\.3\.so u:object_r:system_lib_file:s0
@@ -286,13 +273,10 @@
 /system/lib/libMattingCore\.camera\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/com\.android\.media\.audioclient-aconfig-cc\.so u:object_r:system_lib_file:s0
 /system/lib/libsoundboostereq_legacy\.so u:object_r:system_lib_file:s0
-/system/lib/aidl_comm_kg_client\.so u:object_r:system_lib_file:s0
 /system/lib/libswspatializer_legacy\.so u:object_r:system_lib_file:s0
-/system/lib/libhermes_cred\.so u:object_r:system_lib_file:s0
 /system/lib/libsensorservice\.so u:object_r:system_lib_file:s0
 /system/lib/libharfbuzz_subset\.so u:object_r:system_lib_file:s0
 /system/lib/libsavscmn\.so u:object_r:system_lib_file:s0
-/system/lib/libknox_filemanager\.so u:object_r:system_lib_file:s0
 /system/lib/libgui\.so u:object_r:system_lib_file:s0
 /system/lib/libsheif\.so u:object_r:system_lib_file:s0
 /system/lib/libhardware\.so u:object_r:system_lib_file:s0
@@ -316,7 +300,6 @@
 /system/lib/libnativecfms\.so u:object_r:system_lib_file:s0
 /system/lib/libRS_internal\.so u:object_r:system_lib_file:s0
 /system/lib/libstagefright_graphicbuffersource_aidl\.so u:object_r:system_lib_file:s0
-/system/lib/libtlc_payment_direct_comm\.so u:object_r:system_lib_file:s0
 /system/lib/com\.android\.media\.aaudio-aconfig-cc\.so u:object_r:system_lib_file:s0
 /system/lib/libnativeloader_lazy\.so u:object_r:system_lib_file:s0
 /system/lib/libstagefright\.so u:object_r:system_lib_file:s0
@@ -366,7 +349,6 @@
 /system/lib/libruntime\.vexfwk\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/libSegmentationCore\.camera\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/libpcre2\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.mpos_tui@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libtinyxml2\.so u:object_r:system_lib_file:s0
 /system/lib/libmediasndk\.so u:object_r:system_lib_file:s0
 /system/lib/libincident\.so u:object_r:system_lib_file:s0
@@ -390,8 +372,6 @@
 /system/lib/libmediadrmmetrics_full\.so u:object_r:system_lib_file:s0
 /system/lib/libcore2nativeutil\.camera\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.radio@1\.1\.so u:object_r:system_lib_file:s0
-/system/lib/libtlc_blockchain_comm\.so u:object_r:system_lib_file:s0
-/system/lib/libbpf_bcc\.so u:object_r:system_lib_file:s0
 /system/lib/libaudiopolicyengineconfigurable\.so u:object_r:system_lib_file:s0
 /system/lib/libsemimagecrop_jni\.media\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/libmediadrm\.so u:object_r:system_lib_file:s0
@@ -399,7 +379,6 @@
 /system/lib/libmediametrics\.so u:object_r:system_lib_file:s0
 /system/lib/libactivitymanager_aidl\.so u:object_r:system_lib_file:s0
 /system/lib/libmedia_helper\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.hdm@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/lib_soundaliveresampler\.so u:object_r:system_lib_file:s0
 /system/lib/libstagefright_http_support\.so u:object_r:system_lib_file:s0
 /system/lib/libskstream\.so u:object_r:system_lib_file:s0
@@ -422,7 +401,6 @@
 /system/lib/android\.hardware\.power@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libvulkan\.so u:object_r:system_lib_file:s0
 /system/lib/libaudio_aidl_conversion_common_ndk\.so u:object_r:system_lib_file:s0
-/system/lib/libhidl_comm_mpos_tui_client\.so u:object_r:system_lib_file:s0
 /system/lib/effect-aidl-cpp\.so u:object_r:system_lib_file:s0
 /system/lib/libsmsd\.so u:object_r:system_lib_file:s0
 /system/lib/libneuralnetworks_packageinfo\.so u:object_r:system_lib_file:s0
@@ -435,7 +413,6 @@
 /system/lib/libcodec2_aidl_client\.so u:object_r:system_lib_file:s0
 /system/lib/libpackagelistparser\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.graphics\.common@1\.1\.so u:object_r:system_lib_file:s0
-/system/lib/libtlc_payment_comm\.so u:object_r:system_lib_file:s0
 /system/lib/libcommon-jni\.vexfwk\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/libmediadrmmetrics_consumer\.so u:object_r:system_lib_file:s0
 /system/lib/libEGL_angle\.so u:object_r:system_lib_file:s0
@@ -446,7 +423,6 @@
 /system/lib/android\.hardware\.thermal-V3-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.media\.bufferpool2-V2-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libstagefright_framecapture_utils\.so u:object_r:system_lib_file:s0
-/system/lib/libknox_remotedesktopclient\.knox\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/libblas\.so u:object_r:system_lib_file:s0
 /system/lib/av-audio-types-aidl-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libdrmframeworkcommon\.so u:object_r:system_lib_file:s0
@@ -498,7 +474,6 @@
 /system/lib/libsembitmapregiondec_jni\.so u:object_r:system_lib_file:s0
 /system/lib/heapprofd_client_api\.so u:object_r:system_lib_file:s0
 /system/lib/libstagefright_codecbase\.so u:object_r:system_lib_file:s0
-/system/lib/libbpf_minimal\.so u:object_r:system_lib_file:s0
 /system/lib/libcrypto\.so u:object_r:system_lib_file:s0
 /system/lib/libstagefright_surface_utils\.so u:object_r:system_lib_file:s0
 /system/lib/libclang_rt\.ubsan_standalone-arm-android\.so u:object_r:system_lib_file:s0
@@ -514,7 +489,6 @@
 /system/lib/libunwindstack\.so u:object_r:system_lib_file:s0
 /system/lib/libaudioaidlcommon\.so u:object_r:system_lib_file:s0
 /system/lib/libsum_opencv\.plugin\.impl\.so u:object_r:system_lib_file:s0
-/system/lib/libsec_semTlc\.so u:object_r:system_lib_file:s0
 /system/lib/libsec_wvkprov_serverHal\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.tv\.input@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/framework-permission-aidl-cpp\.so u:object_r:system_lib_file:s0
@@ -535,7 +509,6 @@
 /system/lib/audio-permission-aidl-cpp\.so u:object_r:system_lib_file:s0
 /system/lib/persistent_source_aidl-cpp\.so u:object_r:system_lib_file:s0
 /system/lib/libsume_opencv\.plugin\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.kg-V2-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libmediautils_delayed\.so u:object_r:system_lib_file:s0
 /system/lib/libselinux_ext\.so u:object_r:system_lib_file:s0
 /system/lib/libexifa\.camera\.samsung\.so u:object_r:system_lib_file:s0
@@ -544,7 +517,6 @@
 /system/lib/libsonic\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hidl\.token@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libaudiofoundation\.so u:object_r:system_lib_file:s0
-/system/lib/libtlc_blockchain_keystore\.so u:object_r:system_lib_file:s0
 /system/lib/android\.system\.suspend-V1-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libremotedesktopservice\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.atrace@1\.0\.so u:object_r:system_lib_file:s0
@@ -554,7 +526,6 @@
 /system/lib/libcodec2_hal_common\.so u:object_r:system_lib_file:s0
 /system/lib/vendor\.samsung\.hardware\.keymint-V1-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.graphics\.common@1\.2\.so u:object_r:system_lib_file:s0
-/system/lib/libztnativesdk\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.common-V2-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/lib_SoundBooster_ver2000\.so u:object_r:system_lib_file:s0
 /system/lib/libabcfingr\.so u:object_r:system_lib_file:s0
@@ -570,10 +541,8 @@
 /system/lib/vendor\.samsung_slsi\.hardware\.eden_runtime@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libadbd_fs\.so u:object_r:system_lib_file:s0
 /system/lib/libsoundpool\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.iccc@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/lib_nativeJni\.dk\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/libtimestamphelper\.so u:object_r:system_lib_file:s0
-/system/lib/libucm_esecomm_adapter\.so u:object_r:system_lib_file:s0
 /system/lib/libsecrecorder\.so u:object_r:system_lib_file:s0
 /system/lib/libbufferstats\.so u:object_r:system_lib_file:s0
 /system/lib/libprocessgroup\.so u:object_r:system_lib_file:s0
@@ -616,7 +585,6 @@
 /system/lib/libSAG_VM_Score_V300\.so u:object_r:system_lib_file:s0
 /system/lib/libvolumemonitor_energy\.so u:object_r:system_lib_file:s0
 /system/lib/libziparchive\.so u:object_r:system_lib_file:s0
-/system/lib/libtlc_payment_spay\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.biometrics\.fingerprint@2\.1\.so u:object_r:system_lib_file:s0
 /system/lib/libclang_rt\.asan-arm-android\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.common-V2-cpp\.so u:object_r:system_lib_file:s0
@@ -630,14 +598,12 @@
 /system/lib/libpdfium\.so u:object_r:system_lib_file:s0
 /system/lib/libperfetto\.so u:object_r:system_lib_file:s0
 /system/lib/libtimeinstate\.so u:object_r:system_lib_file:s0
-/system/lib/libdualdar\.so u:object_r:system_lib_file:s0
 /system/lib/graphicbuffersource-aidl-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libsce_v1\.crypto\.samsung\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.broadcastradio@1\.1\.so u:object_r:system_lib_file:s0
 /system/lib/libimage_io\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.audio\.effect-V3-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.graphics\.mapper@4\.0\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.tlc\.payment@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libperfetto_framework_jni\.so u:object_r:system_lib_file:s0
 /system/lib/libbase\.so u:object_r:system_lib_file:s0
 /system/lib/libvolumemonitor_score\.so u:object_r:system_lib_file:s0
@@ -668,7 +634,6 @@
 /system/lib/android\.hardware\.graphics\.bufferqueue@1\.0\.so u:object_r:system_lib_file:s0
 /system/lib/com\.android\.media\.audioserver-aconfig-cc\.so u:object_r:system_lib_file:s0
 /system/lib/libOpenCv\.camera\.samsung\.so u:object_r:system_lib_file:s0
-/system/lib/libmdf\.so u:object_r:system_lib_file:s0
 /system/lib/libaudiohal\.so u:object_r:system_lib_file:s0
 /system/lib/libimageconverter\.so u:object_r:system_lib_file:s0
 /system/lib/libshmemutil\.so u:object_r:system_lib_file:s0
@@ -694,7 +659,6 @@
 /system/lib/libvendorsupport\.so u:object_r:system_lib_file:s0
 /system/lib/libbatterystats_aidl\.so u:object_r:system_lib_file:s0
 /system/lib/android\.frameworks\.sensorservice@1\.0\.so u:object_r:system_lib_file:s0
-/system/lib/hidl_comm_iccc_client\.so u:object_r:system_lib_file:s0
 /system/lib/android\.hardware\.configstore@1\.1\.so u:object_r:system_lib_file:s0
 /system/lib/libaudio_aidl_conversion_common_ndk_cpp\.so u:object_r:system_lib_file:s0
 /system/lib/libdrm\.so u:object_r:system_lib_file:s0
@@ -740,7 +704,6 @@
 /system/lib/android\.hardware\.graphics\.mapper@3\.0\.so u:object_r:system_lib_file:s0
 /system/lib/libaudio_aidl_conversion_effect_ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libSEF\.quram\.so u:object_r:system_lib_file:s0
-/system/lib/vendor\.samsung\.hardware\.mpos-V1-ndk\.so u:object_r:system_lib_file:s0
 /system/lib/libradio_metadata\.so u:object_r:system_lib_file:s0
 /system/lib/libappfuse\.so u:object_r:system_lib_file:s0
 /system/lib/libvintf_jni\.so u:object_r:system_lib_file:s0
