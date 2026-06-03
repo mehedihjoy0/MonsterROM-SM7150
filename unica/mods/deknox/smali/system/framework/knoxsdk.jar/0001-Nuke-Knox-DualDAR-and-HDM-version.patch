@@ -13,11 +13,11 @@ diff --git a/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali b/smali/com
 +++ b/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali
 @@ -112,7 +112,7 @@
      .locals 1
- 
+
      .line 1
 -    const-string v0, "1.8.0"
 +    const/4 v0, 0x0
- 
+
      .line 2
      .line 3
 diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/samsung/android/knox/hdm/HdmManager.smali
@@ -25,15 +25,15 @@ diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/sam
 +++ b/smali/com/samsung/android/knox/hdm/HdmManager.smali
 @@ -48,92 +48,10 @@
  .end method
- 
+
  .method public static greylist getHdmVersion()Ljava/lang/String;
 -    .locals 4
 +    .locals 1
- 
+
 -    .line 1
 -    sget-object v0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
 +    const/4 v0, 0x0
- 
+
 -    .line 2
 -    .line 3
 -    const-string v1, "getHdmVersion() on HdmManager.java"
@@ -117,7 +117,7 @@ diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/sam
 -    .line 43
      return-object v0
  .end method
- 
 
--- 
+
+--
 2.49.1

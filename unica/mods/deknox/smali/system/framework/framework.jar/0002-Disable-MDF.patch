@@ -15,7 +15,7 @@ index 93c961ac..806e08ad 100644
 @@ -1297,22 +1297,52 @@
      return v1
  .end method
- 
+
 -.method public static native blacklist isMdfApplied()Z
 +.method public static blacklist isMdfApplied()Z
 +    .locals 1
@@ -24,7 +24,7 @@ index 93c961ac..806e08ad 100644
 +
 +    return v0
  .end method
- 
+
 -.method public static native blacklist isMdfDisabled()Z
 +.method public static blacklist isMdfDisabled()Z
 +    .locals 1
@@ -33,7 +33,7 @@ index 93c961ac..806e08ad 100644
 +
 +    return v0
  .end method
- 
+
 -.method public static native blacklist isMdfEnabled()Z
 +.method public static blacklist isMdfEnabled()Z
 +    .locals 1
@@ -42,16 +42,16 @@ index 93c961ac..806e08ad 100644
 +
 +    return v0
  .end method
- 
+
 -.method public static native blacklist isMdfEnforced()Z
 +.method public static blacklist isMdfEnforced()Z
 +    .locals 1
 +
 +    const/4 v0, 0x0
-+ 
++
 +    return v0
  .end method
- 
+
 -.method public static native blacklist isMdfReady()Z
 +.method public static blacklist isMdfReady()Z
 +    .locals 1
@@ -60,7 +60,7 @@ index 93c961ac..806e08ad 100644
 +
 +    return v0
  .end method
- 
+
 -.method public static native blacklist isMdfSupported()Z
 +.method public static blacklist isMdfSupported()Z
 +    .locals 1
@@ -69,9 +69,9 @@ index 93c961ac..806e08ad 100644
 +
 +    return v0
  .end method
- 
+
  .method public static blacklist logMdf(Ljava/lang/String;Ljava/lang/String;ZILjava/lang/String;)V
 
--- 
+--
 2.49.1
 

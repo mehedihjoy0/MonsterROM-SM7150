@@ -5,20 +5,18 @@ Subject: [PATCH] Nuke Knox DualDAR version
 
 Signed-off-by: Ocin4ever <85343782+Ocin4ever@users.noreply.github.com>
 ---
- .../com/samsung/android/knox/ddar/DualDARPolicy.smali           | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
 diff --git a/smali_classes4/com/samsung/android/knox/ddar/DualDARPolicy.smali b/smali_classes4/com/samsung/android/knox/ddar/DualDARPolicy.smali
 --- a/smali_classes4/com/samsung/android/knox/ddar/DualDARPolicy.smali
 +++ b/smali_classes4/com/samsung/android/knox/ddar/DualDARPolicy.smali
-@@ -120,7 +120,7 @@
+@@ -98,7 +98,7 @@
+ .method public static getDualDARVersion()Ljava/lang/String;
      .locals 1
- 
-     .line 1
+
 -    const-string v0, "1.8.0"
 +    const/4 v0, 0x0
- 
-     .line 2
-     .line 3
 
--- 
+     return-object v0
+ .end method
+
+--
 2.49.1

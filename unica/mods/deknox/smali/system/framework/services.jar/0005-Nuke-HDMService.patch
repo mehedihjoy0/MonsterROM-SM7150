@@ -5,28 +5,26 @@ Subject: [PATCH] Nuke HDMService
 
 Signed-off-by: ExtremeXT <75576145+ExtremeXT@users.noreply.github.com>
 ---
- .../EnterpriseDeviceManagerServiceImpl.smali           | 10 ----------
- 1 file changed, 10 deletions(-)
 diff --git a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
 --- a/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
 +++ b/smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali
-@@ -6931,6 +6931,8 @@
-     .line 1896
-     .line 1897
-     .line 1898
+@@ -3471,6 +3471,8 @@
+
+     invoke-static {v0, v3}, Landroid/os/ServiceManager;->addService(Ljava/lang/String;Landroid/os/IBinder;)V
+
 +    goto/16 :unica_skip_hdm_service
 +
      const-string/jumbo v3, "hdm_service"
- 
-     .line 1899
-@@ -7479,6 +7481,7 @@
-     .line 2179
-     .line 2180
-     .line 2181
+
+     new-instance v4, Lcom/android/server/enterprise/hdm/HdmService;
+@@ -3736,6 +3738,7 @@
+
+     invoke-static {v4, v3}, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl$Injector;->addLazySystemService(Lcom/android/server/enterprise/EnterpriseServiceCallback;Ljava/lang/String;)V
+
 +    :unica_skip_hdm_service
      iget-object v0, v1, Lcom/android/server/enterprise/EnterpriseDeviceManagerServiceImpl;->mContext:Landroid/content/Context;
- 
-     .line 2182
 
--- 
+     sget v2, Lcom/android/server/enterprise/appconfig/ApplicationRestrictionsService;->$r8$clinit:I
+
+--
 2.49.1
