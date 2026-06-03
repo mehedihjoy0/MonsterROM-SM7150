@@ -24,10 +24,10 @@ diff --git a/smali/com/samsung/android/server/wifi/ap/SemSoftApConfiguration.sma
 diff --git a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo$SemWifiApChipSupportInfo.smali b/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo$SemWifiApChipSupportInfo.smali
 --- a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo$SemWifiApChipSupportInfo.smali
 +++ b/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo$SemWifiApChipSupportInfo.smali
-@@ -27,6 +27,16 @@
+@@ -15,6 +15,16 @@
  
-     invoke-direct {p0}, Ljava/lang/StringBuilder;-><init>()V
  
+ # direct methods
 +.method static bridge synthetic -$$Nest$misSupportedSoftAp11ax(Lcom/samsung/android/server/wifi/ap/SemWifiApChipInfo$SemWifiApChipSupportInfo;)Z
 +    .locals 0
 +
@@ -38,9 +38,9 @@ diff --git a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo$SemWifiA
 +    return p0
 +.end method
 +
-     array-length v0, p1
+ .method public constructor <init>([B)V
+     .locals 5
  
-     const/4 v1, 0x0
 diff --git a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali b/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali
 --- a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali
 +++ b/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali
@@ -48,8 +48,7 @@ diff --git a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali b/
  .end method
  
  .method public supportThisSoftApFeature(I)Z
--    .locals 3
-+    .locals 2
+     .locals 3
  
      const/4 v0, 0x1
  
@@ -58,18 +57,5 @@ diff --git a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali b/
  
      const/4 v1, 0x2
  
-@@ -1724,11 +1724,9 @@
- 
-     const/4 v1, 0x3
- 
--    const/4 v2, 0x0
--
-     if-eq p1, v1, :cond_0
- 
--    return v2
-+    goto :goto_1
- 
-     :cond_0
-     iget-boolean p1, p0, Lcom/samsung/android/server/wifi/ap/SemWifiApChipInfo;->mSupportPowerSave:Z
 -- 
 2.43.0

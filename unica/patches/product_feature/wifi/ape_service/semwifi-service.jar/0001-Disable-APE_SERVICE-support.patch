@@ -4,9 +4,9 @@ Date: Sun, 12 Oct 2025 16:27:45 +0200
 Subject: [PATCH] Disable APE_SERVICE support
 
 ---
- .../server/wifi/SemQboxController.smali       | 8 ++------
+ .../server/wifi/SemQboxController.smali       | 4 ++--
  .../android/server/wifi/SemWifiInjector.smali | 2 +-
- 2 files changed, 3 insertions(+), 7 deletions(-)
+ 2 files changed, 3 insertions(+), 3 deletions(-)
 
 diff --git a/smali/com/samsung/android/server/wifi/SemQboxController.smali b/smali/com/samsung/android/server/wifi/SemQboxController.smali
 index 9b3cdaf..3caa6d4 100644
@@ -24,20 +24,6 @@ index 9b3cdaf..3caa6d4 100644
  
      invoke-virtual {p1, v0, v2, v1}, Lcom/samsung/android/server/wifi/SemFrameworkFacade;->getIntegerSetting(Landroid/content/Context;Ljava/lang/String;I)I
  
-@@ -1028,11 +1028,7 @@
- 
-     move-result-object v2
- 
--    new-instance v3, Lcom/samsung/android/server/wifi/SemQboxController$1;
--
--    const/4 v4, 0x0
--
--    invoke-direct {v3, p0, v4, p1}, Lcom/samsung/android/server/wifi/SemQboxController$1;-><init>(Lcom/samsung/android/server/wifi/SemQboxController;Landroid/os/Handler;Lcom/samsung/android/server/wifi/SemFrameworkFacade;)V
-+    const/4 v3, 0x0
- 
-     const/4 v4, 0x0
- 
-
 diff --git a/smali/com/samsung/android/server/wifi/SemWifiInjector.smali b/smali/com/samsung/android/server/wifi/SemWifiInjector.smali
 index eb567f9..ef860c6 100644
 --- a/smali/com/samsung/android/server/wifi/SemWifiInjector.smali
