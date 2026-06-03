@@ -11,6 +11,15 @@ LOG_MISSING_PATCHES()
         ABORT "${MESSAGE}. Aborting"
     fi
 }
+
+DELETE_SYSTEM_LIB64_IF_EXISTS()
+{
+    local FILE="$WORK_DIR/system/system/lib64/$1"
+
+    if [ -e "$FILE" ] || [ -L "$FILE" ]; then
+        DELETE_FROM_WORK_DIR "system" "system/lib64/$1"
+    fi
+}
 # ]
 
 SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
@@ -290,14 +299,14 @@ if [[ "$SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO" == *"smart_scan.samsung"* ]] && \
 fi
 if [[ "$SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO" == *"super_night.mpi.v2"* ]] && \
         [[ "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO" != *"super_night.mpi.v2"* ]]; then
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libAIQSolution_MPI.camera.samsung.so"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libLocalTM_pcc.camera.samsung.so"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libMultiFrameProcessing30.camera.samsung.so"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libMultiFrameProcessing30.snapwrapper.camera.samsung.so"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libMultiFrameProcessing30Tuning.camera.samsung.so"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libObjectDetector_v1.camera.samsung.so"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libSwIsp_core.camera.samsung.so"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libSwIsp_wrapper_v1.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libAIQSolution_MPI.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libLocalTM_pcc.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libMultiFrameProcessing30.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libMultiFrameProcessing30.snapwrapper.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libMultiFrameProcessing30Tuning.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libObjectDetector_v1.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libSwIsp_core.camera.samsung.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libSwIsp_wrapper_v1.camera.samsung.so"
 fi
 if [[ "$SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO" == *"super_resolution_raw.arcsoft"* ]] && \
         [[ "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO" != *"super_resolution_raw.arcsoft"* ]]; then
@@ -312,7 +321,7 @@ if [[ "$SOURCE_CAMERA_DOCUMENTSCAN_SOLUTIONS" == *"AI_DEWARPING"* ]] && \
 fi
 if [[ "$SOURCE_CAMERA_DOCUMENTSCAN_SOLUTIONS" == *"SHADOW_REMOVAL"* ]] && \
         [[ "$TARGET_CAMERA_DOCUMENTSCAN_SOLUTIONS" != *"SHADOW_REMOVAL"* ]]; then
-    DELETE_FROM_WORK_DIR "system" "system/lib64/libDocShadowRemoval.arcsoft.so"
+    DELETE_SYSTEM_LIB64_IF_EXISTS "libDocShadowRemoval.arcsoft.so"
 fi
 if [ -f "$WORK_DIR/system/system/lib64/libImageSegmenter_v1.camera.samsung.so" ] && \
         [ ! -d "$WORK_DIR/vendor/etc/portrait_data/LF_segmenter" ]; then
@@ -323,10 +332,13 @@ fi
 while IFS= read -r f; do
     HEX_PATCH "$f" "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
 done < <(grep -r -w -l "ro.product.model" "$WORK_DIR/vendor" | grep "camera")
-HEX_PATCH "$WORK_DIR/system/system/lib/libstagefright.so" \
-    "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
-HEX_PATCH "$WORK_DIR/system/system/lib64/libstagefright.so" \
-    "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
+for f in "$WORK_DIR/system/system/lib/libstagefright.so" \
+        "$WORK_DIR/system/system/lib64/libstagefright.so"; do
+    if [ -f "$f" ]; then
+        HEX_PATCH "$f" \
+            "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
+    fi
+done
 
 # Fix object capture
 if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "essi" ]]; then
