@@ -20,31 +20,25 @@ _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/bin/dualdard"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/dualdard.rc"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libdualdar.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/aidl_comm_ddar_client.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/hidl_comm_ddar_client.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.ddar-V1-ndk.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.ddar@1.0.so"
 
 # Blockchain
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/app/BlockchainBasicKit"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/service-samsung-blockchain.jar"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/sysconfig/preinstalled-packages-com.samsung.android.coldwalletservice.xml"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/blockchain_aidl_comm_client.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/hidl_tlc_blockchain_comm_client.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_blockchain_comm.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_blockchain_keystore.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_blockchain_direct_comm.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.blockchain-V1-ndk.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.blockchain@1.0.so"
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_SUPPORT_BLOCKCHAIN_SERVICE" --delete
 
 # Payment
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/payment_aidl_comm_client.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/hidl_tlc_payment_comm_client.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_payment_direct_comm.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_payment_spay.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libtlc_payment_comm.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.payment-V1-ndk.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.payment@1.0.so"
 
 # MPOS
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.mpos.xml"
@@ -56,14 +50,12 @@ _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxMposAgent"
 # eSE COS
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/bin/sem_daemon"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/sem_early.rc"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/init/sem.rc"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.sem.factoryapp.xml"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_sem.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semAidl.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semRil.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libsec_semTlc.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.sem-V1-ndk.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.security.sem@1.0.so"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/SEMFactoryApp"
 
 # HDM
