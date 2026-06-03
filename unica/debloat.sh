@@ -28,6 +28,7 @@ system/etc/permissions/privapp-permissions-com.samsung.ssu.xml
 system/etc/sysconfig/samsungsimunlock.xml
 system/lib64/android.security.securekeygeneration-ndk.so
 system/lib64/libssu_keystore2.so
+system/priv-app/CIDManager
 system/priv-app/SsuService
 "
 
