@@ -59,6 +59,7 @@ _DISABLE_PERFETTO_TRACED()
 }
 
 _SED_DELETE_IF_EXISTS "$WORK_DIR/system/system/etc/init/netbpfload.rc" "/reboot_on_failure reboot,netbpfload-missing/d"
+_SED_DELETE_IF_EXISTS "$WORK_DIR/system/system/etc/init/vold.rc" "/reboot_on_failure reboot,vold-failed/d"
 
 DELETE_FROM_WORK_DIR "system_ext" "priv-app/com.qualcomm.location"
 DELETE_FROM_WORK_DIR "system_ext" "etc/permissions/com.qualcomm.location.xml"
