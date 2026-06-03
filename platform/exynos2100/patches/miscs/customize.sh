@@ -2,6 +2,7 @@ LOG "- Disabling encryption"
 # Encryption
 LINE=$(sed -n "/^\/dev\/block\/by-name\/userdata/=" "$WORK_DIR/vendor/etc/fstab.exynos2100")
 sed -i "${LINE}s/,fileencryption=aes-256-xts:aes-256-cts:v2//g" "$WORK_DIR/vendor/etc/fstab.exynos2100"
+sed -i "\#^[^#].*[[:space:]]/keyrefuge[[:space:]]#d" "$WORK_DIR/vendor/etc/fstab.exynos2100"
 
 LOG_STEP_IN "- Fixing vendor display props"
 # DPI
@@ -56,6 +57,8 @@ _DISABLE_PERFETTO_TRACED()
         "$PERFETTO_RC"
     SET_PROP_IF_DIFF "system" "persist.traced.enable" "0"
 }
+
+_SED_DELETE_IF_EXISTS "$WORK_DIR/system/system/etc/init/netbpfload.rc" "/reboot_on_failure reboot,netbpfload-missing/d"
 
 DELETE_FROM_WORK_DIR "system_ext" "priv-app/com.qualcomm.location"
 DELETE_FROM_WORK_DIR "system_ext" "etc/permissions/com.qualcomm.location.xml"
