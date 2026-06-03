@@ -6,38 +6,34 @@ Subject: [PATCH] Nuke Knox DualDAR and HDM version
 Signed-off-by: Ocin4ever <85343782+Ocin4ever@users.noreply.github.com>
 ---
  .../android/knox/ddar/DualDARPolicy.smali     |  2 +-
- .../samsung/android/knox/hdm/HdmManager.smali | 57 +------------------
- 2 files changed, 3 insertions(+), 56 deletions(-)
+ .../samsung/android/knox/hdm/HdmManager.smali | 48 +-----------------
+ 2 files changed, 4 insertions(+), 46 deletions(-)
+
 diff --git a/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali b/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali
 --- a/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali
 +++ b/smali/com/samsung/android/knox/ddar/DualDARPolicy.smali
-@@ -102,7 +102,7 @@
+@@ -96,7 +96,7 @@
+ .method public static getDualDARVersion()Ljava/lang/String;
      .locals 1
-
-     .line 473
+ 
 -    const-string v0, "1.8.0"
 +    const/4 v0, 0x0
-
+ 
      return-object v0
  .end method
 diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/samsung/android/knox/hdm/HdmManager.smali
 --- a/smali/com/samsung/android/knox/hdm/HdmManager.smali
 +++ b/smali/com/samsung/android/knox/hdm/HdmManager.smali
-@@ -67,57 +67,11 @@
- .end method
-
+@@ -65,50 +65,7 @@
  .method public static getHdmVersion()Ljava/lang/String;
 -    .locals 4
-+    .locals 1
-
--    .line 168
+-
 -    sget-object v0, Lcom/samsung/android/knox/hdm/HdmManager;->TAG:Ljava/lang/String;
 -
 -    const-string v1, "getHdmVersion() on HdmManager.java"
 -
 -    invoke-static {v0, v1}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
 -
--    .line 171
 -    const-string v0, "ro.vendor.hdm.hdm_supported_subsystem"
 -
 -    const-string v1, "none"
@@ -54,7 +50,6 @@ diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/sam
 -
 -    if-nez v2, :cond_0
 -
--    .line 172
 -    new-instance v2, Ljava/lang/StringBuilder;
 -
 -    invoke-direct {v2}, Ljava/lang/StringBuilder;-><init>()V
@@ -74,15 +69,14 @@ diff --git a/smali/com/samsung/android/knox/hdm/HdmManager.smali b/smali/com/sam
 -    invoke-virtual {v2}, Ljava/lang/StringBuilder;->toString()Ljava/lang/String;
 -
 -    move-result-object v0
-+    const/4 v0, 0x0
-
-     return-object v0
+-
+-    return-object v0
 -
 -    :cond_0
 -    return-object v3
++    .locals 1
++
++    const/4 v0, 0x0
++
++    return-object v0
  .end method
-
-
-
---
-2.49.1
