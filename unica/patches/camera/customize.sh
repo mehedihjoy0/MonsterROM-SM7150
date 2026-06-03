@@ -16,16 +16,17 @@ LOG_MISSING_PATCHES()
 SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
 
-# Samsung's ACodec::reconfigEncoder4OtherApps reads /proc/<pid>/cmdline with
-# a 512-byte count into a 255-byte stack buffer on One UI 8.5, which trips
-# Android 16 FORTIFY when starting AVC video recording.
-if xxd -p -c 0 "$WORK_DIR/system/system/lib64/libstagefright.so" 2> /dev/null | \
-        grep -q "21008052c21f8052e30315aae41f8052f6c30191588c0594"; then
-    LOG "- libstagefright AVC encoder cmdline read size is already patched"
+LIBSTAGEFRIGHT="$WORK_DIR/system/system/lib64/libstagefright.so"
+LIBSTAGEFRIGHT_FREAD512="2100805202408052e30315aae41f8052f6c30191588c0594"
+LIBSTAGEFRIGHT_FREAD254="21008052c21f8052e30315aae41f8052f6c30191588c0594"
+
+# Match libstagefright-sdk37-fread254.so: S26 ACodec::reconfigEncoder4OtherApps
+# reads /proc/<pid>/cmdline with 0xfe bytes instead of 0x200 to avoid Android 16
+# FORTIFY aborts while starting AVC video recording.
+if xxd -p -c 0 "$LIBSTAGEFRIGHT" 2> /dev/null | grep -q "$LIBSTAGEFRIGHT_FREAD254"; then
+    LOG "- libstagefright AVC encoder cmdline fread254 fix is already patched"
 else
-    HEX_PATCH "$WORK_DIR/system/system/lib64/libstagefright.so" \
-        "2100805202408052e30315aae41f8052f6c30191588c0594" \
-        "21008052c21f8052e30315aae41f8052f6c30191588c0594"
+    HEX_PATCH "$LIBSTAGEFRIGHT" "$LIBSTAGEFRIGHT_FREAD512" "$LIBSTAGEFRIGHT_FREAD254"
 fi
 
 DELETE_FROM_WORK_DIR "system" "system/cameradata/portrait_data"
