@@ -59,12 +59,11 @@ _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.t
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.mpos.xml"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/etc/permissions/com.samsung.android.nfc.mpos.xml"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/framework/com.samsung.android.nfc.mpos.jar"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/libhidl_comm_mpos_tui_client.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/vendor.samsung.hardware.mpos-V1-ndk.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib/vendor.samsung.hardware.tlc.mpos_tui@1.0.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/libhidl_comm_mpos_tui_client.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.mpos-V1-ndk.so"
-_DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/lib64/vendor.samsung.hardware.tlc.mpos_tui@1.0.so"
+# Keep the native MPOS client chain: libandroid_servers.so still has direct
+# DT_NEEDED entries for these libs on the S948B One UI 8.5 framework.
+SET_METADATA "system" "system/lib64/libhidl_comm_mpos_tui_client.so" 0 0 644 "u:object_r:system_lib_file:s0"
+SET_METADATA "system" "system/lib64/vendor.samsung.hardware.mpos-V1-ndk.so" 0 0 644 "u:object_r:system_lib_file:s0"
+SET_METADATA "system" "system/lib64/vendor.samsung.hardware.tlc.mpos_tui@1.0.so" 0 0 644 "u:object_r:system_lib_file:s0"
 _DELETE_FROM_WORK_DIR_IF_EXISTS "system" "system/priv-app/KnoxMposAgent"
 
 # eSE COS
