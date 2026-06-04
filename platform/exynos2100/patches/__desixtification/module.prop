@@ -1,4 +1,4 @@
 id=_desixtification
-name=Desixtification
+name=Exynos2100 64-bit vendor
 author=Tisenu100, ExtremeXT
-description=Adds 32-bit HAL support to the firmware.
+description=Adapts the Exynos2100 vendor partition for a 64-bit-only S26 Ultra system port.

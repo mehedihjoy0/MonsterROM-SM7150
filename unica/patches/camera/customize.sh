@@ -367,12 +367,6 @@ if [ -f "$WORK_DIR/vendor/lib64/libDualCamBokehCapture.camera.samsung.so" ]; the
     if grep -q "ro.build.flavor" "$WORK_DIR/vendor/lib64/libDualCamBokehCapture.camera.samsung.so" 2> /dev/null; then
         SET_PROP "system" "ro.build.flavor" "$(GET_PROP "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/build.prop" "ro.build.flavor")"
     elif grep -q "ro.product.name" "$WORK_DIR/vendor/lib64/libDualCamBokehCapture.camera.samsung.so" 2> /dev/null; then
-        HEX_PATCH "$WORK_DIR/vendor/lib/libDualCamBokehCapture.camera.samsung.so" \
-            "726f2e70726f647563742e6e616d6500" "726f2e756e6963612e63616d65726100"
-        HEX_PATCH "$WORK_DIR/vendor/lib/liblivefocus_capture_engine.so" \
-            "726f2e70726f647563742e6e616d6500" "726f2e756e6963612e63616d65726100"
-        HEX_PATCH "$WORK_DIR/vendor/lib/liblivefocus_preview_engine.so" \
-            "726f2e70726f647563742e6e616d6500" "726f2e756e6963612e63616d65726100"
         HEX_PATCH "$WORK_DIR/vendor/lib64/libDualCamBokehCapture.camera.samsung.so" \
             "726f2e70726f647563742e6e616d6500" "726f2e756e6963612e63616d65726100"
         HEX_PATCH "$WORK_DIR/vendor/lib64/liblivefocus_capture_engine.so" \
