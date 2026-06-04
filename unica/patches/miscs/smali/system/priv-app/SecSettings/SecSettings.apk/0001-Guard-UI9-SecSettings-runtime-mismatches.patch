@@ -1,0 +1,59 @@
+From 8f9b56b6077d73f1a1c1c91a1d60b3e96fd719bd Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Mon, 1 Jun 2026 18:40:00 +0200
+Subject: [PATCH] Guard UI9 SecSettings runtime mismatches
+
+---
+ .../com/android/settings/users/UserSettings.smali          | 8 ++++++++
+ .../bluetooth/audiobroadcast/SecAuracastListenSettings.smali | 8 ++++++++
+ 2 files changed, 16 insertions(+)
+
+diff --git a/smali_classes2/com/android/settings/users/UserSettings.smali b/smali_classes2/com/android/settings/users/UserSettings.smali
+index 1111111..2222222 100644
+--- a/smali_classes2/com/android/settings/users/UserSettings.smali
++++ b/smali_classes2/com/android/settings/users/UserSettings.smali
+@@ -4290,11 +4290,16 @@
+     :cond_1c
+     iget-object v0, p0, Lcom/android/settings/users/UserSettings;->mAddSupervisedUser:Lcom/android/settingslib/RestrictedPreference;
+ 
++    if-eqz v0, :cond_skip_supervised_user_visible
++
+     invoke-virtual {v0, v5}, Landroidx/preference/Preference;->setVisible(Z)V
+ 
++    :cond_skip_supervised_user_visible
+     :goto_9
+     iget-object v0, p0, Lcom/android/settings/users/UserSettings;->mAddUserSettingsCategory:Landroidx/preference/PreferenceGroup;
+ 
++    if-eqz v0, :cond_skip_add_user_settings_category
++
+     iget-object v1, p0, Lcom/android/settings/users/UserSettings;->mAddUserFromSignInPreferenceController:Lcom/android/settings/users/AddUserFromSignInPreferenceController;
+ 
+     invoke-virtual {v1}, Lcom/android/settings/core/BasePreferenceController;->isAvailable()Z
+@@ -4306,6 +4310,7 @@
+ 
+     invoke-virtual {v0, v1}, Landroidx/preference/Preference;->setVisible(Z)V
+ 
++    :cond_skip_add_user_settings_category
+     invoke-virtual {v3}, Ljava/util/ArrayList;->size()I
+ 
+     move-result v0
+diff --git a/smali_classes5/com/samsung/android/settings/bluetooth/audiobroadcast/SecAuracastListenSettings.smali b/smali_classes5/com/samsung/android/settings/bluetooth/audiobroadcast/SecAuracastListenSettings.smali
+index 1111111..2222222 100644
+--- a/smali_classes5/com/samsung/android/settings/bluetooth/audiobroadcast/SecAuracastListenSettings.smali
++++ b/smali_classes5/com/samsung/android/settings/bluetooth/audiobroadcast/SecAuracastListenSettings.smali
+@@ -284,6 +284,13 @@
+ 
+     iget-object v0, p0, Lcom/samsung/android/settings/bluetooth/audiobroadcast/SecAuracastListenSettings;->mLeBroadcastAssistant:Lcom/android/settingslib/bluetooth/LocalBluetoothLeBroadcastAssistant;
+ 
++    if-nez v0, :cond_mr_has_assistant
++
++    const/4 v0, 0x0
++
++    return-object v0
++
++    :cond_mr_has_assistant
+     iget-object v0, v0, Lcom/android/settingslib/bluetooth/LocalBluetoothLeBroadcastAssistant;->mService:Landroid/bluetooth/BluetoothLeBroadcastAssistant;
+ 
+     const/4 v1, 0x1
+-- 
+2.51.0
