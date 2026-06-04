@@ -173,8 +173,24 @@ _TYPE_EXISTS()
     grep -R -q -F "(type $1)" \
         "$WORK_DIR/system/system/etc/selinux" \
         "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux" \
+        "$WORK_DIR/system_ext/etc/selinux" \
+        "$WORK_DIR/system/system_ext/etc/selinux" \
+        "$WORK_DIR/system/system/system_ext/etc/selinux" \
         "$WORK_DIR/product/etc/selinux" \
         "$WORK_DIR/vendor/etc/selinux" 2> /dev/null
+}
+
+_CIL_SYMBOL_EXISTS()
+{
+    _TYPE_EXISTS "$1" || \
+        grep -R -q -F "(typeattribute $1)" \
+            "$WORK_DIR/system/system/etc/selinux" \
+            "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux" \
+            "$WORK_DIR/system_ext/etc/selinux" \
+            "$WORK_DIR/system/system_ext/etc/selinux" \
+            "$WORK_DIR/system/system/system_ext/etc/selinux" \
+            "$WORK_DIR/product/etc/selinux" \
+            "$WORK_DIR/vendor/etc/selinux" 2> /dev/null
 }
 
 _APPEND_CONTEXT()
@@ -200,6 +216,20 @@ _APPEND_CONTEXT()
     fi
 }
 
+_APPEND_SEAPP_CONTEXT()
+{
+    local FILE="$1"
+    local RULE="$2"
+
+    [ -f "$FILE" ] || return 0
+
+    if ! grep -q -F "$RULE" "$FILE"; then
+        PATCHED=true
+        LOG "- Adding SELinux app context: $RULE"
+        printf "%s\n" "$RULE" >> "$FILE"
+    fi
+}
+
 _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "vendor.samsung.hardware.security.vaultkeeper.ISehVaultKeeper/default" "VaultKeeper_service"
 _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "vendor.samsung.hardware.security.hermes.ISehHermesCommand/default" "Hermes_service"
 _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "vendor.samsung.hardware.sysinput.ISehSysInputDev/default" "SemInputDeviceManager_service"
@@ -209,7 +239,11 @@ _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "vendor.s
 _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "vendor.samsung.hardware.nfc_aidl.ISehNfc/default" "hal_nfc_service"
 _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "android.hardware.security.keymint.IRemotelyProvisionedComponent/strongbox" "hal_remotelyprovisionedcomponent_service"
 _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "vendor.qti.hardware.display.config.IDisplayConfig/default" "vendor_hal_displayconfig_service"
+_APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_service_contexts" "vendor.qti.hardware.display.aiqe.IDisplayAiqe/default" "vendor_hal_displayconfig_service"
 _APPEND_CONTEXT "$WORK_DIR/vendor/etc/selinux/vendor_hwservice_contexts" "vendor.display.config::IDisplayConfig" "hal_vendor_configstore_hwservice"
+_APPEND_CONTEXT "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/system_ext_service_contexts" "vendor.samsung.hardware.kg30.ISehKg30/default" "knoxguard_service"
+_APPEND_CONTEXT "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/system_ext_service_contexts" "vendor.samsung.hardware.khdm.ISehKhdm/default" "EDM_Policy_service"
+_APPEND_CONTEXT "$WORK_DIR/system/system/etc/selinux/plat_service_contexts" "android.hardware.bluetooth.ranging.IBluetoothChannelSounding/samsung" "hal_bluetooth_service"
 
 _APPEND_PROP_ALLOW()
 {
@@ -220,12 +254,12 @@ _APPEND_PROP_ALLOW()
 
     [ -f "$FILE" ] || return 0
 
-    if ! _TYPE_EXISTS "$DOMAIN"; then
+    if ! _CIL_SYMBOL_EXISTS "$DOMAIN"; then
         LOGW "SELinux domain not found for property allow: $DOMAIN"
         return 0
     fi
 
-    if ! _TYPE_EXISTS "$TYPE"; then
+    if ! _CIL_SYMBOL_EXISTS "$TYPE"; then
         LOGW "SELinux property type not found for $DOMAIN: $TYPE"
         return 0
     fi
@@ -258,6 +292,44 @@ _APPEND_CIL_RULE()
     fi
 }
 
+_APPEND_SERVICE_FIND()
+{
+    local FILE="$1"
+    local SOURCE="$2"
+    local TARGET="$3"
+
+    if ! _CIL_SYMBOL_EXISTS "$SOURCE"; then
+        LOGW "SELinux domain not found for service allow: $SOURCE"
+        return 0
+    fi
+
+    if ! _CIL_SYMBOL_EXISTS "$TARGET"; then
+        LOGW "SELinux service type not found for $SOURCE: $TARGET"
+        return 0
+    fi
+
+    _APPEND_CIL_RULE "$FILE" "(allow $SOURCE $TARGET (service_manager (find)))"
+}
+
+_APPEND_HWSERVICE_FIND()
+{
+    local FILE="$1"
+    local SOURCE="$2"
+    local TARGET="$3"
+
+    if ! _CIL_SYMBOL_EXISTS "$SOURCE"; then
+        LOGW "SELinux domain not found for hwservice allow: $SOURCE"
+        return 0
+    fi
+
+    if ! _CIL_SYMBOL_EXISTS "$TARGET"; then
+        LOGW "SELinux hwservice type not found for $SOURCE: $TARGET"
+        return 0
+    fi
+
+    _APPEND_CIL_RULE "$FILE" "(allow $SOURCE $TARGET (hwservice_manager (find)))"
+}
+
 _APPEND_PROCESS_ALLOW()
 {
     local FILE="$1"
@@ -265,12 +337,12 @@ _APPEND_PROCESS_ALLOW()
     local TARGET="$3"
     local PERMS="$4"
 
-    if ! _TYPE_EXISTS "$SOURCE"; then
+    if ! _CIL_SYMBOL_EXISTS "$SOURCE"; then
         LOGW "SELinux domain not found for process allow: $SOURCE"
         return 0
     fi
 
-    if [[ "$TARGET" != "self" ]] && ! _TYPE_EXISTS "$TARGET"; then
+    if [[ "$TARGET" != "self" ]] && ! _CIL_SYMBOL_EXISTS "$TARGET"; then
         LOGW "SELinux target not found for process allow: $TARGET"
         return 0
     fi
@@ -279,11 +351,24 @@ _APPEND_PROCESS_ALLOW()
 }
 
 SYSTEM_EXT_SEPOLICY="$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/system_ext_sepolicy.cil"
+VENDOR_SEPOLICY="$WORK_DIR/vendor/etc/selinux/vendor_sepolicy.cil"
+SYSTEM_EXT_SEAPP_RULE="user=oem_5959 seinfo=platform name=com.samsung.android.kgclient domain=kg_app type=app_data_file levelFrom=user"
+for SYSTEM_EXT_SEAPP in \
+    "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/system_ext_seapp_contexts" \
+    "$WORK_DIR/system_ext/etc/selinux/system_ext_seapp_contexts" \
+    "$WORK_DIR/system/system_ext/etc/selinux/system_ext_seapp_contexts" \
+    "$WORK_DIR/system/system/system_ext/etc/selinux/system_ext_seapp_contexts"; do
+    _APPEND_SEAPP_CONTEXT "$SYSTEM_EXT_SEAPP" "$SYSTEM_EXT_SEAPP_RULE"
+done
 _APPEND_PROP_ALLOW "$SYSTEM_EXT_SEPOLICY" "emservice" "vendor_em_tstate_prop"
 _APPEND_PROP_ALLOW "$SYSTEM_EXT_SEPOLICY" "emservice" "em_version_prop"
 _APPEND_PROP_ALLOW "$SYSTEM_EXT_SEPOLICY" "hermesd" "vendor_securehw_prop"
 _APPEND_PROP_ALLOW "$SYSTEM_EXT_SEPOLICY" "hermesd" "vendor_securenvm_prop"
 _APPEND_PROP_ALLOW "$SYSTEM_EXT_SEPOLICY" "snap_utility" "cache_status_prop"
+_APPEND_PROP_ALLOW "$SYSTEM_EXT_SEPOLICY" "system_app" "logpersistd_logging_prop"
+_APPEND_PROP_ALLOW "$VENDOR_SEPOLICY" "macloader" "vendor_default_prop_30_0"
+_APPEND_SERVICE_FIND "$SYSTEM_EXT_SEPOLICY" "samsungpowersoundplay" "audio_service"
+_APPEND_HWSERVICE_FIND "$VENDOR_SEPOLICY" "hal_audio_default" "system_suspend_hwservice_30_0"
 _APPEND_PROCESS_ALLOW "$SYSTEM_EXT_SEPOLICY" "adbd" "self" "setcurrent"
 _APPEND_PROCESS_ALLOW "$SYSTEM_EXT_SEPOLICY" "adbd" "su" "dyntransition"
 _APPEND_PROCESS_ALLOW "$SYSTEM_EXT_SEPOLICY" "adbd" "adbd_tradeinmode" "dyntransition"
@@ -299,5 +384,5 @@ if ! $PATCHED; then
     LOG "\033[0;33m! Nothing to do\033[0m"
 fi
 
-unset ENTRIES DUPLICATES SERVICE_DUPLICATES CIL_NAME PATCHED SELINUX_DIRS VENDOR_API_LIST MAPPING_FILE SYSTEM_EXT_SEPOLICY VENDOR_SEPOLICY
-unset -f GET_SYSTEM_EXT _CLEAN_UNDECLARED_MAPPING_ATTRS _TYPE_EXISTS _APPEND_CONTEXT _APPEND_PROP_ALLOW _APPEND_CIL_RULE _APPEND_PROCESS_ALLOW
+unset ENTRIES DUPLICATES SERVICE_DUPLICATES CIL_NAME PATCHED SELINUX_DIRS VENDOR_API_LIST MAPPING_FILE SYSTEM_EXT_SEPOLICY VENDOR_SEPOLICY SYSTEM_EXT_SEAPP SYSTEM_EXT_SEAPP_RULE
+unset -f GET_SYSTEM_EXT _CLEAN_UNDECLARED_MAPPING_ATTRS _TYPE_EXISTS _CIL_SYMBOL_EXISTS _APPEND_CONTEXT _APPEND_SEAPP_CONTEXT _APPEND_PROP_ALLOW _APPEND_CIL_RULE _APPEND_SERVICE_FIND _APPEND_HWSERVICE_FIND _APPEND_PROCESS_ALLOW

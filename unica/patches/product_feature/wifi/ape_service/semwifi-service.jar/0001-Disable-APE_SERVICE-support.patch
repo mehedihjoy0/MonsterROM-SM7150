@@ -12,8 +12,10 @@ diff --git a/smali/com/samsung/android/server/wifi/SemQboxController.smali b/sma
 index 9b3cdaf..3caa6d4 100644
 --- a/smali/com/samsung/android/server/wifi/SemQboxController.smali
 +++ b/smali/com/samsung/android/server/wifi/SemQboxController.smali
-@@ -1014,9 +1014,9 @@
+@@ -1014,9 +1014,11 @@
  
++    return-void
++
      iget-object v0, p0, Lcom/samsung/android/server/wifi/SemQboxController;->mContext:Landroid/content/Context;
  
 -    const/4 v1, 0x1

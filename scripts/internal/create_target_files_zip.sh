@@ -157,8 +157,28 @@ fi
 LOG "- Generating build_info.txt"
 GENERATE_BUILD_INFO
 
+CREATE_TARGET_FILES_ZIP()
+{
+    local status=1
+
+    rm -f "$OUTPUT_FILE"
+
+    if command -v zip &> /dev/null; then
+        EVAL "cd \"$TMP_DIR\" && find . -mindepth 1 -print | LC_ALL=C sort | sed 's#^./##' | zip -q -X -3 -y \"$OUTPUT_FILE\" -@" && status=0
+        if [ "$status" -eq 0 ]; then
+            EVAL "zip -T \"$OUTPUT_FILE\"" && return 0
+            LOG "      ! zip validation failed, retrying with 7z"
+            rm -f "$OUTPUT_FILE"
+            status=1
+        fi
+    fi
+
+    rm -f "$OUTPUT_FILE"
+    EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=3 -mmt=off -mtc=off -mtm=off \"$OUTPUT_FILE\" -r *" || return 1
+    EVAL "7z t \"$OUTPUT_FILE\"" || return 1
+}
+
 LOG "- Creating zip"
-rm -f "$OUTPUT_FILE"
-EVAL "cd \"$TMP_DIR\" && 7z a -tzip -mx=3 -mmt=$(nproc) -mtc=off -mtm=off \"$OUTPUT_FILE\" -r *" || exit 1
+CREATE_TARGET_FILES_ZIP || exit 1
 
 exit 0

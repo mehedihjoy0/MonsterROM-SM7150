@@ -98,18 +98,4 @@ else
     fi
 fi
 
-SOURCE_PRODUCT_API_LEVEL="${SOURCE_PRODUCT_FIRST_API_LEVEL:-${SOURCE_PRODUCT_SHIPPING_API_LEVEL:-0}}"
-TARGET_PRODUCT_API_LEVEL="${TARGET_PRODUCT_FIRST_API_LEVEL:-${TARGET_PRODUCT_SHIPPING_API_LEVEL:-0}}"
-if [[ "$SOURCE_PRODUCT_API_LEVEL" =~ ^[0-9]+$ ]] && \
-        [[ "$TARGET_PRODUCT_API_LEVEL" =~ ^[0-9]+$ ]] && \
-        [[ "$SOURCE_PRODUCT_API_LEVEL" -gt 33 && "$TARGET_PRODUCT_API_LEVEL" -le 33 ]]; then
-    LOG_STEP_IN "- Downgrading ENGMODE JNI"
-    DELETE_FROM_WORK_DIR "system" "system/lib64/vendor.samsung.hardware.security.engmode-V1-ndk.so"
-    ADD_TO_WORK_DIR "r11sxxx" "system" "system/lib64/lib.engmode.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
-    ADD_TO_WORK_DIR "r11sxxx" "system" "system/lib64/lib.engmodejni.samsung.so" 0 0 644 "u:object_r:system_lib_file:s0"
-    ADD_TO_WORK_DIR "r11sxxx" "system" "system/lib64/vendor.samsung.hardware.security.engmode@1.0.so" 0 0 644 "u:object_r:system_lib_file:s0"
-    LOG_STEP_OUT
-fi
-
-unset TARGET_FIRMWARE_PATH SOURCE_FIRMWARE_PATH SOURCE_PRODUCT_API_LEVEL TARGET_PRODUCT_API_LEVEL
 unset -f MATCH_TARGET_FEATURES
