@@ -1,0 +1,13 @@
+diff --git a/smali_classes5/com/android/internal/hidden_from_bootclasspath/android/os/Flags.smali b/smali_classes5/com/android/internal/hidden_from_bootclasspath/android/os/Flags.smali
+index 0000000..0000000 100644
+--- a/smali_classes5/com/android/internal/hidden_from_bootclasspath/android/os/Flags.smali
++++ b/smali_classes5/com/android/internal/hidden_from_bootclasspath/android/os/Flags.smali
+@@ -571,7 +571,7 @@
+ .method public static blacklist perfettoSdkTracingV3()Z
+     .locals 1
+ 
+-    const/4 v0, 0x1
++    const/4 v0, 0x0
+ 
+     return v0
+ .end method
