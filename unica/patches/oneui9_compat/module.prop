@@ -1,4 +1,0 @@
-id=oneui9_compat
-name=One UI 9 Compatibility
-author=devcore94
-description=Adapts One UI 9 framework smali and libhwui to the S21 Exynos 2100 base.

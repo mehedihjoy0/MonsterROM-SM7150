@@ -1,4 +1,0 @@
-id=s26portfixes
-name=S26U port compatibility fixes
-author=Codex
-description=Build-time conversion of safe S26U/S21+ KSU mitigations.
