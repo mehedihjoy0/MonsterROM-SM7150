@@ -79,4 +79,4 @@ SMALI_PATCH "system" "system/framework/services.jar" \
     SMALI_PATCH "system" "system/priv-app/KmxService/KmxService.apk" \
         "smali_classes2/com/samsung/android/kmxservice/sdk/trustchain/util/IntegrityStatus.smali" "return" \
         'isNormal()Z' 'true'
-fi
+
