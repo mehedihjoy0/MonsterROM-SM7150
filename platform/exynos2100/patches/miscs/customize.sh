@@ -5,10 +5,7 @@ LOG_STEP_OUT
 LOG "- Disabling encryption"
 # Encryption
 LINE=$(sed -n "/^\/dev\/block\/by-name\/userdata/=" "$WORK_DIR/vendor/etc/fstab.exynos2100")
-sed -i "${LINE}s/,fileencryption=[^,[:space:]]*//g" "$WORK_DIR/vendor/etc/fstab.exynos2100"
-sed -i "${LINE}s/,metadata_encryption=[^,[:space:]]*//g" "$WORK_DIR/vendor/etc/fstab.exynos2100"
-sed -i "${LINE}s/,keydirectory=[^,[:space:]]*//g" "$WORK_DIR/vendor/etc/fstab.exynos2100"
-sed -i "\#^[^#].*[[:space:]]/keyrefuge[[:space:]]#d" "$WORK_DIR/vendor/etc/fstab.exynos2100"
+sed -i "${LINE}s/,fileencryption=aes-256-xts:aes-256-cts:v2//g" "$WORK_DIR/vendor/etc/fstab.exynos2100"
 
 # ODE
 sed -i -e "/ODE/d" -e "/keydata/d" -e "/keyrefuge/d" "$WORK_DIR/vendor/etc/fstab.exynos2100"
