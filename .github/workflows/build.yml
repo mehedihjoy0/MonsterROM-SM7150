@@ -2,15 +2,22 @@ name: Build
 
 on:
   workflow_dispatch:
+  pull_request:
+  push:
+    branches:
+      - 'sixteenQPR2'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     strategy:
       matrix:
-        build_type: [encrypted, decrypted]
-      fail-fast: false
+        target: [o1s, p3s, r0q, r9s, t2s]
 
     steps:
       - name: Checkout repo
@@ -47,11 +54,11 @@ jobs:
           echo -n "${{ secrets.PLATFORM_KEY_PK8 }}" | base64 --decode > security/unica_platform.pk8
           echo -n "${{ secrets.PLATFORM_KEY_PEM }}" | base64 --decode > security/unica_platform.x509.pem
 
-      - name: Set up JDK 17
+      - name: Set up JDK 21
         uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
           cache: 'gradle'
 
       - name: Ignore erroring out
