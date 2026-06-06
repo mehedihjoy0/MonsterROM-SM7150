@@ -1,0 +1,11 @@
+system 0 0 755 capabilities=0x0
+system/apex 0 0 755 capabilities=0x0
+system/apex/com.google.android.tethering_compressed.apex 0 0 644 capabilities=0x0
+system/apex/com.google.android.tzdata6.apex 0 0 644 capabilities=0x0
+system/apex/com.android.i18n.apex 0 0 644 capabilities=0x0
+system/apex/com.android.runtime.apex 0 0 644 capabilities=0x0
+system/apex/com.android.bt.apex 0 0 644 capabilities=0x0
+system/bin 0 0 755 capabilities=0x0
+system/bin/bootstrap 0 0 755 capabilities=0x0
+system/bin/bootstrap/linker 0 0 755 capabilities=0x0
+system/bin/bootstrap/linker_asan 0 0 755 capabilities=0x0
