@@ -330,3 +330,15 @@ system/etc/sysconfig/feature-a11y-preload-voacc.xml
 PRODUCT_DEBLOAT+="
 app/YouTube
 "
+
+# Extras
+SYSTEM_DEBLOAT+="
+system/priv-app/Bixby
+system/priv-app/AREmoji
+system/priv-app/PhotoRemasterService
+system/priv-app/Routines
+system/app/SamsungWeather
+system/app/BixbyWakeup
+system/priv-app/StickerFaceARAvatar
+system/app/VisionIntelligence3.7
+"
