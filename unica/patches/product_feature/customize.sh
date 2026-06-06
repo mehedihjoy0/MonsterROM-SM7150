@@ -153,9 +153,6 @@ if $SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION; then
             "$MODPATH/audio/virtual_vib/framework.jar/0001-Disable-virtual-vibration-support.patch"
         APPLY_PATCH "system" "system/framework/services.jar" \
             "$MODPATH/audio/virtual_vib/services.jar/0001-Disable-virtual-vibration-support.patch"
-        VIBRATOR_MANAGER_INTERNAL_SMALI="$APKTOOL_DIR/system/framework/services.jar/smali_classes2/com/android/server/vibrator/VibratorManagerInternal.smali"
-        EVAL "sed -i \"/.source/q\" \"$VIBRATOR_MANAGER_INTERNAL_SMALI\""
-        EVAL "grep -q \"mServiceWeakReference\" \"$VIBRATOR_MANAGER_INTERNAL_SMALI\" || printf \"\\n.field public mServiceWeakReference:Ljava/lang/ref/WeakReference;\\n\" >> \"$VIBRATOR_MANAGER_INTERNAL_SMALI\""
         APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
             "$MODPATH/audio/virtual_vib/SecSettings.apk/0001-Disable-virtual-vibration-support.patch"
         APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \

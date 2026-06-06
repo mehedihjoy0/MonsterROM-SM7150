@@ -7,68 +7,7 @@ if [[ "$SOURCE_PRODUCT_NAME" == "$TARGET_PRODUCT_NAME" ]]; then
     return 0
 fi
 
-TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
-
 _LOG() { if $DEBUG; then LOGW "$1"; else ABORT "$1"; fi }
-
-_COUNT_ARRAY_ITEMS()
-{
-    awk -v name="$2" '
-        $0 ~ "<array name=\"" name "\">" { inside = 1; next }
-        inside && $0 ~ /<\/array>/ { print count + 0; found = 1; exit }
-        inside && $0 ~ /<item>/ { count++ }
-        END { if (!found) print 0 }
-    ' "$1"
-}
-
-_ALIGN_PRIVACY_NITS_ARRAY()
-{
-    local ARRAYS_XML="$1"
-    local MAIN_COUNT
-    local PRIVACY_COUNT
-
-    [ -f "$ARRAYS_XML" ] || return 0
-
-    MAIN_COUNT="$(_COUNT_ARRAY_ITEMS "$ARRAYS_XML" "config_screenBrightnessNits")"
-    [ "$MAIN_COUNT" -gt 0 ] 2> /dev/null || return 0
-
-    PRIVACY_COUNT="$(_COUNT_ARRAY_ITEMS "$ARRAYS_XML" "config_screenBrightnessNitsPrivacy")"
-    if [ "$MAIN_COUNT" = "$PRIVACY_COUNT" ]; then
-        return 0
-    fi
-
-    LOG "- Aligning privacy brightness nits config"
-    awk '
-        NR == FNR {
-            if ($0 ~ /<array name="config_screenBrightnessNits">/) capture = 1
-            if (capture) {
-                line = $0
-                sub(/config_screenBrightnessNits/, "config_screenBrightnessNitsPrivacy", line)
-                block = block line ORS
-            }
-            if (capture && $0 ~ /<\/array>/) capture = 0
-            next
-        }
-        $0 ~ /<array name="config_screenBrightnessNitsPrivacy">/ {
-            if (!done) {
-                printf "%s", block
-                done = 1
-            }
-            skip = 1
-            next
-        }
-        skip {
-            if ($0 ~ /<\/array>/) skip = 0
-            next
-        }
-        $0 ~ /<\/resources>/ && !done {
-            printf "%s", block
-            done = 1
-        }
-        { print }
-    ' "$ARRAYS_XML" "$ARRAYS_XML" > "$ARRAYS_XML.tmp"
-    mv -f "$ARRAYS_XML.tmp" "$ARRAYS_XML"
-}
 
 while IFS= read -r f; do
     f="$(basename "$f")"
@@ -85,27 +24,41 @@ while IFS= read -r f; do
             _LOG "Folder not found: target/$TARGET_CODENAME/overlay"
             continue
         fi
-        PRIVACY_NITS_ARRAY="$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/config_screenBrightnessNitsPrivacy.xml"
-        sed -n "/<array name=\"config_screenBrightnessNitsPrivacy\">/,/<\/array>/p" \
-            "$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml" \
-            > "$PRIVACY_NITS_ARRAY"
-
         LOG_STEP_IN "- Applying target product overlay"
         EVAL "rm -rf \"$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res\""
         EVAL "cp -a \"$SRC_DIR/target/$TARGET_CODENAME/overlay\" \"$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res\""
-        if [ -s "$PRIVACY_NITS_ARRAY" ] && \
-                ! grep -q -w "config_screenBrightnessNitsPrivacy" "$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml" 2> /dev/null; then
-            LOG "- Preserving source privacy brightness nits config"
-            awk 'NR == FNR { block = block $0 ORS; next } /<\/resources>/ { printf "%s", block } { print }' \
-                "$PRIVACY_NITS_ARRAY" \
-                "$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml" \
-                > "$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml.tmp"
-            mv -f \
-                "$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml.tmp" \
-                "$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml"
+        FRAMEWORK_RRO_ARRAYS="$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml"
+        if ! grep -q -w "config_screenBrightnessNitsPrivacy" "$FRAMEWORK_RRO_ARRAYS" 2> /dev/null && \
+                grep -q -w "config_screenBrightnessNits" "$FRAMEWORK_RRO_ARRAYS" 2> /dev/null; then
+            LOG "- Adding privacy display brightness nits fallback"
+            TMP_PRIVACY_NITS="$(mktemp)"
+            awk '
+                /<array name="config_screenBrightnessNits">/ {
+                    capture = 1
+                    sub("config_screenBrightnessNits", "config_screenBrightnessNitsPrivacy")
+                }
+                capture {
+                    print
+                    if ($0 ~ /<\/array>/) {
+                        exit
+                    }
+                }
+            ' "$FRAMEWORK_RRO_ARRAYS" > "$TMP_PRIVACY_NITS"
+            awk -v blockfile="$TMP_PRIVACY_NITS" '
+                BEGIN {
+                    while ((getline line < blockfile) > 0) {
+                        block = block line ORS
+                    }
+                }
+                /<\/resources>/ {
+                    printf "%s", block
+                }
+                { print }
+            ' "$FRAMEWORK_RRO_ARRAYS" > "$FRAMEWORK_RRO_ARRAYS.tmp"
+            EVAL "mv -f \"$FRAMEWORK_RRO_ARRAYS.tmp\" \"$FRAMEWORK_RRO_ARRAYS\""
+            EVAL "rm -f \"$TMP_PRIVACY_NITS\""
         fi
-        _ALIGN_PRIVACY_NITS_ARRAY "$APKTOOL_DIR/product/overlay/${f//$SOURCE_PRODUCT_NAME/$TARGET_PRODUCT_NAME}/res/values/arrays.xml"
-        rm -f "$PRIVACY_NITS_ARRAY"
+        unset FRAMEWORK_RRO_ARRAYS TMP_PRIVACY_NITS
         if [ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_LCD_SUPPORT_EXTRA_BRIGHTNESS")" ] && \
                 ! grep -q -w "config_Extra_Brightness_Display_Solution_Brightness_Value" "$SRC_DIR/target/$TARGET_CODENAME/overlay/values/arrays.xml" 2> /dev/null; then
             _LOG "SEC_FLOATING_FEATURE_LCD_SUPPORT_EXTRA_BRIGHTNESS is set but \"config_Extra_Brightness_Display_Solution_Brightness_Value\" is missing in arrays.xml"
@@ -133,17 +86,5 @@ while IFS= read -r f; do
     LOG_STEP_OUT
 done < <(find "$WORK_DIR/product/overlay" -maxdepth 1 -type f -name "*$SOURCE_PRODUCT_NAME*.apk")
 
-LOG_STEP_IN "- Adding missing target product overlays"
-while IFS= read -r f; do
-    f="$(basename "$f")"
-    if [ -f "$WORK_DIR/product/overlay/$f" ] || [ -d "$APKTOOL_DIR/product/overlay/$f" ]; then
-        continue
-    fi
-
-    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "product" "overlay/$f" 0 0 644 "u:object_r:system_file:s0"
-    DECODE_APK "product" "overlay/$f"
-done < <(find "$FW_DIR/$TARGET_FIRMWARE_PATH/product/overlay" -maxdepth 1 -type f -name "*$TARGET_PRODUCT_NAME*.apk")
-LOG_STEP_OUT
-
-unset SOURCE_PRODUCT_NAME TARGET_PRODUCT_NAME TARGET_FIRMWARE_PATH
-unset -f _LOG _COUNT_ARRAY_ITEMS _ALIGN_PRIVACY_NITS_ARRAY
+unset SOURCE_PRODUCT_NAME TARGET_PRODUCT_NAME
+unset -f _LOG
