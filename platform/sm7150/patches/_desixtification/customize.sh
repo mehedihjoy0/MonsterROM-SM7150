@@ -1,5 +1,5 @@
-LOG_STEP_IN "- Adding S23 FE (r11qxxx) lib/ blobs"
-ADD_TO_WORK_DIR "r11qxxx" "system" "system/lib" 0 0 644
+LOG_STEP_IN "- Adding S23 FE (r11sxxx) lib/ blobs"
+ADD_TO_WORK_DIR "r11sxxx" "system" "system/lib" 0 0 644
 
 BLOBS_LIST="
 system/apex/com.android.i18n.apex
@@ -10,7 +10,7 @@ system/bin/bootstrap/linker_asan
 "
 for blob in $BLOBS_LIST
 do
-ADD_TO_WORK_DIR "r11qxxx" "system" "$blob"
+ADD_TO_WORK_DIR "r11sxxx" "system" "$blob"
 done
 LOG_STEP_OUT
 
