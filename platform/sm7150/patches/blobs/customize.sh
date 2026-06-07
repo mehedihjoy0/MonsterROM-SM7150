@@ -1,6 +1,4 @@
 LOG_STEP_IN "- Adding Google Hotword Enrollment blobs from a73xqxx"
-DELETE_FROM_WORK_DIR "product" "priv-app/HotwordEnrollmentOKGoogleEx4HEXAGON"
-DELETE_FROM_WORK_DIR "product" "priv-app/HotwordEnrollmentXGoogleEx4HEXAGON"
 rm -rf $WORK_DIR/product/priv-app/HotwordEnrollmentOKGoogle*
 ADD_TO_WORK_DIR "a73xqxx" "product" "priv-app/HotwordEnrollmentOKGoogleEx3HEXAGON"
 ADD_TO_WORK_DIR "a73xqxx" "product" "priv-app/HotwordEnrollmentXGoogleEx3HEXAGON"
