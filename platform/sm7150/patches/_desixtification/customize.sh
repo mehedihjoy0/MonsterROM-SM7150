@@ -6,7 +6,6 @@ system/apex/com.android.i18n.apex
 system/apex/com.android.runtime.apex
 system/apex/com.google.android.tzdata6.apex
 system/bin/bootstrap/linker
-system/bin/bootstrap/linker_asan
 "
 for blob in $BLOBS_LIST
 do
