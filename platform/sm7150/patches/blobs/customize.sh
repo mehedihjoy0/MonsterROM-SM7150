@@ -4,6 +4,11 @@ ADD_TO_WORK_DIR "a73xqxx" "product" "priv-app/HotwordEnrollmentOKGoogleEx3HEXAGO
 ADD_TO_WORK_DIR "a73xqxx" "product" "priv-app/HotwordEnrollmentXGoogleEx3HEXAGON"
 LOG_STEP_OUT
 
+LOG_STEP_IN "- Adding light blobs from a73xqxx"
+ADD_TO_WORK_DIR "a73xqxx" "vendor" "bin/hw/vendor.samsung.hardware.light-service"
+ADD_TO_WORK_DIR "a73xqxx" "vendor" "lib64/vendor.samsung.hardware.light-V1-ndk_platform.so"
+LOG_STEP_OUT
+
 LOG_STEP_IN "- Adding SoundBooster libs from stock"
 DELETE_FROM_WORK_DIR "system" "system/lib64/lib_SAG_EQ_ver2090.so"
 DELETE_FROM_WORK_DIR "system" "system/lib64/lib_SoundBooster_ver2090.so"
