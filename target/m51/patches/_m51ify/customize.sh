@@ -105,7 +105,7 @@ LOG_STEP_IN "- Injecting m51-specific blobs"
 EVAL "git clone \"https://github.com/mehedihjoy0/M51-Device-Tree\" \"$MODPATH/tree\""
 ADD_TO_WORK_DIR "$MODPATH/tree" "system" "."
 ADD_TO_WORK_DIR "$MODPATH/tree" "vendor" "."
-EVAL "cp -r \"$WORK_DIR/vendor/etc/media_profiles_V1_0.xml\" \"$WORK_DIR/odm/etc\""
+#EVAL "cp -r \"$WORK_DIR/vendor/etc/media_profiles_V1_0.xml\" \"$WORK_DIR/odm/etc\""
 LOG_STEP_OUT
 
 LOG_STEP_IN "- Performing additional steps before going to the next step"
