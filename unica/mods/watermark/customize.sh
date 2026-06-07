@@ -1,8 +1,3 @@
-LOG_STEP_IN "- Downloading latest Samsung Wallpaper app"
-DOWNLOAD_FILE "$(GET_GALAXY_STORE_DOWNLOAD_URL "000008552712")" \
-    "$WORK_DIR/system/system/priv-app/SpriteWallpaper/SpriteWallpaper.apk"
-LOG_STEP_OUT
-
 LOG_STEP_IN "- Removing \"AI-generated content\" watermark from all image generation apps"
 
 IMG_GEN_APPS="
