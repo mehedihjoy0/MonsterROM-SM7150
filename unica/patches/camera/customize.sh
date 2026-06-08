@@ -29,15 +29,6 @@ LIBSTAGEFRIGHT="$WORK_DIR/system/system/lib64/libstagefright.so"
 LIBSTAGEFRIGHT_FREAD512="2100805202408052e30315aae41f8052f6c30191588c0594"
 LIBSTAGEFRIGHT_FREAD254="21008052c21f8052e30315aae41f8052f6c30191588c0594"
 
-# Match libstagefright-sdk37-fread254.so: S26 ACodec::reconfigEncoder4OtherApps
-# reads /proc/<pid>/cmdline with 0xfe bytes instead of 0x200 to avoid Android 16
-# FORTIFY aborts while starting AVC video recording.
-if xxd -p -c 0 "$LIBSTAGEFRIGHT" 2> /dev/null | grep -q "$LIBSTAGEFRIGHT_FREAD254"; then
-    LOG "- libstagefright AVC encoder cmdline fread254 fix is already patched"
-else
-    HEX_PATCH "$LIBSTAGEFRIGHT" "$LIBSTAGEFRIGHT_FREAD512" "$LIBSTAGEFRIGHT_FREAD254"
-fi
-
 DELETE_FROM_WORK_DIR "system" "system/cameradata/portrait_data"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/cameradata/portrait_data" 0 0 755 "u:object_r:system_file:s0"
 if [ -f "$SRC_DIR/target/$TARGET_CODENAME/camera/singletake/service-feature.xml" ]; then
