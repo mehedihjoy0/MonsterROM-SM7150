@@ -725,29 +725,6 @@ else
     fi
 fi
 
-# SEC_PRODUCT_FEATURE_WLAN_SUPPORT_APE_SERVICE
-# SEC_PRODUCT_FEATURE_WLAN_CONFIG_CONNECTION_PERSONALIZATION
-# SEC_PRODUCT_FEATURE_WLAN_CONFIG_DYNAMIC_SWITCH
-if [[ "$SOURCE_WLAN_CONFIG_CONNECTION_PERSONALIZATION" != "$TARGET_WLAN_CONFIG_CONNECTION_PERSONALIZATION" ]] || \
-        [[ "$SOURCE_WLAN_CONFIG_DYNAMIC_SWITCH" != "$TARGET_WLAN_CONFIG_DYNAMIC_SWITCH" ]] || \
-        [[ "$SOURCE_WLAN_SUPPORT_APE_SERVICE" != "$TARGET_WLAN_SUPPORT_APE_SERVICE" ]]; then
-    if [[ "$SOURCE_WLAN_CONFIG_CONNECTION_PERSONALIZATION" == "1" ]] && $SOURCE_WLAN_SUPPORT_APE_SERVICE; then
-        APPLY_PATCH "system" "system/framework/semwifi-service.jar" \
-            "$MODPATH/wifi/connection_personalization/semwifi-service.jar/0001-Allow-custom-CONNECTION_PERSONALIZATION-value.patch"
-        SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
-            "smali/com/samsung/android/server/wifi/SemWifiInjector.smali" "replace" \
-            "<init>(Landroid/content/Context;)V" \
-            "CONFIG_CONNECTION_PERSONALIZATION" \
-            "$TARGET_WLAN_CONFIG_CONNECTION_PERSONALIZATION" | \
-            sed "s/CONFIG_CONNECTION_PERSONALIZATION/$SOURCE_WLAN_CONFIG_CONNECTION_PERSONALIZATION/g"
-        APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "$MODPATH/wifi/connection_personalization/SecSettings.apk/0001-Allow-custom-CONNECTION_PERSONALIZATION-value.patch"
-        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "smali_classes2/com/samsung/android/settings/wifi/develop/compatibility/btm/BtmController.smali" "replace" \
-            "getAvailabilityStatus()I" \
-            "CONFIG_CONNECTION_PERSONALIZATION" \
-            "$TARGET_WLAN_CONFIG_CONNECTION_PERSONALIZATION" | \
-            sed "s/CONFIG_CONNECTION_PERSONALIZATION/$SOURCE_WLAN_CONFIG_CONNECTION_PERSONALIZATION/g"
 
         if [[ "$SOURCE_WLAN_CONFIG_DYNAMIC_SWITCH" != "$TARGET_WLAN_CONFIG_DYNAMIC_SWITCH" ]]; then
             SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
