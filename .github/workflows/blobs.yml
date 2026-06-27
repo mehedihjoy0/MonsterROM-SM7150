@@ -23,6 +23,9 @@ jobs:
           - module: "Galaxy S21 FE 5G (Exynos) (r9sxxx)"
             device: "r9sxxx"
             firmware: "SM-G990E/THL/355798871234563"
+          - module: "Galaxy Tab S11 5G (gts11xx)"
+            device: "gts11xx"
+            firmware: "SM-X736B/EUX/R52Y8065XJM"
 
     steps:
       - name: Checkout repo
