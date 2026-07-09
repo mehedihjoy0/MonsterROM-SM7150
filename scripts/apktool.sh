@@ -15,10 +15,12 @@ FILE=""
 INPUT_FILE=""
 OUTPUT_PATH=""
 
-THREAD_COUNT=$(awk -v max="$(nproc)" '/MemTotal/ {
-  tc = int(($2 + 1048575) / 2097152);
-  print (tc < 1 ? 1 : (tc > max ? max : tc));
-}' /proc/meminfo)
+if [ -n "$UN1CA_APKTOOL_THREADS" ]; then
+    THREAD_COUNT="$UN1CA_APKTOOL_THREADS"
+else
+    # Default to a single apktool worker to avoid OOM during local WSL builds.
+    THREAD_COUNT=1
+fi
 
 [ -n "$GITHUB_ACTIONS" ] && THREAD_COUNT=1
 
