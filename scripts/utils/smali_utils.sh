@@ -356,7 +356,10 @@ SMALI_PATCH()
                         next
                     }
                 } else if ($0 ~ /^[[:space:]]*const-string(\/jumbo)?/) {
-                    sub("\"" STR "\"", "\"" REP "\"")
+                    idx = index($0, "\"" STR "\"")
+                    if (idx > 0) {
+                        $0 = substr($0, 1, idx - 1) "\"" REP "\"" substr($0, idx + length("\"" STR "\""))
+                    }
                 } else {
                     line = $0
                     gsub(/^[ \t]+|[ \t]+$/, "", line)
