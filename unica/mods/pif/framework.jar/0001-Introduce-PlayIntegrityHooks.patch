@@ -8,16 +8,16 @@ UN1CA: this patch is not complete! Please check unica/mods/pif/customize.sh for 
  .../keystore2/AndroidKeyStoreSpi.smali        |    2 +
  ...grityHooks$$ExternalSyntheticLambda0.smali |   30 +
  .../mesalabs/unica/PlayIntegrityHooks$1.smali |   79 ++
- .../mesalabs/unica/PlayIntegrityHooks.smali   | 1028 +++++++++++++++++
- 4 files changed, 1139 insertions(+)
+ .../mesalabs/unica/PlayIntegrityHooks.smali   | 1048 +++++++++++++++++
+ 4 files changed, 1159 insertions(+)
  create mode 100644 smali_classes6/io/mesalabs/unica/PlayIntegrityHooks$$ExternalSyntheticLambda0.smali
  create mode 100644 smali_classes6/io/mesalabs/unica/PlayIntegrityHooks$1.smali
  create mode 100644 smali_classes6/io/mesalabs/unica/PlayIntegrityHooks.smali
 
-diff --git a/smali_classes3/android/security/keystore2/AndroidKeyStoreSpi.smali b/smali_classes3/android/security/keystore2/AndroidKeyStoreSpi.smali
+diff --git a/smali_classes2/android/security/keystore2/AndroidKeyStoreSpi.smali b/smali_classes2/android/security/keystore2/AndroidKeyStoreSpi.smali
 index c724b464..0579bc5c 100644
---- a/smali_classes3/android/security/keystore2/AndroidKeyStoreSpi.smali
-+++ b/smali_classes3/android/security/keystore2/AndroidKeyStoreSpi.smali
+--- a/smali_classes2/android/security/keystore2/AndroidKeyStoreSpi.smali
++++ b/smali_classes2/android/security/keystore2/AndroidKeyStoreSpi.smali
 @@ -3223,6 +3223,8 @@
  .method public whitelist test-api engineGetCertificateChain(Ljava/lang/String;)[Ljava/security/cert/Certificate;
      .locals 4
@@ -153,7 +153,7 @@ new file mode 100644
 index 00000000..af0f2efe
 --- /dev/null
 +++ b/smali_classes6/io/mesalabs/unica/PlayIntegrityHooks.smali
-@@ -0,0 +1,1028 @@
+@@ -0,0 +1,1048 @@
 +.class public final Lio/mesalabs/unica/PlayIntegrityHooks;
 +.super Ljava/lang/Object;
 +.source "PlayIntegrityHooks.java"
@@ -400,7 +400,7 @@ index 00000000..af0f2efe
 +.end method
 +
 +.method private static blacklist setPropValue(Ljava/lang/String;Ljava/lang/Object;)V
-+    .locals 2
++    .locals 4
 +
 +    const-string v0, "Defining prop "
 +
@@ -443,9 +443,29 @@ index 00000000..af0f2efe
 +
 +    invoke-virtual {v0, v1}, Ljava/lang/reflect/Field;->setAccessible(Z)V
 +
++    const-class v2, Ljava/lang/reflect/Field;
++
++    const-string v3, "accessFlags"
++
++    invoke-virtual {v2, v3}, Ljava/lang/Class;->getDeclaredField(Ljava/lang/String;)Ljava/lang/reflect/Field;
++
++    move-result-object v2
++
++    invoke-virtual {v2, v1}, Ljava/lang/reflect/Field;->setAccessible(Z)V
++
++    invoke-virtual {v0}, Ljava/lang/reflect/Field;->getModifiers()I
++
++    move-result v3
++
++    and-int/lit8 v3, v3, -0x11
++
++    invoke-virtual {v2, v0, v3}, Ljava/lang/reflect/Field;->setInt(Ljava/lang/Object;I)V
++
 +    const/4 v1, 0x0
 +
 +    invoke-virtual {v0, v1, p1}, Ljava/lang/reflect/Field;->set(Ljava/lang/Object;Ljava/lang/Object;)V
++
++    invoke-virtual {v2, v1}, Ljava/lang/reflect/Field;->setAccessible(Z)V
 +
 +    const/4 p1, 0x0
 +
@@ -473,9 +493,7 @@ index 00000000..af0f2efe
 +
 +    move-result-object p0
 +
-+    const-string v0, "PlayIntegrityHooks"
-+
-+    invoke-static {v0, p0, p1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    invoke-static {p0}, Lio/mesalabs/unica/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    return-void
 +.end method
@@ -601,9 +619,7 @@ index 00000000..af0f2efe
 +
 +    move-result-object p0
 +
-+    const-string v0, "PlayIntegrityHooks"
-+
-+    invoke-static {v0, p0, p1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    invoke-static {p0}, Lio/mesalabs/unica/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    return-void
 +.end method
@@ -652,9 +668,7 @@ index 00000000..af0f2efe
 +
 +    move-result-object p0
 +
-+    const-string v0, "PlayIntegrityHooks"
-+
-+    invoke-static {v0, p0, p1}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    invoke-static {p0}, Lio/mesalabs/unica/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    return-void
 +.end method
@@ -719,6 +733,14 @@ index 00000000..af0f2efe
 +    :try_end_0
 +    .catch Ljava/lang/Exception; {:try_start_0 .. :try_end_0} :catch_0
 +
++    invoke-static {p0}, Landroid/os/UserHandle;->getAppId(I)I
++
++    move-result p0
++
++    invoke-static {v1}, Landroid/os/UserHandle;->getAppId(I)I
++
++    move-result v1
++
 +    if-ne p0, v1, :cond_0
 +
 +    const/4 p0, 0x1
@@ -731,11 +753,9 @@ index 00000000..af0f2efe
 +    :catch_0
 +    move-exception p0
 +
-+    const-string v0, "PlayIntegrityHooks"
++    const-string p0, "shouldBypassTaskPermission: unable to get gms uid"
 +
-+    const-string v1, "shouldBypassTaskPermission: unable to get gms uid"
-+
-+    invoke-static {v0, v1, p0}, Landroid/util/Log;->e(Ljava/lang/String;Ljava/lang/String;Ljava/lang/Throwable;)I
++    invoke-static {p0}, Lio/mesalabs/unica/PlayIntegrityHooks;->dlog(Ljava/lang/String;)V
 +
 +    return v2
 +.end method
@@ -1184,4 +1204,3 @@ index 00000000..af0f2efe
 +.end method
 -- 
 2.54.0
-
