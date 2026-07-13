@@ -15,6 +15,26 @@ else
     ABORT "ro.sf.lcd_density prop not found in vendor"
 fi
 LOG_STEP_OUT
+
+_SED_DELETE_IF_EXISTS()
+{
+    local FILE="$1"
+    shift
+
+    [ -f "$FILE" ] || return 0
+    sed -i "$@" "$FILE"
+}
+
+_FOR_EACH_EXYNOS_INIT()
+{
+    local SCRIPT="$1"
+    local FILE
+
+    while IFS= read -r FILE; do
+        sed -i "$SCRIPT" "$FILE"
+    done < <(find "$WORK_DIR/vendor/etc/init" -maxdepth 1 -type f -name 'init*.rc' | LC_ALL=C sort)
+}
+
 _FIX_STRONGBOX_KEYMASTER_RC()
 {
     local RC="$WORK_DIR/vendor/etc/init/android.hardware.keymaster@4.0_strongbox-service.rc"
@@ -68,6 +88,154 @@ _DROP_MISSING_SENSOR_HAL_BLOBS()
     done
 }
 
+_BACKPORT_HIDL_VAULTKEEPER_CLIENT()
+{
+    local TARGET_FIRMWARE_DIR="$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    local CURRENT_MANAGER="$WORK_DIR/system/system/lib64/libvkmanager.so"
+    local LEGACY_MANAGER="$TARGET_FIRMWARE_DIR/system/system/lib64/libvkmanager.so"
+    local LEGACY_INTERFACE="$TARGET_FIRMWARE_DIR/system/system/lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so"
+    local VENDOR_INTERFACE="$WORK_DIR/vendor/lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so"
+
+    [ -f "$CURRENT_MANAGER" ] || return 0
+
+    if ! strings "$CURRENT_MANAGER" | grep -qF "vaultkeeper-V1-ndk.so"; then
+        return 0
+    fi
+    if [ ! -f "$VENDOR_INTERFACE" ]; then
+        LOG "- Skipping HIDL VaultKeeper client backport: vendor HIDL service is absent"
+        return 0
+    fi
+    if [ ! -f "$LEGACY_MANAGER" ] || [ ! -f "$LEGACY_INTERFACE" ]; then
+        ABORT "Target HIDL VaultKeeper client libraries are missing"
+    fi
+
+    # One UI 9 uses an AIDL client, but the legacy t2s vendor exposes HIDL 2.0.
+    LOG "- Backporting HIDL VaultKeeper client for the legacy vendor HAL"
+    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libvkmanager.so" \
+        0 0 644 "u:object_r:system_lib_file:s0"
+    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+        "system/lib64/vendor.samsung.hardware.security.vaultkeeper@2.0.so" \
+        0 0 644 "u:object_r:system_lib_file:s0"
+}
+
+_BACKPORT_HIDL_ENGMODE_CLIENT()
+{
+    local TARGET_FIRMWARE_DIR="$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    local CURRENT_MANAGER="$WORK_DIR/system/system/lib64/lib.engmode.samsung.so"
+    local LEGACY_MANAGER="$TARGET_FIRMWARE_DIR/system/system/lib64/lib.engmode.samsung.so"
+    local LEGACY_INTERFACE="$TARGET_FIRMWARE_DIR/system/system/lib64/vendor.samsung.hardware.security.engmode@1.0.so"
+    local VENDOR_INTERFACE="$WORK_DIR/vendor/lib64/vendor.samsung.hardware.security.engmode@1.0.so"
+
+    [ -f "$CURRENT_MANAGER" ] || return 0
+
+    if ! strings "$CURRENT_MANAGER" | grep -qF "engmode-V1-ndk.so"; then
+        return 0
+    fi
+    if [ ! -f "$VENDOR_INTERFACE" ]; then
+        LOG "- Skipping HIDL EngMode client backport: vendor HIDL service is absent"
+        return 0
+    fi
+    if [ ! -f "$LEGACY_MANAGER" ] || [ ! -f "$LEGACY_INTERFACE" ]; then
+        ABORT "Target HIDL EngMode client libraries are missing"
+    fi
+
+    # The source JNI bridge uses the stable EngMode C ABI exposed by this client.
+    LOG "- Backporting HIDL EngMode client for the legacy vendor HAL"
+    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/lib.engmode.samsung.so" \
+        0 0 644 "u:object_r:system_lib_file:s0"
+    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" \
+        "system/lib64/vendor.samsung.hardware.security.engmode@1.0.so" \
+        0 0 644 "u:object_r:system_lib_file:s0"
+}
+
+_BACKPORT_LEGACY_DEX_STACK()
+{
+    local TARGET_FIRMWARE_DIR="$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    local LEGACY_UI="$TARGET_FIRMWARE_DIR/system/system/priv-app/DesktopModeUiService/DesktopModeUiService.apk"
+    local FILE
+
+    [ -f "$LEGACY_UI" ] || return 0
+    [ ! -f "$WORK_DIR/system/system/priv-app/DesktopModeUiService/DesktopModeUiService.apk" ] || return 0
+
+    # One UI 9 moved this stack off the system image; retain the target's HAL-compatible DeX UI.
+    LOG "- Backporting legacy DeX stack for the target display pipeline"
+    for FILE in \
+        system/priv-app/DesktopSystemUI \
+        system/priv-app/DesktopModeUiService \
+        system/priv-app/KnoxDesktopLauncher \
+        system/framework/DesktopSystemUICoreLib.jar \
+        system/framework/DesktopSystemUIKnoxLib.jar \
+        system/etc/permissions/DesktopSystemUICoreLib_permissions.xml \
+        system/etc/permissions/DesktopSystemUIKnoxLib_permissions.xml \
+        system/etc/permissions/privapp-permissions-com.sec.android.app.desktoplauncher.xml \
+        system/etc/permissions/privapp-permissions-com.sec.android.desktopmode.uiservice.xml \
+        system/lib/libknox_remotedesktopclient.knox.samsung.so \
+        system/lib/libremotedesktopservice.so \
+        system/lib64/libknox_remotedesktopclient.knox.samsung.so \
+        system/lib64/libremotedesktopservice.so; do
+        [ -e "$TARGET_FIRMWARE_DIR/system/$FILE" ] || continue
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "$FILE"
+    done
+
+    _BACKPORT_LEGACY_DEX_SERVICE
+}
+
+_BACKPORT_LEGACY_DEX_SERVICE()
+{
+    local TARGET_FIRMWARE_DIR="$FW_DIR/$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+    local SOURCE_SERVICES="$APKTOOL_DIR/system/framework/services.jar"
+    local SOURCE_SYSTEM_SERVER="$SOURCE_SERVICES/smali/com/android/server/SystemServer.smali"
+    local TARGET_SERVICES="$TARGET_FIRMWARE_DIR/system/system/framework/services.jar"
+    local TARGET_APKTOOL="$TMP_DIR/legacy_dex_services"
+    local TARGET_DESKTOPMODE="$TARGET_APKTOOL/smali/com/android/server/desktopmode"
+    local SOURCE_DESKTOPMODE="$SOURCE_SERVICES/smali_classes3/com/android/server/desktopmode"
+    local START_PATCH="$MODPATH/dex/services.jar/0001-Start-legacy-DesktopModeService.patch"
+
+    if [ ! -f "$TARGET_SERVICES" ]; then
+        LOG "- Skipping legacy DeX service backport: target services.jar is absent"
+        return 0
+    fi
+
+    DECODE_APK "system" "system/framework/services.jar" || return 1
+
+    if [ ! -f "$SOURCE_SYSTEM_SERVER" ]; then
+        ABORT "Source SystemServer smali is missing"
+    fi
+    if grep -qF 'Lcom/android/server/desktopmode/DesktopModeService$Lifecycle;' "$SOURCE_SYSTEM_SERVER"; then
+        return 0
+    fi
+    if find "$SOURCE_SERVICES" -type d -path '*/com/android/server/desktopmode' -print -quit | grep -q .; then
+        LOG "- Skipping legacy DeX service backport: source already provides desktopmode classes"
+        return 0
+    fi
+
+    LOG "- Backporting legacy DeX system service for the target display pipeline"
+    if [ ! -d "$TARGET_DESKTOPMODE" ]; then
+        EVAL "rm -rf \"$TARGET_APKTOOL\""
+        EVAL "mkdir -p \"$(dirname "$TARGET_APKTOOL")\""
+        EVAL "\"$TOOLS_DIR/bin/apktool\" -JXX:TieredStopAtLevel=1 d --no-debug-info -j 1 -p \"$APKTOOL_DIR/framework\" -o \"$TARGET_APKTOOL\" \"$TARGET_SERVICES\"" || return 1
+    fi
+    if [ ! -d "$TARGET_DESKTOPMODE" ]; then
+        ABORT "Target DesktopModeService smali is missing"
+    fi
+
+    EVAL "mkdir -p \"$(dirname "$SOURCE_DESKTOPMODE")\""
+    EVAL "cp -a \"$TARGET_DESKTOPMODE\" \"$(dirname "$SOURCE_DESKTOPMODE")\""
+    APPLY_PATCH "system" "system/framework/services.jar" "$START_PATCH"
+}
+
+_DROP_INCOMPATIBLE_CIDMANAGER()
+{
+    local CID_APK="$WORK_DIR/system/system/priv-app/CIDManager/CIDManager.apk"
+
+    [ -f "$CID_APK" ] || return 0
+
+    LOG "- Removing S26 CIDManager carrier activation incompatible with t2s"
+    DELETE_FROM_WORK_DIR "system" "system/priv-app/CIDManager"
+    DELETE_FROM_WORK_DIR "system" "system/etc/sysconfig/preinstalled-packages-com.samsung.android.cidmanager.xml"
+    DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.cidmanager.xml"
+}
+
 _DISABLE_SURFACEFLINGER_SHADER_CACHE()
 {
     local INIT_RC="$WORK_DIR/system/system/etc/init/hw/init.rc"
@@ -104,9 +272,12 @@ _DISABLE_SURFACEFLINGER_SHADER_CACHE()
 
 _DISABLE_UNSUPPORTED_MAINLINE_FEATURES()
 {
-    LOG "- Disabling UFFD GC and RKP paths unsupported by Exynos2100 vendor"
+    LOG "- Disabling UFFD GC, virtual Perfetto relay, and RKP paths unsupported by Exynos2100 vendor"
     SET_PROP "product" "ro.dalvik.vm.enable_uffd_gc" "false"
+    SET_PROP "product" "persist.device_config.runtime_native_boot.enable_uffd_gc_2" "false"
     SET_PROP "product" "persist.device_config.runtime_native_boot.enable_uffd_gc" "false"
+    SET_PROP "product" "persist.device_config.runtime_native_boot.force_disable_uffd_gc" "true"
+    SET_PROP "product" "traced.relay_producer_port" --delete
     SET_PROP "product" "remote_provisioning.enable_rkpd" "false"
     SET_PROP "product" "remote_provisioning.tee.rkp_only" "0"
     DELETE_FROM_WORK_DIR "system" "system/apex/com.google.android.rkpd_compressed.apex"
@@ -144,6 +315,8 @@ _DISABLE_UNSUPPORTED_BT_OFFLOAD()
 _DISABLE_UNSUPPORTED_OUI9_INIT_WRITES()
 {
     LOG "- Removing One UI 9 init writes rejected by the Exynos2100 kernel"
+    _SED_DELETE_IF_EXISTS "$WORK_DIR/system/system/etc/init/hw/init.rc" \
+        -e "/^[[:space:]]*exec_start init_dev_config$/d"
     _SED_DELETE_IF_EXISTS "$WORK_DIR/system/system/etc/init/init.memory.rc" "/\/sys\/kernel\/mm\/transparent_hugepage\/khugepaged\/max_ptes_shared/d"
     _SED_DELETE_IF_EXISTS "$WORK_DIR/system/system/etc/init/atrace.rc" "/\/sys\/kernel\/tracing\/synthetic_events/d"
     _SED_DELETE_IF_EXISTS "$WORK_DIR/system/system/etc/init/hw/init.rc" \
@@ -169,6 +342,32 @@ _DISABLE_UNSUPPORTED_OUI9_INIT_WRITES()
         -e "/\/proc\/sys\/net\/core\/netdev_max_backlog/d"
     _SED_DELETE_IF_EXISTS "$WORK_DIR/vendor/etc/init/init.baseband.rc" "/\/proc\/sys\/net\/core\/netdev_max_backlog/d"
     _SED_DELETE_IF_EXISTS "$WORK_DIR/vendor/etc/init/init.nfc.samsung.rc" "/\/sys\/class\/nfc_sec\/pvdd/d"
+}
+
+_DISABLE_BOOTCHECKER_RESCUE_LOOP()
+{
+    LOG "- Disabling bootchecker rescue-party loop for legacy Exynos2100 boots"
+    DELETE_FROM_WORK_DIR "system" "system/etc/init/bootchecker.rc"
+}
+
+_DISABLE_ZYGOTE_NEXT_BOOT()
+{
+    LOG "- Disabling zygote_next on legacy Exynos2100 vendor stack"
+    DELETE_FROM_WORK_DIR "system" "system/etc/init/zygote_next.rc"
+    SET_PROP "product" "persist.zygote.zygote_next.start_on_boot" "false"
+    SET_PROP "product" "zygote.zygote_next.server_ready" "false"
+}
+
+_RELAX_VOLD_REBOOT_ON_FAILURE()
+{
+    local VOLD_RC="$WORK_DIR/system/system/etc/init/vold.rc"
+
+    [ -f "$VOLD_RC" ] || return 0
+
+    if grep -q "^[[:space:]]*reboot_on_failure " "$VOLD_RC"; then
+        LOG "- Removing vold reboot_on_failure on legacy Exynos2100 vendor stack"
+        sed -i '/^[[:space:]]*reboot_on_failure /d' "$VOLD_RC"
+    fi
 }
 
 _SET_LOG_TAG_LEVEL()
@@ -427,8 +626,24 @@ ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.cil
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.compat.cil" 0 0 644 "u:object_r:system_file:s0"
 
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/ueventd.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
-ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "ueventd.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/bluetooth_audio_policy_configuration.xml" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/init/android.hardware.sensors@2.0-service-multihal.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "bin/monsterrom_wait_sensors_ready.sh" 0 2000 755 "u:object_r:vendor_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "system" "system/etc/default-permissions/default-permissions-com.samsung.android.beaconmanager.xml" 0 0 644 "u:object_r:system_file:s0"
+
+_FIX_STRONGBOX_KEYMASTER_RC
+_DISABLE_STALE_KEYMASTER_WAIT
+_PATCH_SENSORHUB_SYSFS_LOG_NOISE
+_DROP_MISSING_SENSOR_HAL_BLOBS
+_BACKPORT_HIDL_VAULTKEEPER_CLIENT
+_BACKPORT_HIDL_ENGMODE_CLIENT
+_BACKPORT_LEGACY_DEX_STACK
+_DROP_INCOMPATIBLE_CIDMANAGER
+_DISABLE_SURFACEFLINGER_SHADER_CACHE
+_DISABLE_UNSUPPORTED_MAINLINE_FEATURES
+_DISABLE_UNSUPPORTED_BT_OFFLOAD
+_DISABLE_UNSUPPORTED_OUI9_INIT_WRITES
+_DISABLE_BOOTCHECKER_RESCUE_LOOP
+_DISABLE_ZYGOTE_NEXT_BOOT
+_RELAX_VOLD_REBOOT_ON_FAILURE
+_PATCH_BEACONMANAGER_LOCATION_PERMISSIONS
