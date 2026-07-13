@@ -57,21 +57,35 @@ GET_SYSTEM_EXT()
 
 CIL_NAME="$(head -n 1 "$WORK_DIR/vendor/etc/selinux/plat_sepolicy_vers.txt")"
 PATCHED=false
-VENDOR_API_LIST="$(find "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/mapping" -type f -printf "%f\n" | \
-                    sed '/.compat./d' | sed 's/.cil//' | sed 's/\./_/' | sort)"
+MAPPING_DIRS=(
+    "$WORK_DIR/system/system/etc/selinux/mapping"
+    "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/mapping"
+    "$WORK_DIR/product/etc/selinux/mapping"
+)
+MAPPING_FILES=()
+for d in "${MAPPING_DIRS[@]}"; do
+    [ -d "$d" ] || continue
+    while IFS= read -r f; do
+        MAPPING_FILES+=("$f")
+    done < <(find "$d" -maxdepth 1 -type f -name '*.cil' ! -name '*.compat.cil' | sort)
+done
 # ]
 
 for e in $ENTRIES; do
-    if grep -q -F "($e)" "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/mapping/$CIL_NAME.cil" || \
-         grep -q -F "${e}_${CIL_NAME//./_}" "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/mapping/$CIL_NAME.cil"; then
-        # the problematic entry is currently present in system_ext, check if we need to remove it
+    ENTRY_PRESENT=false
+    for f in "${MAPPING_FILES[@]}"; do
+        if grep -q -F "($e)" "$f" || grep -q -F "${e}_${CIL_NAME//./_}" "$f"; then
+            ENTRY_PRESENT=true
+            break
+        fi
+    done
+    if $ENTRY_PRESENT; then
+        # The source mapping exposes this type; remove it when target vendor does not.
         if ! grep -q -F "(type $e)" "$WORK_DIR/vendor/etc/selinux/plat_pub_versioned.cil"; then
             PATCHED=true
-            # the problematic entry is not supported by the target device
             LOG "- \"$e\" SELinux entry not supported. Removing"
-            sed -i "/($e)/d" "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/mapping/$CIL_NAME.cil"
-            for a in $VENDOR_API_LIST; do
-                sed -i "/${e}_${a}/d" "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/mapping/$CIL_NAME.cil"
+            for f in "${MAPPING_FILES[@]}"; do
+                sed -i -e "/($e)/d" -e "/${e}_[0-9][0-9]_[0-9]/d" "$f"
             done
             if grep -q "genfscon.*$e" "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/system_ext_sepolicy.cil"; then
                 sed -i "/genfscon.*$e/d" "$WORK_DIR/$(GET_SYSTEM_EXT)/etc/selinux/system_ext_sepolicy.cil"
@@ -99,5 +113,5 @@ if ! $PATCHED; then
     LOG "\033[0;33m! Nothing to do\033[0m"
 fi
 
-unset ENTRIES DUPLICATES CIL_NAME PATCHED VENDOR_API_LIST
+unset ENTRIES DUPLICATES CIL_NAME PATCHED ENTRY_PRESENT MAPPING_DIRS MAPPING_FILES
 unset -f GET_SYSTEM_EXT
