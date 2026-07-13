@@ -1,0 +1,221 @@
+# FloppyKernel source and packaging configuration. All values can be
+# overridden from the environment without changing this module.
+FLOPPY_KERNEL_REPO="${FLOPPY_KERNEL_REPO:-https://github.com/FlopKernel-Series/flop_exynos2100_kernel}"
+FLOPPY_KERNEL_BRANCH="${FLOPPY_KERNEL_BRANCH:-floppy-main}"
+FLOPPY_ANYKERNEL_REPO="${FLOPPY_ANYKERNEL_REPO:-https://github.com/FlopKernel-Series/AnyKernel3-exynos2100}"
+FLOPPY_ANYKERNEL_BRANCH="${FLOPPY_ANYKERNEL_BRANCH:-floppy-unity}"
+FLOPPY_KERNEL_BUILD_ARGS="${FLOPPY_KERNEL_BUILD_ARGS:-kcR}"
+FLOPPY_KERNEL_JOBS="${FLOPPY_KERNEL_JOBS:-1}"
+FLOPPY_BPF_SPOOF_MODE="${FLOPPY_BPF_SPOOF_MODE:-2}"
+FLOPPY_SELINUX_MODE="${FLOPPY_SELINUX_MODE:-1}"
+
+KERNEL_CACHE_DIR="$SRC_DIR/out/kernel-cache/flop_exynos2100_kernel"
+KERNEL_WORKSPACE_DIR="$SRC_DIR/out/kernel-cache/floppy-workspace"
+KERNEL_BUILD_DIR="$TMP_DIR/floppykernel"
+KERNEL_SOURCE_DIR="$KERNEL_BUILD_DIR/source"
+ANYKERNEL_DIR="$KERNEL_BUILD_DIR/anykernel"
+KERNEL_ARTIFACT_DIR="$SRC_DIR/out/kernel-builds"
+
+_FLOPPY_CLEAN_BUILD_TREE()
+{
+    if [ -d "$KERNEL_CACHE_DIR/.git" ] && [ -e "$KERNEL_SOURCE_DIR" ]; then
+        git -C "$KERNEL_CACHE_DIR" worktree remove --force "$KERNEL_SOURCE_DIR" >/dev/null 2>&1 || true
+    fi
+
+    case "$KERNEL_BUILD_DIR" in
+        "$TMP_DIR"/floppykernel)
+            rm -rf "$KERNEL_BUILD_DIR"
+            ;;
+        *)
+            ABORT "Refusing to clean unexpected kernel build path: $KERNEL_BUILD_DIR"
+            ;;
+    esac
+
+    if [ -d "$KERNEL_CACHE_DIR/.git" ]; then
+        git -C "$KERNEL_CACHE_DIR" worktree prune
+    fi
+}
+
+_FLOPPY_PATCH_LITERAL()
+{
+    local FILE="$1"
+    local FROM="$2"
+    local TO="$3"
+
+    if [ ! -f "$FILE" ]; then
+        ABORT "FloppyKernel patch target not found: $FILE"
+        return 1
+    fi
+    if ! grep -qF "$FROM" "$FILE"; then
+        ABORT "FloppyKernel patch context not found in $FILE: $FROM"
+        return 1
+    fi
+
+    sed -i "s|$FROM|$TO|g" "$FILE"
+}
+
+_FLOPPY_SET_MODE_DEFAULT()
+{
+    local FILE="$1"
+    local KEY="$2"
+    local VALUE="$3"
+
+    if [ ! -f "$FILE" ]; then
+        ABORT "FloppyKernel mode target not found: $FILE"
+        return 1
+    fi
+    if ! grep -qE "${KEY}=[0-2]" "$FILE"; then
+        ABORT "FloppyKernel mode context not found in $FILE: $KEY"
+        return 1
+    fi
+
+    sed -i -E "s|${KEY}=[0-2]|${KEY}=${VALUE}|g" "$FILE"
+}
+
+case "$FLOPPY_KERNEL_JOBS" in
+    ''|0|*[!0-9]*) ABORT "FLOPPY_KERNEL_JOBS must be a positive integer" ;;
+esac
+case "$FLOPPY_BPF_SPOOF_MODE" in
+    0|1|2) ;;
+    *) ABORT "FLOPPY_BPF_SPOOF_MODE must be 0, 1, or 2" ;;
+esac
+case "$FLOPPY_SELINUX_MODE" in
+    0|1|2) ;;
+    *) ABORT "FLOPPY_SELINUX_MODE must be 0, 1, or 2" ;;
+esac
+
+LOG_STEP_IN "- Updating FloppyKernel source"
+mkdir -p "$(dirname "$KERNEL_CACHE_DIR")" "$KERNEL_WORKSPACE_DIR"
+
+if [ ! -d "$KERNEL_CACHE_DIR/.git" ]; then
+    if [ -e "$KERNEL_CACHE_DIR" ]; then
+        ABORT "Kernel cache exists but is not a Git checkout: $KERNEL_CACHE_DIR"
+    fi
+    git clone --filter=blob:none --no-checkout --branch "$FLOPPY_KERNEL_BRANCH" \
+        "$FLOPPY_KERNEL_REPO" "$KERNEL_CACHE_DIR"
+else
+    git -C "$KERNEL_CACHE_DIR" remote set-url origin "$FLOPPY_KERNEL_REPO"
+fi
+
+git -C "$KERNEL_CACHE_DIR" fetch --prune --depth=1 origin "$FLOPPY_KERNEL_BRANCH"
+KERNEL_COMMIT="$(git -C "$KERNEL_CACHE_DIR" rev-parse FETCH_HEAD)"
+KERNEL_COMMIT_SHORT="$(git -C "$KERNEL_CACHE_DIR" rev-parse --short=12 "$KERNEL_COMMIT")"
+LOG "- Building upstream commit $KERNEL_COMMIT_SHORT"
+
+_FLOPPY_CLEAN_BUILD_TREE
+mkdir -p "$KERNEL_BUILD_DIR"
+git -C "$KERNEL_CACHE_DIR" worktree add --detach "$KERNEL_SOURCE_DIR" "$KERNEL_COMMIT"
+LOG_STEP_OUT
+
+LOG_STEP_IN "- Applying UN1CA kernel compatibility"
+_FLOPPY_SET_MODE_DEFAULT "$KERNEL_SOURCE_DIR/init/main.c" \
+    "uname_bpf_spoof" "$FLOPPY_BPF_SPOOF_MODE"
+_FLOPPY_SET_MODE_DEFAULT "$KERNEL_SOURCE_DIR/init/main.c" \
+    "selinux_mode" "$FLOPPY_SELINUX_MODE"
+if grep -qF 'MAKE_JOBS="-j$(nproc --all)"' "$KERNEL_SOURCE_DIR/build/scripts/build.sh"; then
+    _FLOPPY_PATCH_LITERAL "$KERNEL_SOURCE_DIR/build/scripts/build.sh" \
+        'MAKE_JOBS="-j$(nproc --all)"' 'MAKE_JOBS="-j${KERNEL_BUILD_JOBS:-1}"'
+elif ! grep -qF 'KERNEL_BUILD_JOBS' "$KERNEL_SOURCE_DIR/build/scripts/build.sh"; then
+    ABORT "FloppyKernel build job configuration is no longer compatible"
+fi
+# The bundled AOSP toolchain already provides cross-binutils. Upstream checks
+# for the Debian package name as if it were a command, causing apt on every run.
+sed -i 's/ binutils-aarch64-linux-gnu//g' "$KERNEL_SOURCE_DIR/build/scripts/deps.sh"
+
+while IFS= read -r PATCH; do
+    [ -n "$PATCH" ] || continue
+    LOG "- Applying $(basename "$PATCH")"
+    git -C "$KERNEL_SOURCE_DIR" apply --check "$PATCH"
+    git -C "$KERNEL_SOURCE_DIR" apply "$PATCH"
+done < <(find "$MODPATH/kernel-patches" -maxdepth 1 -type f -name "*.patch" 2>/dev/null | LC_ALL=C sort)
+LOG_STEP_OUT
+
+LOG_STEP_IN "- Preparing Android 17+ AnyKernel"
+git clone --depth=1 --branch "$FLOPPY_ANYKERNEL_BRANCH" \
+    "$FLOPPY_ANYKERNEL_REPO" "$ANYKERNEL_DIR"
+if ! grep -q '^supported\.versions=' "$ANYKERNEL_DIR/anykernel.sh"; then
+    ABORT "AnyKernel Android version configuration not found"
+fi
+sed -i 's/^supported\.versions=.*/supported.versions=11.0-99.0/' "$ANYKERNEL_DIR/anykernel.sh"
+
+while IFS= read -r PATCH; do
+    [ -n "$PATCH" ] || continue
+    LOG "- Applying $(basename "$PATCH")"
+    git -C "$ANYKERNEL_DIR" apply --check "$PATCH"
+    git -C "$ANYKERNEL_DIR" apply "$PATCH"
+done < <(find "$MODPATH/anykernel-patches" -maxdepth 1 -type f -name "*.patch" 2>/dev/null | LC_ALL=C sort)
+LOG_STEP_OUT
+
+if [ "${FLOPPY_KERNEL_SKIP_BUILD:-0}" = "1" ]; then
+    LOG "- FLOPPY_KERNEL_SKIP_BUILD=1, source preparation verified"
+    _FLOPPY_CLEAN_BUILD_TREE
+    unset -f _FLOPPY_CLEAN_BUILD_TREE _FLOPPY_PATCH_LITERAL _FLOPPY_SET_MODE_DEFAULT
+    return 0
+fi
+
+LOG_STEP_IN "- Building FloppyKernel ($FLOPPY_KERNEL_JOBS jobs)"
+mkdir -p "$KERNEL_SOURCE_DIR/out/.thinlto-cache" "$KERNEL_SOURCE_DIR/.thinlto-cache"
+LOG "- Initializing FloppyKernel mkbootimg submodule"
+if ! git -C "$KERNEL_SOURCE_DIR" submodule update --init --depth=1 --recommend-shallow build/mkbootimg; then
+    _FLOPPY_CLEAN_BUILD_TREE
+    ABORT "Failed to initialize FloppyKernel mkbootimg submodule"
+fi
+if [ ! -f "$KERNEL_SOURCE_DIR/build/mkbootimg/mkbootimg.py" ]; then
+    _FLOPPY_CLEAN_BUILD_TREE
+    ABORT "FloppyKernel mkbootimg submodule was not initialized"
+fi
+LOG "- Disabling LTO to work around LLVM segfault (DO_NOLTO=1)"
+if ! (
+    cd "$KERNEL_SOURCE_DIR"
+    AK3_DIR="$ANYKERNEL_DIR" \
+    WP="$KERNEL_WORKSPACE_DIR" \
+    KERNEL_BUILD_JOBS="$FLOPPY_KERNEL_JOBS" \
+    DO_NOLTO=1 \
+    USE_CCACHE=1 \
+    DO_ZIP=1 \
+    DO_TAR=0 \
+    PLATFORM_VERSION=11 \
+    ANDROID_MAJOR_VERSION=r \
+    BOOT_OS_VERSION=17.0.0 \
+    bash do_build.sh "$FLOPPY_KERNEL_BUILD_ARGS"
+); then
+    _FLOPPY_CLEAN_BUILD_TREE
+    ABORT "FloppyKernel build failed at commit $KERNEL_COMMIT_SHORT"
+fi
+LOG_STEP_OUT
+
+LOG_STEP_IN "- Installing FloppyKernel images"
+for IMAGE_MAP in \
+    "build/images/boot_oneui.img:boot.img" \
+    "build/images/vendor_boot.img:vendor_boot.img"; do
+    SOURCE_IMAGE="$KERNEL_SOURCE_DIR/${IMAGE_MAP%%:*}"
+    TARGET_IMAGE="$WORK_DIR/kernel/${IMAGE_MAP##*:}"
+
+    if [ ! -f "$SOURCE_IMAGE" ]; then
+        _FLOPPY_CLEAN_BUILD_TREE
+        ABORT "Built kernel image not found: $SOURCE_IMAGE"
+    fi
+
+    LOG "- Replacing $(basename "$TARGET_IMAGE")"
+    cp -f "$SOURCE_IMAGE" "$TARGET_IMAGE"
+done
+
+mkdir -p "$KERNEL_ARTIFACT_DIR"
+KERNEL_ZIP="$(find "$KERNEL_SOURCE_DIR/build" -maxdepth 1 -type f -name 'Floppy_*.zip' | LC_ALL=C sort | tail -n 1)"
+if [ -n "$KERNEL_ZIP" ]; then
+    cp -f "$KERNEL_ZIP" "$KERNEL_ARTIFACT_DIR/"
+fi
+printf '%s\n' "$KERNEL_COMMIT" > "$KERNEL_ARTIFACT_DIR/latest-commit.txt"
+LOG "- FloppyKernel commit: $KERNEL_COMMIT"
+LOG_STEP_OUT
+
+_FLOPPY_CLEAN_BUILD_TREE
+
+unset FLOPPY_KERNEL_REPO FLOPPY_KERNEL_BRANCH
+unset FLOPPY_ANYKERNEL_REPO FLOPPY_ANYKERNEL_BRANCH
+unset FLOPPY_KERNEL_BUILD_ARGS FLOPPY_KERNEL_JOBS
+unset FLOPPY_BPF_SPOOF_MODE FLOPPY_SELINUX_MODE
+unset KERNEL_CACHE_DIR KERNEL_WORKSPACE_DIR KERNEL_BUILD_DIR KERNEL_SOURCE_DIR
+unset ANYKERNEL_DIR KERNEL_ARTIFACT_DIR KERNEL_COMMIT KERNEL_COMMIT_SHORT
+unset IMAGE_MAP SOURCE_IMAGE TARGET_IMAGE KERNEL_ZIP PATCH
+unset -f _FLOPPY_CLEAN_BUILD_TREE _FLOPPY_PATCH_LITERAL _FLOPPY_SET_MODE_DEFAULT
