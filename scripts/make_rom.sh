@@ -17,7 +17,7 @@ TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" 
 
 GET_WORK_DIR_HASH()
 {
-    find "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0 | \
+    find "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" "$SRC_DIR/platform/$TARGET_PLATFORM" -type f -print0 | \
         sort -z | xargs -0 sha1sum | sha1sum | cut -d " " -f 1
 }
 
@@ -163,7 +163,9 @@ if $BUILD_TARGET_FILES || $BUILD_FLASHABLE_ZIP; then
     fi
     ZIP_FILE_NAME+="-target_files.zip"
 
-    if [ ! -f "$OUT_DIR/$ZIP_FILE_NAME" ]; then
+    # A dirty build keeps the same version string, so a matching filename alone
+    # does not prove that target files describe the current completed work dir.
+    if [ ! -f "$OUT_DIR/$ZIP_FILE_NAME" ] || [ "$WORK_DIR/.completed" -nt "$OUT_DIR/$ZIP_FILE_NAME" ]; then
         LOG_STEP_IN true "Creating target-files zip"
         "$SRC_DIR/scripts/internal/create_target_files_zip.sh" "$OUT_DIR/$ZIP_FILE_NAME" || exit 1
         LOG_STEP_OUT
