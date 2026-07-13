@@ -1,0 +1,23 @@
+# Android fstab for Samsung sm8550 dynamic-partition devices.
+#<src>                                      <mnt_point>     <type>  <mnt_flags>  <fs_mgr_flags>
+system                                      /system         erofs   ro           wait,avb=vbmeta,logical,first_stage_mount
+vendor                                      /vendor         erofs   ro           wait,avb,logical,first_stage_mount
+product                                     /product        erofs   ro           wait,avb,logical,first_stage_mount
+odm                                         /odm            erofs   ro           wait,avb,logical,first_stage_mount
+system_ext                                  /system_ext     erofs   ro           wait,avb=vbmeta,logical,first_stage_mount
+vendor_dlkm                                 /vendor_dlkm    erofs   ro           wait,avb=vbmeta,logical,first_stage_mount
+odm_dlkm                                    /odm_dlkm       erofs   ro           wait,avb=vbmeta,logical,first_stage_mount
+system_dlkm                                 /system_dlkm    erofs   ro           wait,avb=vbmeta,logical,first_stage_mount
+/dev/block/by-name/boot                     /boot           emmc    defaults     recoveryonly
+/dev/block/by-name/init_boot                /init_boot      emmc    defaults     recoveryonly
+/dev/block/by-name/vendor_boot              /vendor_boot    emmc    defaults     recoveryonly
+/dev/block/by-name/dtbo                     /dtbo           emmc    defaults     recoveryonly
+/dev/block/by-name/vbmeta                   /vbmeta         emmc    defaults     recoveryonly
+/dev/block/by-name/vbmeta_system            /vbmeta_system  emmc    defaults     recoveryonly
+/dev/block/by-name/vbmeta_vendor            /vbmeta_vendor  emmc    defaults     recoveryonly
+/dev/block/by-name/vbmeta_samsung           /vbmeta_samsung emmc    defaults     recoveryonly
+/dev/block/by-name/metadata                 /metadata       ext4    defaults     recoveryonly
+/dev/block/by-name/userdata                 /data           f2fs    defaults     recoveryonly
+/dev/block/by-name/efs                      /efs            ext4    defaults     recoveryonly
+/dev/block/by-name/sec_efs                  /sec_efs        ext4    defaults     recoveryonly
+/dev/block/by-name/misc                     /misc           emmc    defaults     recoveryonly
