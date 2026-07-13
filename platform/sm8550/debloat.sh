@@ -1,21 +1,8 @@
-#
-# Copyright (C) 2025 Salvo Giangreco
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+# Copyright (c) 2026 Salvo Giangreco
 
-# Debloat list for Galaxy S23 (Snapdragon) (dm1q)
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Debloat list for Snapdragon 8 Gen 2 devices (sm8550)
 # - Add entries inside the specific partition containing that file (<PARTITION>_DEBLOAT+="")
 # - DO NOT add the partition name at the start of any entry (eg. "/system/dpolicy_system")
 # - DO NOT add a slash at the start of any entry (eg. "/dpolicy_system")
@@ -25,7 +12,7 @@ SYSTEM_DEBLOAT+="
 system/priv-app/GameDriver-SM8450
 "
 
-# system_ext clean-up
+# system_ext cleanup
 SYSTEM_EXT_DEBLOAT+="
 etc/permissions/com.qti.location.sdk.xml
 etc/permissions/com.qualcomm.location.xml
