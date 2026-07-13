@@ -4,6 +4,17 @@ TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" 
 DELETE_FROM_WORK_DIR "system" "system/saiv"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/saiv" 0 0 755 "u:object_r:system_file:s0"
 
+# FaceService and libImageCropper are retained from the source firmware and
+# require their matching TFLite model. The legacy target SAIV tree does not
+# provide it, which leaves a null interpreter and crashes FaceService.
+if [ -f "$WORK_DIR/system/system/priv-app/FaceService/FaceService.apk" ] && \
+        [ -f "$WORK_DIR/system/system/lib64/libImageCropper.camera.samsung.so" ] && \
+        [ -f "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/saiv/imageCropper/sce_detector_cnn.tflite" ]; then
+    ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" \
+        "system" "system/saiv/imageCropper/sce_detector_cnn.tflite" \
+        0 0 644 "u:object_r:system_file:s0"
+fi
+
 # SEC_PRODUCT_FEATURE_VISION_CONFIG_FACE_RECOGNITION_SOLUTION
 SOURCE_VISION_CONFIG_FACE_RECOGNITION_SOLUTION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_FACE_CLUSTER_VERSION")"
 TARGET_VISION_CONFIG_FACE_RECOGNITION_SOLUTION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_FACE_CLUSTER_VERSION")"
