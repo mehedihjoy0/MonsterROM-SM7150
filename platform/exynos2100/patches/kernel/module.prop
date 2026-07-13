@@ -1,0 +1,4 @@
+id=floppykernel
+name=FloppyKernel source build
+author=devcore94, FlopKernel-Series
+description=Builds the latest FloppyKernel source with UN1CA Android 17 compatibility.
