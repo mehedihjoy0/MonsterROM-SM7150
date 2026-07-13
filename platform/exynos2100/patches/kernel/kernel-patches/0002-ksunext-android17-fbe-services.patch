@@ -1,0 +1,22 @@
+From: devcore94 <ditternation@outlook.com>
+Subject: [PATCH] kernelsu: start module services after Android FBE unlock
+
+Android 17 no longer reliably triggers the legacy nonencrypted or
+vold.decrypt=trigger_restart_framework actions. Run the KernelSU service
+stage when user 0 credential-encrypted storage becomes available so module
+service.sh scripts are activated before boot completion.
+
+diff --git a/drivers/kernelsu/kernel/runtime/ksud_integration.c b/drivers/kernelsu/kernel/runtime/ksud_integration.c
+--- a/drivers/kernelsu/kernel/runtime/ksud_integration.c
++++ b/drivers/kernelsu/kernel/runtime/ksud_integration.c
+@@ -44,6 +44,10 @@ static const char KERNEL_SU_RC[] =
+ 	"    exec u:r:" KERNEL_SU_DOMAIN ":s0 root -- " KSUD_PATH " services\n"
+ 	"\n"
+ 
++	"on property:sys.user.0.ce_available=true\n"
++	"    exec u:r:" KERNEL_SU_DOMAIN ":s0 root -- " KSUD_PATH " services\n"
++	"\n"
++
+ 	"on property:sys.boot_completed=1\n"
+ 	"    exec u:r:" KERNEL_SU_DOMAIN ":s0 root -- " KSUD_PATH " boot-completed\n"
+ 	"\n"
