@@ -516,6 +516,11 @@ if [[ "$SOURCE_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE" != "$TARGET_LCD_CONFIG_HFR
             "getHighRefreshRateSupportedValues(I)[Ljava/lang/String;" \
             "$SOURCE_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE" \
             "${TARGET_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE//none/}" || true
+        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+            "smali_classes3/com/samsung/android/settings/display/SecDisplayUtils.smali" "replace" \
+            "isSupportMaxHS60RefreshRate(I)Z" \
+            "$SOURCE_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE" \
+            "${TARGET_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE//none/}" || true
         SMALI_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
             "smali_classes2/com/android/systemui/keyguard/KeyguardViewMediatorHelperImpl\$\$ExternalSyntheticLambda0.smali" "replace" \
             "invoke()Ljava/lang/Object;" \
@@ -629,6 +634,18 @@ else
         # TODO handle this condition
         LOG_MISSING_PATCHES "SOURCE_RIL_SUPPORT_WATERPROOF_SIM_TRAY_MSG" "TARGET_RIL_SUPPORT_WATERPROOF_SIM_TRAY_MSG"
     fi
+fi
+
+# SEC_PRODUCT_FEATURE_SECURITY_CONFIG_ESE_COS_NAME
+if [[ "$SOURCE_SECURITY_CONFIG_ESE_COS_NAME" != "$TARGET_SECURITY_CONFIG_ESE_COS_NAME" ]] && \
+        grep -qF "eSE_COS: $SOURCE_SECURITY_CONFIG_ESE_COS_NAME" \
+            "$APKTOOL_DIR/system/framework/services.jar/smali/com/android/server/SystemConfig.smali"; then
+    # Keep the framework's NFC/eSE diagnostic identity aligned with the target chip.
+    SMALI_PATCH "system" "system/framework/services.jar" \
+        "smali/com/android/server/SystemConfig.smali" "replace" \
+        "readAllPermissions()V" \
+        "eSE_COS: $SOURCE_SECURITY_CONFIG_ESE_COS_NAME" \
+        "eSE_COS: $TARGET_SECURITY_CONFIG_ESE_COS_NAME"
 fi
 
 # SEC_PRODUCT_FEATURE_SECURITY_SUPPORT_STRONGBOX
