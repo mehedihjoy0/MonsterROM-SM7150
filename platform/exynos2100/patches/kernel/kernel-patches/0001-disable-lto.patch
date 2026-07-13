@@ -1,0 +1,16 @@
+--- a/build/scripts/build.sh
++++ b/build/scripts/build.sh
+@@ -83,6 +83,13 @@ build() {
+         scripts/config --file "$OUTDIR/.config" --disable CONFIG_LTO_CLANG_THIN
+     fi
+ 
++    if [ "$DO_NOLTO" = "1" ]; then
++        scripts/config --file "$OUTDIR/.config" --disable CONFIG_LTO_CLANG_THIN
++        scripts/config --file "$OUTDIR/.config" --disable CONFIG_LTO_CLANG_FULL
++        scripts/config --file "$OUTDIR/.config" --enable CONFIG_LTO_NONE
++        scripts/config --file "$OUTDIR/.config" --disable LTO_CLANG
++    fi
++
+     echo -e "\n$(log_info "Starting compilation...")\n"
+ 
+     run_make $MAKE_JOBS "${MAKE_COMMON_ARGS[@]}" dtbs
