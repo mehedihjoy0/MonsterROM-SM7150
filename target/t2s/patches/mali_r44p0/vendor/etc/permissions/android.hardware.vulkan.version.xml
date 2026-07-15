@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+     SPDX-License-Identifier: Apache-2.0
+
+     The pinned r44p0 Mali-G78 UMD exposes Vulkan 1.3 (0x00403000).
+-->
+<permissions>
+    <feature name="android.hardware.vulkan.version" version="4206592" />
+</permissions>

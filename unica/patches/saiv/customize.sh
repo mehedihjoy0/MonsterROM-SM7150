@@ -181,8 +181,10 @@ if [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/saiv/smartcropping_2.0" ]; 
         ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" "system/saiv/smartcropping_2.0/db/smartcrop_saliency_train" 0 0 644 "u:object_r:system_file:s0"
     fi
 fi
-if [ ! -d "$WORK_DIR/vendor/saiv/image_understanding/db/sce_detector" ] || \
-        [ "$TARGET_PLATFORM_SDK_VERSION" -lt "$SOURCE_PLATFORM_SDK_VERSION" ]; then
+SOURCE_SCE_DETECTOR="$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/saiv/image_understanding/db/sce_detector/sce_detector_cnn.tflite"
+if [ -f "$SOURCE_SCE_DETECTOR" ] && \
+        { [ ! -d "$WORK_DIR/vendor/saiv/image_understanding/db/sce_detector" ] || \
+            [ "$TARGET_PLATFORM_SDK_VERSION" -lt "$SOURCE_PLATFORM_SDK_VERSION" ]; }; then
     if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/sce_detector" ]; then
         DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/sce_detector"
     fi
@@ -207,7 +209,7 @@ if [ -f "$WORK_DIR/system/system/lib64/libSmartScan.camera.samsung.so" ]; then
     fi
 fi
 
-unset SOURCE_FIRMWARE_PATH TARGET_FIRMWARE_PATH \
+unset SOURCE_FIRMWARE_PATH TARGET_FIRMWARE_PATH SOURCE_SCE_DETECTOR \
     SOURCE_VISION_CONFIG_FACE_RECOGNITION_SOLUTION TARGET_VISION_CONFIG_FACE_RECOGNITION_SOLUTION \
     SOURCE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION TARGET_GALLERY_CONFIG_IMAGE_TAGGER_VERSION \
     SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION \

@@ -20,11 +20,18 @@ if [ -s "$SMART_SUGGESTIONS_APK_DIR/assets/commonsense/airport_names_v1.0.0.csv.
 fi
 
 LOG "- Disabling unsupported Smart Suggestions SSCO semantic provider path"
-SMALI_PATCH "system" "$SMART_SUGGESTIONS_APK" "$SMART_SUGGESTIONS_SSCO_REQUESTER" "replace" \
-    "b(Ljava/lang/String;Ljava/lang/String;)[F" \
-    "new-instance v0, Lcom/samsung/android/smartsuggestions/feature/aisuggestion/ui/test/c;" \
-    "    const/4 p0, 0x0\n\n    return-object p0" \
-    > /dev/null || true
+SSCO_REQUESTER_SMALI="$SMART_SUGGESTIONS_APK_DIR/$SMART_SUGGESTIONS_SSCO_REQUESTER"
+SSCO_REQUESTER_CONSTRUCTOR="$(
+    sed -n '/^\.method.* b(Ljava\/lang\/String;Ljava\/lang\/String;)\[F/,/^\.end method/p' \
+        "$SSCO_REQUESTER_SMALI" | grep -m 1 '^[[:space:]]*new-instance v0,' || true
+)"
+if [ "$SSCO_REQUESTER_CONSTRUCTOR" ]; then
+    SMALI_PATCH "system" "$SMART_SUGGESTIONS_APK" "$SMART_SUGGESTIONS_SSCO_REQUESTER" "replace" \
+        "b(Ljava/lang/String;Ljava/lang/String;)[F" \
+        "$SSCO_REQUESTER_CONSTRUCTOR" \
+        "    const/4 p0, 0x0\n\n    return-object p0" \
+        > /dev/null
+fi
 SMALI_PATCH "system" "$SMART_SUGGESTIONS_APK" "$SMART_SUGGESTIONS_SSCO_REQUESTER" "return" \
     "d(Ljava/lang/String;)Z" \
     "false" \
@@ -95,6 +102,8 @@ ENABLE_SMART_SUGGESTIONS_RUNE "getSUPPORT_AI_SUGGESTION_WIDGET_SETTINGS_BACKGROU
 ENABLE_SMART_SUGGESTIONS_RUNE "getSUPPORT_AI_SUGGESTION_WIDGET_SETTINGS_BACKGROUND_SHAPE()Z"
 ENABLE_SMART_SUGGESTIONS_RUNE "getSUPPORT_AI_SUGGESTION_WIDGET_SETTINGS_DIM()Z"
 ENABLE_SMART_SUGGESTIONS_RUNE "getSUPPORT_AI_SUGGESTION_WIDGET_SETTINGS_TRANSPARENCY()Z"
+
+unset SSCO_REQUESTER_SMALI SSCO_REQUESTER_CONSTRUCTOR
 
 LOG "- Enabling Smart Suggestions Now/briefing gates"
 ENABLE_SMART_SUGGESTIONS_RUNE "getSUPPORT_4x2_WIDGET_WEATHER_INFO()Z"

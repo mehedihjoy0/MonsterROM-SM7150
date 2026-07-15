@@ -1,0 +1,103 @@
+From: MonsterROM <noreply@monsterrom.local>
+Subject: [PATCH] kernel: port Floppy BPF uname spoof modes
+
+Keep the existing fake-uname Kconfig version selection, but make its BPF
+loader scope runtime-configurable like FloppyKernel. Mode 0 disables it,
+mode 1 limits it to netbpfload, and mode 2 covers all expected root loaders.
+
+diff --git a/init/main.c b/init/main.c
+--- a/init/main.c
++++ b/init/main.c
+@@ -177,6 +177,33 @@ static int __init set_reset_devices(char *str)
+ 
+ __setup("reset_devices", set_reset_devices);
+ 
++static int uname_bpf_spoof = 2;
++
++static int __init set_uname_bpf_spoof(char *val)
++{
++	int mode = uname_bpf_spoof;
++
++	if (get_option(&val, &mode)) {
++		switch (mode) {
++		case 0:
++		case 1:
++		case 2:
++			uname_bpf_spoof = mode;
++			break;
++		default:
++			uname_bpf_spoof = 0;
++		}
++	}
++
++	return 0;
++}
++__setup("uname_bpf_spoof=", set_uname_bpf_spoof);
++
++int is_bpf_spoof_enabled(void)
++{
++	return uname_bpf_spoof;
++}
++
+ static const char *argv_init[MAX_INIT_ARGS+2] = { "init", NULL, };
+ const char *envp_init[MAX_INIT_ENVS+2] = { "HOME=/", "TERM=linux", NULL, };
+ static const char *panic_later, *panic_param;
+diff --git a/kernel/sys.c b/kernel/sys.c
+--- a/kernel/sys.c
++++ b/kernel/sys.c
+@@ -1258,5 +1258,6 @@ extern struct static_key_false susfs_is_uname_spoof_buffer_set;
+ extern void susfs_spoof_uname(struct new_utsname* tmp);
+ #endif
++extern int is_bpf_spoof_enabled(void);
+ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
+ {
+ 	struct new_utsname tmp;
+@@ -1269,25 +1270,36 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
+ 		susfs_spoof_uname(&tmp);
+ #endif
+ #ifndef CONFIG_FAKE_UNAME_NONE
+-	if (!strncmp(current->comm, "bpfloader", 9) ||
+-	    !strncmp(current->comm, "netbpfload", 10) ||
+-	    !strncmp(current->comm, "netd", 4) ||
+-	    !strncmp(current->comm, "uprobestats", 11)) {
++	{
++		int bpf_spoof = is_bpf_spoof_enabled();
++		bool match = false;
++
++		if (bpf_spoof == 1) {
++			match = !strncmp(current->comm, "netbpfload", 10);
++		} else if (bpf_spoof >= 2) {
++			match = !strncmp(current->comm, "bpfloader", 9) ||
++				!strncmp(current->comm, "netbpfload", 10) ||
++				!strncmp(current->comm, "netd", 4) ||
++				!strncmp(current->comm, "uprobestats", 11);
++		}
++
++		if (match && current_uid().val == 0) {
+ #if defined(CONFIG_FAKE_UNAME_5_4)
+-		strcpy(tmp.release, "5.4.200");
++			strcpy(tmp.release, "5.4.200");
+ #elif defined(CONFIG_FAKE_UNAME_5_10)
+-		strcpy(tmp.release, "5.10.200");
++			strcpy(tmp.release, "5.10.200");
+ #elif defined(CONFIG_FAKE_UNAME_5_15)
+-		strcpy(tmp.release, "5.15.200");
++			strcpy(tmp.release, "5.15.200");
+ #elif defined(CONFIG_FAKE_UNAME_6_1)
+-		strcpy(tmp.release, "6.1.200");
++			strcpy(tmp.release, "6.1.200");
+ #elif defined(CONFIG_FAKE_UNAME_6_6)
+-		strcpy(tmp.release, "6.6.200");
++			strcpy(tmp.release, "6.6.200");
+ #elif defined(CONFIG_FAKE_UNAME_6_12)
+-		strcpy(tmp.release, "6.12.200");
++			strcpy(tmp.release, "6.12.200");
+ #endif
+-		pr_debug("fake uname: %s/%d release=%s\n",
+-			 current->comm, current->pid, tmp.release);
++			pr_debug("fake uname: %s/%d release=%s\n",
++				 current->comm, current->pid, tmp.release);
++		}
+ 	}
+ #endif
+ 	up_read(&uts_sem);

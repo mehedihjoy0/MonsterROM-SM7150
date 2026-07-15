@@ -126,14 +126,21 @@ SMALI_PATCH "system" "system/framework/services.jar" \
     'if-nez v0, :cond_19' \
     'if-nez v0, :cond_19\n\n    const-string v43, "persist.sys.unica.sdkbypass"\n\n    const/16 v44, 0x0\n\n    invoke-static/range {v43 .. v44}, Landroid/os/SystemProperties;->getBoolean(Ljava/lang/String;Z)Z\n\n    move-result v43\n\n    if-nez v43, :cond_19'
 
+ASKS_SMALI="$APKTOOL_DIR/system/framework/services.jar/smali/com/android/server/asks/ASKSManagerService.smali"
+ASKS_POLICY_METHOD='getUnknownAppsDataFromXML(ILjava/util/ArrayList;Ljava/util/HashMap;Z)V'
+if ! sed -n '/^\.method.*getUnknownAppsDataFromXML(/,/^\.end method/p' "$ASKS_SMALI" | \
+        grep -q 'ro.build.official.release'; then
+    ASKS_POLICY_METHOD='getPolicyFilePath(IZ)Ljava/lang/String;'
+fi
+
 SMALI_PATCH "system" "system/framework/services.jar" \
     "smali/com/android/server/asks/ASKSManagerService.smali" "replace" \
-    'getUnknownAppsDataFromXML(ILjava/util/ArrayList;Ljava/util/HashMap;Z)V' \
+    "$ASKS_POLICY_METHOD" \
     'ro.build.official.release' \
     'persist.sys.unica.asks'
 SMALI_PATCH "system" "system/framework/services.jar" \
     "smali/com/android/server/asks/ASKSManagerService.smali" "replace" \
-    'getUnknownAppsDataFromXML(ILjava/util/ArrayList;Ljava/util/HashMap;Z)V' \
+    "$ASKS_POLICY_METHOD" \
     'false' \
     'true'
 SMALI_PATCH "system" "system/framework/services.jar" \
@@ -156,6 +163,7 @@ SMALI_PATCH "system" "system/framework/services.jar" \
     'verifyASKStokenForPackage(Ljava/lang/String;Ljava/lang/String;J[Landroid/content/pm/Signature;Ljava/lang/String;Ljava/lang/String;Z)I' \
     'invoke-static {v6}, Landroid/os/SystemProperties;->get(Ljava/lang/String;)Ljava/lang/String;' \
     'const-string/jumbo v10, "true"\n\n    invoke-static {v6, v10}, Landroid/os/SystemProperties;->get(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;'
+unset ASKS_SMALI ASKS_POLICY_METHOD
 
 LOG_STEP_IN "- Adding UN1CA Settings"
 

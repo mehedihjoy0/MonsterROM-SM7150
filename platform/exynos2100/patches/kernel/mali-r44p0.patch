@@ -1,0 +1,99 @@
+diff --git a/arch/arm64/configs/exynos2100-unified_defconfig b/arch/arm64/configs/exynos2100-unified_defconfig
+index 1be9993954be..b4b4bbd7d66f 100755
+--- a/arch/arm64/configs/exynos2100-unified_defconfig
++++ b/arch/arm64/configs/exynos2100-unified_defconfig
+@@ -3565,7 +3565,8 @@ CONFIG_VIDEOBUF2_DMA_SG=m
+ # CONFIG_MALI_DDK_VALHALL_R26P0 is not set
+ # CONFIG_MALI_DDK_VALHALL_R32P1 is not set
+ # CONFIG_MALI_DDK_VALHALL_R38P0 is not set
+-CONFIG_MALI_DDK_VALHALL_R38P1=y
++# CONFIG_MALI_DDK_VALHALL_R38P1 is not set
++CONFIG_MALI_DDK_VALHALL_R44P0=y
+ CONFIG_MALI_MIDGARD=m
+ # CONFIG_MALI_GATOR_SUPPORT is not set
+ # CONFIG_MALI_MIDGARD_DVFS is not set
+diff --git a/drivers/gpu/arm/Kbuild b/drivers/gpu/arm/Kbuild
+index ff33eca1b011..d4d888d8d230 100755
+--- a/drivers/gpu/arm/Kbuild
++++ b/drivers/gpu/arm/Kbuild
+@@ -42,3 +42,6 @@ endif
+ ifeq ($(CONFIG_MALI_DDK_VALHALL_R38P1),y)
+ 	obj-$(CONFIG_MALI_MIDGARD) += v_r38p1/
+ endif
++ifeq ($(CONFIG_MALI_DDK_VALHALL_R44P0),y)
++	obj-$(CONFIG_MALI_MIDGARD) += v_r44p0/
++endif
+diff --git a/drivers/gpu/arm/Kconfig b/drivers/gpu/arm/Kconfig
+index 312a43a6066a..647e68de7e2b 100755
+--- a/drivers/gpu/arm/Kconfig
++++ b/drivers/gpu/arm/Kconfig
+@@ -57,6 +57,9 @@ config MALI_DDK_VALHALL_R38P0
+ config MALI_DDK_VALHALL_R38P1
+ 	bool "Valhall r38p1 driver"
+ 
++config MALI_DDK_VALHALL_R44P0
++	bool "Valhall r44p0 driver"
++
+ endchoice
+ 
+ if MALI_DDK_VALHALL_R20P0
+@@ -91,4 +94,8 @@ if MALI_DDK_VALHALL_R38P1
+ source "drivers/gpu/arm/v_r38p1/Kconfig"
+ endif
+ 
++if MALI_DDK_VALHALL_R44P0
++source "drivers/gpu/arm/v_r44p0/Kconfig"
++endif
++
+ endmenu
+diff --git a/drivers/gpu/arm/v_r44p0/Kconfig b/drivers/gpu/arm/v_r44p0/Kconfig
+index b86397f..fbfa00e 100644
+--- a/drivers/gpu/arm/v_r44p0/Kconfig
++++ b/drivers/gpu/arm/v_r44p0/Kconfig
+@@ -395,7 +395,7 @@ config MALI_SEC_DEPENDENCY_CHECK
+ endif
+ 
+ config MALI_ARBITRATION
+-	tristate "Enable Virtualization reference code"
++	bool "Enable Virtualization reference code"
+ 	depends on MALI_MIDGARD
+ 	default n
+ 	help
+diff --git a/drivers/gpu/arm/v_r44p0/mmu/mali_kbase_mmu.c b/drivers/gpu/arm/v_r44p0/mmu/mali_kbase_mmu.c
+index 387ac07..1e5a49a 100644
+--- a/drivers/gpu/arm/v_r44p0/mmu/mali_kbase_mmu.c
++++ b/drivers/gpu/arm/v_r44p0/mmu/mali_kbase_mmu.c
+@@ -308,12 +308,11 @@ static void kbase_mmu_sync_pgd_gpu(struct kbase_device *kbdev, struct kbase_cont
+ 
+ static void kbase_mmu_sync_pgd_cpu(struct kbase_device *kbdev, dma_addr_t handle, size_t size)
+ {
+-	/* In non-coherent system, ensure the GPU can read
+-	 * the pages from memory
++	/* Ensure that the GPU can read the pages from memory. Pixel's r44
++	 * integration requires this sync even when the system is coherent.
+ 	 */
+-	if (kbdev->system_coherency == COHERENCY_NONE)
+-		dma_sync_single_for_device(kbdev->dev, handle, size,
+-				DMA_TO_DEVICE);
++	dma_sync_single_for_device(kbdev->dev, handle, size,
++			DMA_TO_DEVICE);
+ }
+ 
+ /**
+@@ -339,14 +338,8 @@ static void kbase_mmu_sync_pgd(struct kbase_device *kbdev, struct kbase_context
+ 			       phys_addr_t phys, dma_addr_t handle, size_t size,
+ 			       enum kbase_mmu_op_type flush_op)
+ {
+-#if IS_ENABLED(CONFIG_MALI_EXYNOS_LLC)
+-	if (kbdev->system_coherency != COHERENCY_ACE){
+-#else
+-	if (kbdev->system_coherency == COHERENCY_NONE){
+-#endif
+-		kbase_mmu_sync_pgd_cpu(kbdev, handle, size);
+-		kbase_mmu_sync_pgd_gpu(kbdev, kctx, phys, size, flush_op);
+-	}
++	kbase_mmu_sync_pgd_cpu(kbdev, handle, size);
++	kbase_mmu_sync_pgd_gpu(kbdev, kctx, phys, size, flush_op);
+ }
+ 
+ /*

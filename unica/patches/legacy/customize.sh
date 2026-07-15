@@ -309,13 +309,29 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
             "onChange(Z)V" \
             "CLOUDY_WORK_MODE" \
             "1"
+        USB_HOST_RESTRICTOR_HANDLER_SMALI="$(
+            find "$APKTOOL_DIR/system/framework/services.jar" -type f \
+                    -name 'UsbHostRestrictor$*.smali' -print0 | \
+                while IFS= read -r -d '' SMALI; do
+                    if grep -qF '.method public final handleMessage(Landroid/os/Message;)V' "$SMALI" && \
+                            grep -qF 'SUNNY_WORK_MODE' "$SMALI" && \
+                            grep -qF 'RAINY_RESTRICT_MODE' "$SMALI"; then
+                        printf '%s\n' "${SMALI#"$APKTOOL_DIR/system/framework/services.jar/"}"
+                        break
+                    fi
+                done
+        )"
+        if [[ -z "$USB_HOST_RESTRICTOR_HANDLER_SMALI" ]]; then
+            ABORT "UsbHostRestrictor mode handler smali is missing"
+            return 1
+        fi
         SMALI_PATCH "system" "system/framework/services.jar" \
-            "smali_classes2/com/android/server/usb/UsbHostRestrictor\$8.smali" "replace" \
+            "$USB_HOST_RESTRICTOR_HANDLER_SMALI" "replace" \
             "handleMessage(Landroid/os/Message;)V" \
             "SUNNY_WORK_MODE" \
             "0"
         SMALI_PATCH "system" "system/framework/services.jar" \
-            "smali_classes2/com/android/server/usb/UsbHostRestrictor\$8.smali" "replace" \
+            "$USB_HOST_RESTRICTOR_HANDLER_SMALI" "replace" \
             "handleMessage(Landroid/os/Message;)V" \
             "RAINY_RESTRICT_MODE" \
             "2"
@@ -329,6 +345,7 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
             "onBootPhase(I)V" \
             "CLOUDY_WORK_MODE" \
             "1"
+        unset USB_HOST_RESTRICTOR_HANDLER_SMALI SMALI
     fi
 
     unset VBOOT_MISSING KERNEL_MISSING

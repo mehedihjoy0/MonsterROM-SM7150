@@ -1,0 +1,217 @@
+From: MonsterROM <noreply@monsterrom.local>
+Subject: [PATCH] lk3rd: support the bundled LLVM toolchain
+
+Port lk3rd to the AOSP Clang toolchain already used by MonsterROM. Fix
+Clang diagnostics, LLD syntax, PIE relocations, the nested boot-shim
+compiler handoff, and portable binary settings output under Ubuntu sh.
+
+diff --git a/arch/arm64/start.S b/arch/arm64/start.S
+index 8cac2d89..7e745d52 100644
+--- a/arch/arm64/start.S
++++ b/arch/arm64/start.S
+@@ -42,8 +42,10 @@ arm_reset:
+ .L__do_bss:
+     /* clear out the bss excluding the stack and kernel translation table  */
+     /* NOTE: relies on __post_prebss_bss_start and __bss_end being 8 byte aligned */
+-    ldr     tmp, =__post_prebss_bss_start
+-    ldr     tmp2, =__bss_end
++    adrp    tmp, __post_prebss_bss_start
++    add     tmp, tmp, :lo12:__post_prebss_bss_start
++    adrp    tmp2, __bss_end
++    add     tmp2, tmp2, :lo12:__bss_end
+     sub     tmp2, tmp2, tmp
+     cbz     tmp2, .L__bss_loop_done
+ .L__bss_loop:
+diff --git a/dev/scsi/ufs.c b/dev/scsi/ufs.c
+index e6bec1ea..809fdfc6 100644
+--- a/dev/scsi/ufs.c
++++ b/dev/scsi/ufs.c
+@@ -1878,7 +1878,7 @@ static int ufs_check_available_blocks(struct ufs_host *ufs,
+ 	int ret = 0;
+ 
+ 	unsigned long src_alloc_units = be32_to_cpu(src->dNumAllocUnits);
+-	unsigned long tgt_alloc_units;
++	unsigned long tgt_alloc_units = 0;
+ 	unsigned long target_in_byte = tgt->dNumAllocUnits * 1024 * 1024;
+ 	unsigned int enhanced_type_one_ratio = be16_to_cpu(ufs->geometry_desc.wEnhanced1CapAdjFac) / 256;
+ 	unsigned long alloc_unit_in_byte = ufs->geometry_desc.bAllocationUnitSize *
+diff --git a/dev/usb/dwc3/dwc3-dev-ep0.h b/dev/usb/dwc3/dwc3-dev-ep0.h
+index 724e6391..d1145cdb 100644
+--- a/dev/usb/dwc3/dwc3-dev-ep0.h
++++ b/dev/usb/dwc3/dwc3-dev-ep0.h
+@@ -655,7 +655,7 @@ static u8 dwc3_dev_ep0_datastage(DWC3_DEV_EP0_HANDLER dwc3_dev_ep0_h, void **pNe
+ 		break;
+ 	}
+ 	// If control transfer is 2 stage, it must be wait not ready event to transit status stage
+-	if ((*pLen == 0)) {
++	if (*pLen == 0) {
+ 		dwc3_dev_ep0_h->m_eNextEvt = DEPEVT_EVT_XFER_NRDY;
+ 		dwc3_dev_ep0_h->m_hEP->m_eDir = (USB_DIR)(~((u8) dwc3_dev_ep0_h->m_hEP->m_eDir) & 0x1);
+ 		bRet = false;
+diff --git a/engine.mk b/engine.mk
+index cf5012a1..5e9e734a 100644
+--- a/engine.mk
++++ b/engine.mk
+@@ -71,7 +71,7 @@ GLOBAL_CFLAGS += -Werror -fno-stack-protector
+ # Build with -ffreestanding since we are building an OS kernel and cannot
+ # rely on all hosted environment functionality being present.
+ GLOBAL_COMPILEFLAGS += -ffreestanding
+-GLOBAL_CFLAGS := --std=gnu11 -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
++GLOBAL_CFLAGS := --std=gnu11 -fPIC -Werror-implicit-function-declaration -Wstrict-prototypes -Wwrite-strings
+ GLOBAL_CPPFLAGS := --std=c++14 -fno-exceptions -fno-rtti -fno-threadsafe-statics
+ #GLOBAL_CPPFLAGS += -Weffc++
+ GLOBAL_ASMFLAGS := -DASSEMBLY
+diff --git a/lib/fastboot/fastboot_cmd.c b/lib/fastboot/fastboot_cmd.c
+index ff3a9101..d007be26 100644
+--- a/lib/fastboot/fastboot_cmd.c
++++ b/lib/fastboot/fastboot_cmd.c
+@@ -715,7 +715,7 @@ int fb_do_flash(char *cmd_buffer, unsigned int rx_sz)
+ 		print_lcd_update(FONT_ORANGE, FONT_BLACK, "Patching lk3rd, please do not turn off/reboot your device.");
+ 
+ 		int persistent_storage_entry_num = sizeof(enum persistent_storage_entries);
+-		int persistent_entries[persistent_storage_entry_num] = {};
++		int persistent_entries[sizeof(enum persistent_storage_entries)] = { 0 };
+ 
+ 		for(int i = 0; i < persistent_storage_entry_num; i++)
+ 		{
+@@ -762,7 +762,7 @@ int fb_do_flash(char *cmd_buffer, unsigned int rx_sz)
+ 		print_lcd_update(FONT_ORANGE, FONT_BLACK, "Patching lk3rd, please do not turn off/reboot your device.");
+ 
+ 		int persistent_storage_entry_num = sizeof(enum persistent_storage_entries);
+-		int persistent_entries[persistent_storage_entry_num] = {};
++		int persistent_entries[sizeof(enum persistent_storage_entries)] = { 0 };
+ 
+ 		for(int i = 0; i < persistent_storage_entry_num; i++)
+ 		{
+@@ -1098,7 +1098,7 @@ int fb_do_oem(char *cmd_buffer, unsigned int rx_sz)
+ 			}
+ 			break;
+ 
+-		case OEM_UNINSTALL_LK3RD:
++		case OEM_UNINSTALL_LK3RD: {
+ 			void *part = part_get("boot");
+ 			void *part_lk3rd = part_get("lk3rd");
+ 			struct pit_entry *boot_entry = (struct pit_entry *)part;
+@@ -1128,6 +1128,7 @@ int fb_do_oem(char *cmd_buffer, unsigned int rx_sz)
+ 
+ 			query_gpt_rebuild(false);
+ 			break;
++		}
+ 
+ 		default:
+ 			sprintf(response, "FAILunsupported command");
+diff --git a/lib/gpt/pit.c b/lib/gpt/pit.c
+index 2efcb7c2..67a9e9e2 100644
+--- a/lib/gpt/pit.c
++++ b/lib/gpt/pit.c
+@@ -17,7 +17,6 @@
+ #include <types.h>
+ #include <stdlib.h>
+ #include <string.h>
+-#include <strings.h>
+ 
+ #include <platform/decompress_ext4.h>
+ 
+@@ -288,8 +287,8 @@ static int pit_flash_sparse(struct pit_entry *ptn, u64 addr)
+         /* Open device, do operation */
+         dev = bio_open("scsi0");
+ 
+-	if (!check_compress_ext4((char *)addr,
+-				pit_get_length(ptn)) != 0) {
++	if (check_compress_ext4((char *)addr,
++				pit_get_length(ptn)) == 0) {
+ 		printf("Compressed image\n");
+ 		res = write_compressed_ext4((char *)addr, start);
+ 	} else {
+diff --git a/lib/libc/qsort.c b/lib/libc/qsort.c
+index c3650415..804e6c22 100644
+--- a/lib/libc/qsort.c
++++ b/lib/libc/qsort.c
+@@ -50,7 +50,7 @@ static __inline void     swapfunc(char *, char *, int, int);
+         } while (--i > 0);              \
+ }
+ 
+-#define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
++#define SWAPINIT(a, es) swaptype = (uintptr_t)(a) % sizeof(long) || \
+     es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
+ 
+ static __inline void
+diff --git a/lib/lk3rd/boot/Makefile b/lib/lk3rd/boot/Makefile
+index 192eea3d..83ed0315 100644
+--- a/lib/lk3rd/boot/Makefile
++++ b/lib/lk3rd/boot/Makefile
+@@ -1,8 +1,8 @@
+ ARCH              = arm64
+ TARGET            = aarch64-linux-gnu
+-CROSS_COMPILE     = $(TARGET)-
+-CC                = $(CROSS_COMPILE)gcc
+-OBJCOPY           = $(CROSS_COMPILE)objcopy
++CROSS_COMPILE     ?= $(TARGET)-
++CC                ?= $(CROSS_COMPILE)gcc
++OBJCOPY           ?= $(CROSS_COMPILE)objcopy
+ 
+ all: bootshim.elf bootshim.bin
+ 
+diff --git a/make/build.mk b/make/build.mk
+index 40a21942..735e64d3 100644
+--- a/make/build.mk
++++ b/make/build.mk
+@@ -23,13 +23,13 @@ $(ANDROID_BOOT_IMAGE): $(OUTBIN_LK3RD)
+ 	cat $@.tmp $@.pad > $@
+ 	rm $@.tmp $@.pad
+ 	@echo lk3rd: Writing default KASLR and Mainline Quirks settings...
+-	printf '\x00\x00\x00\x00\x01\x00\x00\x00' | dd of=$@ bs=1 seek=$$((0x175000)) conv=notrunc
++	printf '\000\000\000\000\001\000\000\000' | dd of=$@ bs=1 seek=$$((0x175000)) conv=notrunc
+ 	@echo lk3rd: all done! Image is at $@
+ 
+ $(OUTBIN_LK3RD) : $(OUTBIN)
+ 	@echo lk3rd: building final image base: $(MEMBASE): $@
+ 	rm lib/lk3rd/boot/bootshim.bin lib/lk3rd/boot/bootshim.elf -fv
+-	cd lib/lk3rd/boot/ && CREATE_FDT_POINTER=$(CREATE_FDT_POINTER) FDT_POINTER_ADDRESS=$(FDT_POINTER_ADDRESS) LK3RD_BASE=$(MEMBASE) LK3RD_SIZE=0x200000 make
++	cd lib/lk3rd/boot/ && CREATE_FDT_POINTER=$(CREATE_FDT_POINTER) FDT_POINTER_ADDRESS=$(FDT_POINTER_ADDRESS) LK3RD_BASE=$(MEMBASE) LK3RD_SIZE=0x200000 $(MAKE) CROSS_COMPILE=$(TOOLCHAIN_PREFIX)
+ 	cat lib/lk3rd/boot/bootshim.bin $(OUTBIN) > $@
+ 	@echo lk3rd: all done! image can be found at $@
+ 
+@@ -45,7 +45,7 @@ $(OUTELF).hex: $(OUTELF)
+ $(OUTELF): $(ALLMODULE_OBJS) $(EXTRA_OBJS) $(LINKER_SCRIPT) $(EXTRA_LINKER_SCRIPTS)
+ 	$(info linking $@)
+ 	$(NOECHO)$(SIZE) -t --common $(sort $(ALLMODULE_OBJS)) $(EXTRA_OBJS)
+-	$(NOECHO)$(LD) $(GLOBAL_LDFLAGS) $(ARCH_LDFLAGS) -dT $(LINKER_SCRIPT) \
++	$(NOECHO)$(LD) $(GLOBAL_LDFLAGS) $(ARCH_LDFLAGS) -d -T $(LINKER_SCRIPT) \
+ 		$(addprefix -T,$(EXTRA_LINKER_SCRIPTS)) \
+ 		$(ALLMODULE_OBJS) $(EXTRA_OBJS) $(LIBGCC) -Map=$(OUTELF).map -o $@
+ 
+@@ -97,4 +97,3 @@ $(BUILDDIR)/include_paths.txt: $(OUTELF)
+ 	$(NOECHO)echo $(subst -I,,$(sort $(GLOBAL_INCLUDES))) | tr ' ' '\n' > $@
+ 
+ #include arch/$(ARCH)/compile.mk
+-
+diff --git a/platform/exynos9830/platform.c b/platform/exynos9830/platform.c
+index 3ba24b4a..a79f72a6 100644
+--- a/platform/exynos9830/platform.c
++++ b/platform/exynos9830/platform.c
+@@ -445,8 +445,10 @@ static void print_acpm_version(void)
+ 
+ 	for (i = 1; i < num_plugins; i++) {
+ 		plugin_address = plugins + sizeof(struct plugin) * i;
++		plugin = (struct plugin *)(uintptr_t)plugin_address;
+ 		if (readl(get_acpm_plugin_element(plugin, is_attached)) == 1) {
+ 			plugin_ops_address = readl(get_acpm_plugin_element(plugin, plugin_ops));
++			plugin_ops = (struct plugin_ops *)(uintptr_t)plugin_ops_address;
+ 			build_info = (char *)get_acpm_plugin_element(plugin_ops, info);
+ 			printf("ACPM: Plugin(id:%d) version is %s %s\n",
+ 			       (int)readl(get_acpm_plugin_element(plugin, id)),
+diff --git a/platform/exynos9830/rules.mk b/platform/exynos9830/rules.mk
+index 4cd3e39d..57cc169c 100644
+--- a/platform/exynos9830/rules.mk
++++ b/platform/exynos9830/rules.mk
+@@ -39,7 +39,7 @@ MODULE_DEPS += \
+ LINKER_SCRIPT += $(BUILDDIR)/system-onesegment.ld
+ 
+ GLOBAL_COMPILEFLAGS += -mfix-cortex-a53-835769
+-GLOBAL_COMPILEFLAGS += -mfix-cortex-a53-843419
++ARCH_COMPILEFLAGS += -Wno-asm-operand-widths
+ 
+ include make/module.mk
+ include $(LOCAL_DIR)/dpu/rules.mk
+

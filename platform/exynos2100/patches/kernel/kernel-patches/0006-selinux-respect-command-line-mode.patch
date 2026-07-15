@@ -1,0 +1,47 @@
+From: devcore94 <ditternation@outlook.com>
+Subject: [PATCH] selinux: let an explicit mode override the embedded default
+
+Floppy applies its embedded selinux_mode value after the normal kernel
+command line has already been parsed.  That silently overwrites an explicit
+selinux_mode=2 rescue argument and makes the boot-time fallback unusable.
+
+Remember when the setup handler saw a command-line value and only apply the
+embedded build default when no explicit override was supplied.
+
+diff --git a/init/main.c b/init/main.c
+--- a/init/main.c
++++ b/init/main.c
+@@ -310,8 +310,10 @@ static void __init apply_mass_storage_hack_default(void)
+ 	val = strchr(mass_storage_hack_default_arg, '=');
+ 	if (val)
+ 		set_mass_storage_hack(val + 1);
+ }
+ 
++static bool selinux_mode_cmdline_set;
++
+ static int __init set_selinux_mode(char *val)
+ {
+ 	int tmp = selinux_mode;
+@@ -322,11 +324,11 @@ static int __init set_selinux_mode(char *val)
+ 		case FK_SELINUX_MODE_ENFORCING:
+ 		case FK_SELINUX_MODE_PERMISSIVE:
+ 			selinux_mode = tmp;
++			selinux_mode_cmdline_set = true;
+ 			break;
+ 		default:
+-			selinux_mode = FK_SELINUX_MODE_DEFAULT;
+ 			break;
+ 		}
+ 	}
+ 
+ 	return 0;
+@@ -336,6 +338,9 @@ __setup("selinux_mode=", set_selinux_mode);
+ static void __init apply_selinux_mode_default(void)
+ {
+ 	char *val;
++
++	if (selinux_mode_cmdline_set)
++		return;
+ 
+ 	val = strchr(selinux_mode_default_arg, '=');
+ 	if (val)

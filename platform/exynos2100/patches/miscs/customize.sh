@@ -187,7 +187,7 @@ _BACKPORT_LEGACY_DEX_SERVICE()
     local SOURCE_SYSTEM_SERVER="$SOURCE_SERVICES/smali/com/android/server/SystemServer.smali"
     local TARGET_SERVICES="$TARGET_FIRMWARE_DIR/system/system/framework/services.jar"
     local TARGET_APKTOOL="$TMP_DIR/legacy_dex_services"
-    local TARGET_DESKTOPMODE="$TARGET_APKTOOL/smali/com/android/server/desktopmode"
+    local TARGET_DESKTOPMODE=""
     local SOURCE_DESKTOPMODE="$SOURCE_SERVICES/smali_classes3/com/android/server/desktopmode"
     local START_PATCH="$MODPATH/dex/services.jar/0001-Start-legacy-DesktopModeService.patch"
 
@@ -210,13 +210,17 @@ _BACKPORT_LEGACY_DEX_SERVICE()
     fi
 
     LOG "- Backporting legacy DeX system service for the target display pipeline"
-    if [ ! -d "$TARGET_DESKTOPMODE" ]; then
-        EVAL "rm -rf \"$TARGET_APKTOOL\""
+    if [ ! -d "$TARGET_APKTOOL" ]; then
         EVAL "mkdir -p \"$(dirname "$TARGET_APKTOOL")\""
         EVAL "\"$TOOLS_DIR/bin/apktool\" -JXX:TieredStopAtLevel=1 d --no-debug-info -j 1 -p \"$APKTOOL_DIR/framework\" -o \"$TARGET_APKTOOL\" \"$TARGET_SERVICES\"" || return 1
     fi
-    if [ ! -d "$TARGET_DESKTOPMODE" ]; then
-        ABORT "Target DesktopModeService smali is missing"
+
+    TARGET_DESKTOPMODE="$(find "$TARGET_APKTOOL" -type d \
+        -path '*/com/android/server/desktopmode' -print -quit)"
+    if [ -z "$TARGET_DESKTOPMODE" ] || \
+            [ ! -f "$TARGET_DESKTOPMODE/DesktopModeService.smali" ]; then
+        LOG "- Skipping legacy DeX service backport: target firmware uses the newer DexModeService"
+        return 0
     fi
 
     EVAL "mkdir -p \"$(dirname "$SOURCE_DESKTOPMODE")\""

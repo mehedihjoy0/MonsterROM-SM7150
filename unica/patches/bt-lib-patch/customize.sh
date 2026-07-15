@@ -35,6 +35,9 @@ elif xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q "
 elif xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q "88b65a3948050037"; then
     HEX_PATCH "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" \
         "88b65a3948050037" "88b65a392a000014"
+elif xxd -p -c 0 "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" | grep -q "8876523948050037"; then
+    HEX_PATCH "$WORK_DIR/system/system/lib64/libbluetooth_jni.so" \
+        "8876523948050037" "887652392a000014"
 else
     ABORT "No known patch available for the supplied libbluetooth_jni.so"
 fi

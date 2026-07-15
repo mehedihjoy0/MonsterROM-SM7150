@@ -6,6 +6,8 @@ else
 fi
 if [ -f "$FW_DIR/$_TARGET_FIRMWARE_PATH/system/system/lib64/lib_SAG_EQ_ver2090.so" ]; then
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/lib_SAG_EQ_ver2090.so" 0 0 644 "u:object_r:system_lib_file:s0"
+elif [[ "$TARGET_CODENAME" == "r9s" ]]; then
+    ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/lib_SoundBooster_ver1070.so" 0 0 644 "u:object_r:system_lib_file:s0"
 else
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/lib_SoundBooster_ver1050.so" 0 0 644 "u:object_r:system_lib_file:s0"
 fi
@@ -40,4 +42,3 @@ if [[ "$TARGET_CODENAME" != "r9s" ]]; then
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/permissions/privapp-permissions-com.samsung.android.app.ledbackcover.xml" 0 0 644 "u:object_r:system_file:s0"
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/priv-app/LedBackCoverAppUnbound/LedBackCoverAppUnbound.apk" 0 0 644 "u:object_r:system_file:s0"
 fi
-

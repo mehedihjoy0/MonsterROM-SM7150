@@ -177,30 +177,79 @@ if ! $SOURCE_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL; then
             APPLY_PATCH "system" "system/framework/framework.jar" \
                 "$MODPATH/resolution/framework.jar/0001-Enable-FW_DYNAMIC_RESOLUTION_CONTROL.patch"
         fi
-        APPLY_PATCH "system" "system/framework/gamemanager.jar" \
-            "$MODPATH/resolution/gamemanager.jar/0001-Enable-dynamic-resolution-control.patch"
-        APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "$MODPATH/resolution/SecSettings.apk/0001-Enable-dynamic-resolution-control.patch"
-        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "smali_classes2/com/android/settings/Utils\$\$ExternalSyntheticLambda2.smali" "remove"
-        EVAL "sed -i \"s/^\.implements.*/.implements Landroidx\/core\/view\/OnApplyWindowInsetsListener;/g\" \"$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/smali_classes2/com/android/settings/Utils\\\$\\\$ExternalSyntheticLambda3.smali\""
-        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticLambda3.smali" "remove"
-        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticLambda7.smali" "remove"
-        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticLambda9.smali" "remove"
-        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-            "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticOutline0.smali" "remove"
-        if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
+        DECODE_APK "system" "system/framework/gamemanager.jar" || return 1
+        DYN_RESOLUTION_GAME_LISTENER="$APKTOOL_DIR/system/framework/gamemanager.jar/smali/com/samsung/android/game/display/GameDisplayListener.smali"
+        if grep -qF 'invoke-virtual {v0, v0}, Ljava/lang/String;->equals(Ljava/lang/Object;)Z' \
+                "$DYN_RESOLUTION_GAME_LISTENER"; then
+            LOG "- Skipping gamemanager dynamic-resolution patch: support is already enabled"
+        else
+            APPLY_PATCH "system" "system/framework/gamemanager.jar" \
+                "$MODPATH/resolution/gamemanager.jar/0001-Enable-dynamic-resolution-control.patch"
+        fi
+        unset DYN_RESOLUTION_GAME_LISTENER
+
+        DECODE_APK "system" "system/priv-app/SecSettings/SecSettings.apk" || return 1
+        DYN_RESOLUTION_SETTINGS_NEEDS_BACKPORT=false
+        DYN_RESOLUTION_SETTINGS_DIR="$(find \
+            "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk" -type d \
+            -path '*/com/samsung/android/settings/display/controller' -print -quit)"
+        if [ ! -f "$DYN_RESOLUTION_SETTINGS_DIR/ScreenResolutionPreferenceController.smali" ] || \
+                [ ! -f "$DYN_RESOLUTION_SETTINGS_DIR/SecScreenResolutionSingleChoiceController.smali" ]; then
+            ABORT "SecSettings screen-resolution controllers are missing"
+        elif grep -qF 'const/4 p0, 0x3' \
+                "$DYN_RESOLUTION_SETTINGS_DIR/ScreenResolutionPreferenceController.smali" \
+                "$DYN_RESOLUTION_SETTINGS_DIR/SecScreenResolutionSingleChoiceController.smali"; then
+            APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                "$MODPATH/resolution/SecSettings.apk/0001-Enable-dynamic-resolution-control.patch"
+            DYN_RESOLUTION_SETTINGS_NEEDS_BACKPORT=true
+        else
+            LOG "- Skipping SecSettings dynamic-resolution patch: controllers already expose the setting"
+        fi
+        unset DYN_RESOLUTION_SETTINGS_DIR
+        if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ] && \
+                $DYN_RESOLUTION_SETTINGS_NEEDS_BACKPORT; then
+            SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                "smali_classes2/com/android/settings/Utils\$\$ExternalSyntheticLambda2.smali" "remove"
+            EVAL "sed -i \"s/^\.implements.*/.implements Landroidx\/core\/view\/OnApplyWindowInsetsListener;/g\" \"$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/smali_classes2/com/android/settings/Utils\\\$\\\$ExternalSyntheticLambda3.smali\""
+            SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticLambda3.smali" "remove"
+            SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticLambda7.smali" "remove"
+            SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticLambda9.smali" "remove"
+            SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+                "smali_classes2/com/android/settings/applications/manageapplications/ManageApplications\$ApplicationsAdapter\$\$ExternalSyntheticOutline0.smali" "remove"
             APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
                 "$MODPATH/resolution/SecSettings.apk/0002-Backport-legacy-DYN_RESOLUTION_CONTROL-code.patch"
             EVAL "sed -i \"/static fields/,+3d\" \"$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/smali_classes4/com/samsung/android/settings/display/ScreenResolutionFragment.smali\""
             SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
                 "smali_classes4/com/samsung/android/settings/display/controller/ScreenResolutionPreferenceController\$2.smali" "remove"
+        elif [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
+            LOG "- Skipping legacy SecSettings resolution backport: native display-mode implementation is available"
         fi
-        APPLY_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
-            "$MODPATH/resolution/SystemUI.apk/0001-Enable-dynamic-resolution-control.patch"
+        unset DYN_RESOLUTION_SETTINGS_NEEDS_BACKPORT
+        DECODE_APK "system_ext" "priv-app/SystemUI/SystemUI.apk" || return 1
+        DYN_RESOLUTION_SYSTEMUI_DIR="$APKTOOL_DIR/system_ext/priv-app/SystemUI/SystemUI.apk"
+        DYN_RESOLUTION_EDGE_INFO="$(find "$DYN_RESOLUTION_SYSTEMUI_DIR" -type f \
+            -path '*/com/android/systemui/edgelighting/effect/data/EdgeEffectInfo.smali' -print -quit)"
+        DYN_RESOLUTION_EDGE_DIALOG="$(find "$DYN_RESOLUTION_SYSTEMUI_DIR" -type f \
+            -path '*/com/android/systemui/edgelighting/effect/container/EdgeLightingDialog.smali' -print -quit)"
+        DYN_RESOLUTION_NOTIFICATION_EFFECT="$(find "$DYN_RESOLUTION_SYSTEMUI_DIR" -type f \
+            -path '*/com/android/systemui/edgelighting/effect/container/NotificationEffect.smali' -print -quit)"
+        if [ -n "$DYN_RESOLUTION_EDGE_INFO" ] && \
+                [ -n "$DYN_RESOLUTION_EDGE_DIALOG" ] && \
+                [ -n "$DYN_RESOLUTION_NOTIFICATION_EFFECT" ] && \
+                grep -qF '.field public mIsMultiResolutionSupoorted:Z' "$DYN_RESOLUTION_EDGE_INFO" && \
+                grep -qF -- '->setIsMultiResolutionSupoorted(Z)V' "$DYN_RESOLUTION_EDGE_DIALOG" && \
+                grep -qF '.method public setIsMultiResolutionSupoorted(Z)V' \
+                    "$DYN_RESOLUTION_NOTIFICATION_EFFECT"; then
+            LOG "- Skipping SystemUI dynamic-resolution patch: edge lighting already supports it"
+        else
+            APPLY_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \
+                "$MODPATH/resolution/SystemUI.apk/0001-Enable-dynamic-resolution-control.patch"
+        fi
+        unset DYN_RESOLUTION_SYSTEMUI_DIR DYN_RESOLUTION_EDGE_INFO
+        unset DYN_RESOLUTION_EDGE_DIALOG DYN_RESOLUTION_NOTIFICATION_EFFECT
     fi
 else
     if ! $TARGET_COMMON_SUPPORT_DYN_RESOLUTION_CONTROL; then
@@ -395,11 +444,24 @@ if [[ "$SOURCE_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS" != "$TARGET_LCD_CONFIG_CONTRO
         "getBrightness()Ljava/lang/String;" \
         "$SOURCE_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS" \
         "$TARGET_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS"
-    SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
-        "smali_classes4/com/samsung/android/settings/Rune.smali" "replace" \
-        "<clinit>()V" \
-        "$SOURCE_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS" \
-        "$TARGET_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS"
+    DECODE_APK "system" "system/priv-app/SecSettings/SecSettings.apk" || return 1
+    SECSETTINGS_RUNE_SMALI="$(find \
+        "$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk" -type f \
+        -path '*/com/samsung/android/settings/Rune.smali' -print -quit)"
+    if [[ -z "$SECSETTINGS_RUNE_SMALI" ]]; then
+        ABORT "SecSettings Rune smali is missing"
+        return 1
+    elif grep -Eq "^[[:space:]]*const-string(/jumbo)?[[:space:]]+[^,]+,[[:space:]]+\"$SOURCE_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS\"$" \
+            "$SECSETTINGS_RUNE_SMALI"; then
+        SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+            "${SECSETTINGS_RUNE_SMALI#"$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/"}" "replace" \
+            "<clinit>()V" \
+            "$SOURCE_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS" \
+            "$TARGET_LCD_CONFIG_CONTROL_AUTO_BRIGHTNESS"
+    else
+        LOG "- Skipping SecSettings auto-brightness Rune patch: value is no longer hardcoded"
+    fi
+    unset SECSETTINGS_RUNE_SMALI
 fi
 
 # SEC_PRODUCT_FEATURE_LCD_CONFIG_HFR_DEFAULT_REFRESH_RATE

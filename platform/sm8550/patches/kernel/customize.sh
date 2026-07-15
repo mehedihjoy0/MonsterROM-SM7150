@@ -1,20 +1,9 @@
-if [ "${SM8550_CUSTOM_KERNEL:-0}" != "1" ]; then
-    LOG "- Keeping stock target kernel for One UI 9"
-    return 0
-fi
-
-if [ "${SM8550_CUSTOM_KERNEL_ANDROID17:-0}" != "1" ]; then
-    LOGE "Legacy sm8550 kernel is not validated for Android 17"
-    LOGE "Set SM8550_CUSTOM_KERNEL_ANDROID17=1 only after updating its source and ramdisk compatibility"
-    return 1
-fi
-
 LOG_STEP_IN "- Processing optional custom common kernel by @Edgars-cirulis"
 
 PDR="$(pwd)"
 KERNEL_URL="${SM8550_KERNEL_URL:-https://github.com/fsrb-android-dev/edgars-sm8550-kernel/releases/download/23/DMXQ-KERNEL-KSU.ZIP}"
 BOOT_EDITOR_URL="${SM8550_BOOT_EDITOR_URL:-https://github.com/cfig/Android_boot_image_editor/releases/download/v15_r1/boot_editor_v15_r1.zip}"
-KERNELSU_MANAGER_APK="${SM8550_KERNELSU_MANAGER_APK:-https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.0.1/KernelSU_Next_v3.0.1_32967-release.apk}"
+KERNELSU_MANAGER_APK="${SM8550_KERNELSU_MANAGER_APK:-https://https://github.com/KernelSU-Next/KernelSU-Next/releases/download/v3.3.0/KernelSU_Next_v3.3.0_33214-release.apk}"
 
 REPLACE_KERNEL_BINARIES()
 {

@@ -17,9 +17,11 @@ overlay/SoftapOverlayQC
 # DevGPUDriver
 SYSTEM_DEBLOAT+="
 system/priv-app/DevGPUDriver-EX2200
+system/priv-app/DevGPUDriver-EX2600
 "
 
 # GameDriver
 SYSTEM_DEBLOAT+="
 system/priv-app/GameDriver-EX2200
+system/priv-app/GameDriver-EX2600
 "
