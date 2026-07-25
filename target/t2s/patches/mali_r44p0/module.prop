@@ -1,4 +1,0 @@
-id=mali_r44p0
-name=Mali r44p0 matched driver stack (experimental)
-author=ditternation
-description=Ports a pinned Mali-G78 r44p0 userspace/KMD pair to t2s with verified Android 14 SP-HAL dependencies and an r38p1 rollback selector.
