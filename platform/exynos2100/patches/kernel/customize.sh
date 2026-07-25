@@ -286,7 +286,6 @@ fi
 printf '%s\n' "$KERNEL_COMMIT" > "$KERNEL_ARTIFACT_DIR/latest-commit.txt"
 BOOT_IMAGE_SHA256="$(sha256sum "$WORK_DIR/kernel/boot.img" | cut -d ' ' -f 1)"
 VENDOR_BOOT_IMAGE_SHA256="$(sha256sum "$WORK_DIR/kernel/vendor_boot.img" | cut -d ' ' -f 1)"
-{
     printf 'target=%s\n' "$TARGET_CODENAME"
     printf 'floppy_commit=%s\n' "$KERNEL_COMMIT"
     printf 'boot_sha256=%s\n' "$BOOT_IMAGE_SHA256"
