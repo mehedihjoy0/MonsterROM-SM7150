@@ -28,6 +28,7 @@ GET_SYSTEM_EXT()
         echo "system/system/system_ext"
     fi
 }
+
 _SED_DELETE_IF_EXISTS()
 {
     local FILE="$1"
@@ -37,18 +38,7 @@ _SED_DELETE_IF_EXISTS()
     sed -i "$@" "$FILE"
 }
 
-_FOR_EACH_EXYNOS_INIT()
-{
-    local SCRIPT="$1"
-    local FILE
-    for INIT_RC in \
-        "$WORK_DIR/vendor/etc/init/init.exynos2100.rc"; do
-        _SED_DELETE_IF_EXISTS "$INIT_RC" "$SED_EXPR"
-
-    while IFS= read -r FILE; do
-        sed -i "$SCRIPT" "$FILE"
-    done < <
-    _DISABLE_PERFETTO_TRACED()
+_DISABLE_PERFETTO_TRACED()
 {
     local PERFETTO_RC="$WORK_DIR/system/system/etc/init/perfetto.rc"
 
@@ -72,16 +62,18 @@ _FIX_STRONGBOX_KEYMASTER_RC()
     [ -f "$RC" ] || return 0
 
     if ! grep -q "^    interface android\.hardware\.keymaster@4\.0::IKeymasterDevice strongbox$" "$RC"; then
-        sed -i \
-            "/^service vendor\.keymaster-4-0_strongbox /a\\    interface android.hardware.keymaster@4.0::IKeymasterDevice strongbox" \
-            "$RC"
+        sed -i '/^service vendor\.keymaster-4-0_strongbox /a \    interface android.hardware.keymaster@4.0::IKeymasterDevice strongbox' "$RC"
     fi
 }
 
 _DISABLE_STALE_KEYMASTER_WAIT()
 {
+    local INIT_RC="$WORK_DIR/vendor/etc/init/hw/init.exynos2100.rc"
+    
+    [ -f "$INIT_RC" ] || return 0
+
     LOG "- Disabling stale wait_for_keymaster init hook"
-    _FOR_EACH_EXYNOS_INIT 's/^\([[:space:]]*\)exec_start wait_for_keymaster$/\1# exec_start wait_for_keymaster/g'
+    sed -i 's/^\([[:space:]]*\)exec_start wait_for_keymaster$/\1# exec_start wait_for_keymaster/g' "$INIT_RC"
 }
 
 _PATCH_SENSORHUB_SYSFS_LOG_NOISE()
@@ -471,6 +463,7 @@ _PATCH_BOOL_METHOD_RETURN()
         }
         inside && /^\.end method/ {
             print
+            print
             inside = 0
             next
         }
@@ -502,7 +495,7 @@ _PATCH_A2DP_LEGACY_CODEC_PRIORITIES()
             if ($0 ~ /iput v1, p0, Lcom\/android\/bluetooth\/a2dp\/A2dpCodecConfig;->mA2dpSourceCodecPrioritySscUhq:I/) {
                 print ""
                 print "    # MonsterROM One UI 9 legacy BT codec guard"
-                print "    const/16 v0, 0x3e9"
+                print "    const/16 v0, 1001"
                 print "    iput v0, p0, Lcom/android/bluetooth/a2dp/A2dpCodecConfig;->mA2dpSourceCodecPrioritySbc:I"
                 print ""
                 print "    const v0, 0xdbba0"
@@ -646,7 +639,7 @@ _PATCH_BEACONMANAGER_LOCATION_PERMISSIONS()
         android.permission.ACCESS_FINE_LOCATION \
         android.permission.ACCESS_BACKGROUND_LOCATION; do
         if ! grep -q "android:name=\"$PERM\"" "$MANIFEST"; then
-            sed -i "0,/^[[:space:]]*<application/{s#^[[:space:]]*<application#    <uses-permission android:name=\"$PERM\" />\\n\\n    <application#}" "$MANIFEST"
+            sed -i "0,/^[[:space:]]*<application/{s#^[[:space:]]*<application#    <uses-permission android:name=\"$PERM\" />\n\n    <application#}" "$MANIFEST"
             LOG "- Added $PERM"
         fi
     done
@@ -660,7 +653,6 @@ ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.cil
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.compat.cil" 0 0 644 "u:object_r:system_file:s0"
 
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/ueventd.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
-ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "ueventd.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/bluetooth_audio_policy_configuration.xml" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/init/android.hardware.sensors@2.0-service-multihal.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "bin/monsterrom_wait_sensors_ready.sh" 0 2000 755 "u:object_r:vendor_file:s0"
