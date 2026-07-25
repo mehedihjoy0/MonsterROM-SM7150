@@ -8,27 +8,10 @@ FLOPPY_KERNEL_BUILD_ARGS="${FLOPPY_KERNEL_BUILD_ARGS:-kcR}"
 FLOPPY_KERNEL_JOBS="${FLOPPY_KERNEL_JOBS:-1}"
 FLOPPY_BPF_SPOOF_MODE="${FLOPPY_BPF_SPOOF_MODE:-2}"
 # Mode 0 leaves enforcement under Android init's control. Production init
-# loads the split policy and switches to enforcing itself; Floppy mode 1
-# instead hard-locks every SELinux check before Android has finished booting.
-# Keep mode 2 available as an explicit permissive recovery override.
-FLOPPY_SELINUX_MODE="${FLOPPY_SELINUX_MODE:-0}"
-
-# Experimental Mali upgrades are enabled only for t2s. Other Exynos 2100
-# devices retain Floppy's proven r38p1 stack even if the selector is exported
-# globally. r44 remains the default/recovery stack; r49 must be selected
-# explicitly until it has been device-tested.
-if [ "${TARGET_CODENAME:-}" = "t2s" ]; then
-    T2S_MALI_DDK="${T2S_MALI_DDK:-r44p0}"
-else
-    T2S_MALI_DDK="r38p1"
-fi
-
-MALI_R44_KERNEL_REPO="${MALI_R44_KERNEL_REPO:-https://github.com/Mesa-Labs-Archive/android_kernel_samsung_s5e8835}"
-MALI_R44_KERNEL_COMMIT="${MALI_R44_KERNEL_COMMIT:-ed39d840e85ab23495efb36001d0cd792862c5c6}"
-MALI_R49_BACKPORT_REPO="${MALI_R49_BACKPORT_REPO:-https://github.com/Dozairu/KawaKernel-A217X}"
-MALI_R49_BACKPORT_COMMIT="${MALI_R49_BACKPORT_COMMIT:-3aa1f7b4b02dff89881cd283ee56c5854444a514}"
-MALI_R49_UPSTREAM_REPO="${MALI_R49_UPSTREAM_REPO:-https://android.googlesource.com/kernel/google-modules/gpu}"
-MALI_R49_UPSTREAM_COMMIT="${MALI_R49_UPSTREAM_COMMIT:-14fdd7d6beeb8d54b027634eb519251b27d9e8e1}"
+# may switch to enforcing after the kernel starts permissive. Mode 1 hard-locks
+# every SELinux check before Android has finished booting. Use mode 2 as the
+# explicit permissive override for this development ROM.
+FLOPPY_SELINUX_MODE="${FLOPPY_SELINUX_MODE:-2}"
 
 KERNEL_CACHE_DIR="$SRC_DIR/out/kernel-cache/flop_exynos2100_kernel"
 KERNEL_WORKSPACE_DIR="$SRC_DIR/out/kernel-cache/floppy-workspace"
@@ -36,11 +19,7 @@ KERNEL_BUILD_DIR="$TMP_DIR/floppykernel"
 KERNEL_SOURCE_DIR="$KERNEL_BUILD_DIR/source"
 ANYKERNEL_DIR="$KERNEL_BUILD_DIR/anykernel"
 KERNEL_ARTIFACT_DIR="$SRC_DIR/out/kernel-builds"
-KERNEL_MALI_MANIFEST="$KERNEL_ARTIFACT_DIR/latest-mali-ddk.txt"
 KERNEL_LOCK_FILE="$SRC_DIR/out/kernel-cache/floppy-build.lock"
-MALI_R44_KERNEL_CACHE_DIR="$SRC_DIR/out/kernel-cache/mali-r44p0-s5e8835"
-MALI_R49_BACKPORT_CACHE_DIR="$SRC_DIR/out/kernel-cache/mali-r49p0-kawa"
-MALI_R49_UPSTREAM_CACHE_DIR="$SRC_DIR/out/kernel-cache/mali-r49p0-google"
 
 _FLOPPY_CLEAN_BUILD_TREE()
 {
@@ -105,251 +84,6 @@ _FLOPPY_VERIFY_KSUNEXT_BUILD()
     fi
 }
 
-_FLOPPY_IMPORT_MALI_R44()
-{
-    local TREE
-
-    if [ ! -d "$MALI_R44_KERNEL_CACHE_DIR/.git" ]; then
-        if [ -e "$MALI_R44_KERNEL_CACHE_DIR" ]; then
-            ABORT "Mali r44 kernel cache exists but is not a Git checkout: $MALI_R44_KERNEL_CACHE_DIR"
-            return 1
-        fi
-        git clone --filter=blob:none --no-checkout --depth=1 \
-            "$MALI_R44_KERNEL_REPO" "$MALI_R44_KERNEL_CACHE_DIR"
-    else
-        git -C "$MALI_R44_KERNEL_CACHE_DIR" remote set-url origin "$MALI_R44_KERNEL_REPO"
-    fi
-
-    if ! git -C "$MALI_R44_KERNEL_CACHE_DIR" \
-            cat-file -e "$MALI_R44_KERNEL_COMMIT^{commit}" 2>/dev/null; then
-        git -C "$MALI_R44_KERNEL_CACHE_DIR" fetch --filter=blob:none --depth=1 \
-            origin "$MALI_R44_KERNEL_COMMIT"
-    fi
-    if ! git -C "$MALI_R44_KERNEL_CACHE_DIR" \
-            cat-file -e "$MALI_R44_KERNEL_COMMIT^{commit}" 2>/dev/null; then
-        ABORT "Pinned Mali r44 kernel donor commit is unavailable"
-        return 1
-    fi
-
-    # Populate all selected blobs in one sparse-checkout transaction. Running
-    # git archive directly against a blobless partial clone can otherwise make
-    # one lazy network request per object.
-    git -C "$MALI_R44_KERNEL_CACHE_DIR" sparse-checkout init --cone
-    git -C "$MALI_R44_KERNEL_CACHE_DIR" sparse-checkout set \
-        drivers/gpu/arm/v_r44p0 \
-        include/linux/v_r44p0 \
-        include/uapi/gpu/arm/v_r44p0
-    git -C "$MALI_R44_KERNEL_CACHE_DIR" checkout --force --detach \
-        "$MALI_R44_KERNEL_COMMIT"
-    if [ "$(git -C "$MALI_R44_KERNEL_CACHE_DIR" rev-parse HEAD)" != \
-            "$MALI_R44_KERNEL_COMMIT" ]; then
-        ABORT "Mali r44 sparse checkout did not resolve the pinned commit"
-        return 1
-    fi
-    case "$MALI_R44_KERNEL_CACHE_DIR" in
-        "$SRC_DIR"/out/kernel-cache/mali-r44p0-s5e8835)
-            git -C "$MALI_R44_KERNEL_CACHE_DIR" clean -ffd
-            ;;
-        *)
-            ABORT "Refusing to clean unexpected Mali r44 cache path"
-            return 1
-            ;;
-    esac
-
-    for TREE in \
-        drivers/gpu/arm/v_r44p0 \
-        include/linux/v_r44p0 \
-        include/uapi/gpu/arm/v_r44p0; do
-        if [ ! -d "$MALI_R44_KERNEL_CACHE_DIR/$TREE" ]; then
-            ABORT "Pinned Mali r44 donor tree is missing: $TREE"
-            return 1
-        fi
-        if [ -e "$KERNEL_SOURCE_DIR/$TREE" ]; then
-            ABORT "Refusing to overwrite an existing Mali r44 tree: $TREE"
-            return 1
-        fi
-        mkdir -p "$(dirname "$KERNEL_SOURCE_DIR/$TREE")"
-        cp -a -T "$MALI_R44_KERNEL_CACHE_DIR/$TREE" "$KERNEL_SOURCE_DIR/$TREE"
-    done
-
-    if ! grep -qF 'r44p0-01eac0' \
-            "$KERNEL_SOURCE_DIR/drivers/gpu/arm/v_r44p0/Kbuild"; then
-        ABORT "Imported Mali KMD is not r44p0-01eac0"
-        return 1
-    fi
-    if ! grep -qF '#define BASE_UK_VERSION_MINOR 39' \
-            "$KERNEL_SOURCE_DIR/include/uapi/gpu/arm/v_r44p0/jm/mali_kbase_jm_ioctl.h"; then
-        ABORT "Imported Mali KMD does not expose Job Manager UK ABI 11.39"
-        return 1
-    fi
-}
-
-_FLOPPY_IMPORT_MALI_R49()
-{
-    local TREE HEADER FROM TO FILE
-
-    if [ ! -d "$MALI_R49_BACKPORT_CACHE_DIR/.git" ]; then
-        if [ -e "$MALI_R49_BACKPORT_CACHE_DIR" ]; then
-            ABORT "Mali r49 backport cache exists but is not a Git checkout: $MALI_R49_BACKPORT_CACHE_DIR"
-            return 1
-        fi
-        git clone --filter=blob:none --no-checkout \
-            "$MALI_R49_BACKPORT_REPO" "$MALI_R49_BACKPORT_CACHE_DIR"
-    else
-        git -C "$MALI_R49_BACKPORT_CACHE_DIR" remote set-url origin \
-            "$MALI_R49_BACKPORT_REPO"
-    fi
-    if ! git -C "$MALI_R49_BACKPORT_CACHE_DIR" \
-            cat-file -e "$MALI_R49_BACKPORT_COMMIT^{commit}" 2>/dev/null; then
-        git -C "$MALI_R49_BACKPORT_CACHE_DIR" fetch --filter=blob:none --depth=1 \
-            origin "$MALI_R49_BACKPORT_COMMIT"
-    fi
-    if ! git -C "$MALI_R49_BACKPORT_CACHE_DIR" \
-            cat-file -e "$MALI_R49_BACKPORT_COMMIT^{commit}" 2>/dev/null; then
-        ABORT "Pinned Mali r49 Linux 4.19 backport commit is unavailable"
-        return 1
-    fi
-
-    if [ ! -d "$MALI_R49_UPSTREAM_CACHE_DIR/.git" ]; then
-        if [ -e "$MALI_R49_UPSTREAM_CACHE_DIR" ]; then
-            ABORT "Mali r49 upstream cache exists but is not a Git checkout: $MALI_R49_UPSTREAM_CACHE_DIR"
-            return 1
-        fi
-        git clone --filter=blob:none --no-checkout \
-            "$MALI_R49_UPSTREAM_REPO" "$MALI_R49_UPSTREAM_CACHE_DIR"
-    else
-        git -C "$MALI_R49_UPSTREAM_CACHE_DIR" remote set-url origin \
-            "$MALI_R49_UPSTREAM_REPO"
-    fi
-    if ! git -C "$MALI_R49_UPSTREAM_CACHE_DIR" \
-            cat-file -e "$MALI_R49_UPSTREAM_COMMIT^{commit}" 2>/dev/null; then
-        git -C "$MALI_R49_UPSTREAM_CACHE_DIR" fetch --filter=blob:none --depth=1 \
-            origin "$MALI_R49_UPSTREAM_COMMIT"
-    fi
-    if ! git -C "$MALI_R49_UPSTREAM_CACHE_DIR" \
-            cat-file -e "$MALI_R49_UPSTREAM_COMMIT^{commit}" 2>/dev/null; then
-        ABORT "Pinned official Google Mali r49 commit is unavailable"
-        return 1
-    fi
-
-    git -C "$MALI_R49_BACKPORT_CACHE_DIR" sparse-checkout init --cone
-    git -C "$MALI_R49_BACKPORT_CACHE_DIR" sparse-checkout set \
-        drivers/gpu/arm/bv_r49p0 \
-        include/uapi/gpu/arm/bv_r49p0
-    git -C "$MALI_R49_BACKPORT_CACHE_DIR" checkout --force --detach \
-        "$MALI_R49_BACKPORT_COMMIT"
-    if [ "$(git -C "$MALI_R49_BACKPORT_CACHE_DIR" rev-parse HEAD)" != \
-            "$MALI_R49_BACKPORT_COMMIT" ]; then
-        ABORT "Mali r49 sparse checkout did not resolve the pinned commit"
-        return 1
-    fi
-    case "$MALI_R49_BACKPORT_CACHE_DIR" in
-        "$SRC_DIR"/out/kernel-cache/mali-r49p0-kawa)
-            git -C "$MALI_R49_BACKPORT_CACHE_DIR" clean -ffd
-            ;;
-        *)
-            ABORT "Refusing to clean unexpected Mali r49 cache path"
-            return 1
-            ;;
-    esac
-
-    for TREE in \
-        drivers/gpu/arm/bv_r49p0 \
-        include/uapi/gpu/arm/bv_r49p0; do
-        if [ ! -d "$MALI_R49_BACKPORT_CACHE_DIR/$TREE" ]; then
-            ABORT "Pinned Mali r49 backport tree is missing: $TREE"
-            return 1
-        fi
-        if [ -e "$KERNEL_SOURCE_DIR/$TREE" ]; then
-            ABORT "Refusing to overwrite an existing Mali r49 tree: $TREE"
-            return 1
-        fi
-        mkdir -p "$(dirname "$KERNEL_SOURCE_DIR/$TREE")"
-        cp -a -T "$MALI_R49_BACKPORT_CACHE_DIR/$TREE" "$KERNEL_SOURCE_DIR/$TREE"
-    done
-
-    if [ -e "$KERNEL_SOURCE_DIR/include/linux/v_r49p0" ]; then
-        ABORT "Refusing to overwrite existing Mali r49 compatibility headers"
-        return 1
-    fi
-    mkdir -p "$KERNEL_SOURCE_DIR/include/linux/v_r49p0"
-    for HEADER in \
-        mali_arbiter_interface.h \
-        mali_hw_access.h \
-        mali_kbase_debug_coresight_csf.h \
-        memory_group_manager.h \
-        priority_control_manager.h \
-        protected_memory_allocator.h \
-        protected_mode_switcher.h; do
-        if ! git -C "$MALI_R49_BACKPORT_CACHE_DIR" show \
-                "$MALI_R49_BACKPORT_COMMIT:include/linux/$HEADER" \
-                > "$KERNEL_SOURCE_DIR/include/linux/v_r49p0/$HEADER"; then
-            ABORT "Pinned Mali r49 backport header is unavailable: $HEADER"
-            return 1
-        fi
-    done
-    if ! git -C "$MALI_R49_UPSTREAM_CACHE_DIR" show \
-            "$MALI_R49_UPSTREAM_COMMIT:common/include/linux/version_compat_defs.h" \
-            > "$KERNEL_SOURCE_DIR/include/linux/v_r49p0/version_compat_defs.h"; then
-        ABORT "Official Mali r49 kernel compatibility header is unavailable"
-        return 1
-    fi
-
-    # Namespace DDK-private Linux interfaces so the r49 module does not alter
-    # headers used by Floppy's legacy Mali trees or by unrelated drivers.
-    for HEADER in \
-        mali_arbiter_interface.h \
-        mali_hw_access.h \
-        mali_kbase_debug_coresight_csf.h \
-        memory_group_manager.h \
-        priority_control_manager.h \
-        protected_memory_allocator.h \
-        version_compat_defs.h; do
-        FROM="linux/$HEADER"
-        TO="linux/v_r49p0/$HEADER"
-        if ! grep -RIlF "$FROM" \
-                "$KERNEL_SOURCE_DIR/drivers/gpu/arm/bv_r49p0" >/dev/null; then
-            ABORT "Mali r49 private-header reference is missing: $FROM"
-            return 1
-        fi
-        while IFS= read -r FILE; do
-            sed -i "s|$FROM|$TO|g" "$FILE"
-        done < <(grep -RIlF "$FROM" \
-            "$KERNEL_SOURCE_DIR/drivers/gpu/arm/bv_r49p0")
-    done
-    FROM='#include <protected_mode_switcher.h>'
-    TO='#include <linux/v_r49p0/protected_mode_switcher.h>'
-    FILE="$KERNEL_SOURCE_DIR/drivers/gpu/arm/bv_r49p0/mali_kbase_defs.h"
-    if ! grep -qF "$FROM" "$FILE"; then
-        ABORT "Mali r49 protected-mode header reference is missing"
-        return 1
-    fi
-    sed -i "s|$FROM|$TO|" "$FILE"
-
-    if ! grep -qF 'r49p0-00eac0' \
-            "$KERNEL_SOURCE_DIR/drivers/gpu/arm/bv_r49p0/Kbuild"; then
-        ABORT "Imported Mali KMD is not r49p0-00eac0"
-        return 1
-    fi
-    if ! grep -qF '#define BASE_UK_VERSION_MINOR 45' \
-            "$KERNEL_SOURCE_DIR/include/uapi/gpu/arm/bv_r49p0/jm/mali_kbase_jm_ioctl.h"; then
-        ABORT "Imported Mali r49 KMD does not expose Job Manager UK ABI 11.45"
-        return 1
-    fi
-    if ! git -C "$MALI_R49_UPSTREAM_CACHE_DIR" show \
-            "$MALI_R49_UPSTREAM_COMMIT:mali_kbase/Kbuild" | \
-            grep -qF 'r49p0-00eac0'; then
-        ABORT "Pinned official Google source is not Mali r49p0-00eac0"
-        return 1
-    fi
-    if ! git -C "$MALI_R49_UPSTREAM_CACHE_DIR" show \
-            "$MALI_R49_UPSTREAM_COMMIT:common/include/uapi/gpu/arm/midgard/jm/mali_kbase_jm_ioctl.h" | \
-            grep -qF '#define BASE_UK_VERSION_MINOR 45'; then
-        ABORT "Pinned official Google source does not expose Job Manager UK ABI 11.45"
-        return 1
-    fi
-}
-
 _FLOPPY_PATCH_LITERAL()
 {
     local FILE="$1"
@@ -397,10 +131,6 @@ case "$FLOPPY_SELINUX_MODE" in
     0|1|2) ;;
     *) ABORT "FLOPPY_SELINUX_MODE must be 0, 1, or 2" ;;
 esac
-case "$T2S_MALI_DDK" in
-    r38p1|r44p0|r49p0) ;;
-    *) ABORT "T2S_MALI_DDK must be r38p1, r44p0, or r49p0" ;;
-esac
 
 command -v flock >/dev/null || ABORT "Required kernel build lock tool is missing: flock"
 mkdir -p "$(dirname "$KERNEL_LOCK_FILE")" "$KERNEL_ARTIFACT_DIR"
@@ -409,7 +139,6 @@ LOG "- Waiting for the exclusive FloppyKernel build lock"
 flock "$FLOPPY_LOCK_FD"
 # Never allow an old successful build to authorize new userspace after a
 # preparation or compilation failure.
-rm -f "$KERNEL_MALI_MANIFEST" "$KERNEL_MALI_MANIFEST.tmp"
 
 LOG_STEP_IN "- Updating FloppyKernel source"
 mkdir -p "$(dirname "$KERNEL_CACHE_DIR")" "$KERNEL_WORKSPACE_DIR"
@@ -455,20 +184,6 @@ fi
 # for the Debian package name as if it were a command, causing apt on every run.
 sed -i 's/ binutils-aarch64-linux-gnu//g' "$KERNEL_SOURCE_DIR/build/scripts/deps.sh"
 
-if [ "$T2S_MALI_DDK" = "r44p0" ]; then
-    LOG "- Importing pinned Samsung Mali r44p0 KMD"
-    _FLOPPY_IMPORT_MALI_R44
-    LOG "- Applying Mali r44p0 Exynos 2100 integration"
-    git -C "$KERNEL_SOURCE_DIR" apply --check "$MODPATH/mali-r44p0.patch"
-    git -C "$KERNEL_SOURCE_DIR" apply "$MODPATH/mali-r44p0.patch"
-elif [ "$T2S_MALI_DDK" = "r49p0" ]; then
-    LOG "- Importing pinned Mali r49p0 Linux 4.19 backport"
-    _FLOPPY_IMPORT_MALI_R49
-    LOG "- Applying Mali r49p0 Exynos 2100 integration"
-    git -C "$KERNEL_SOURCE_DIR" apply --check "$MODPATH/mali-r49p0.patch"
-    git -C "$KERNEL_SOURCE_DIR" apply "$MODPATH/mali-r49p0.patch"
-fi
-
 while IFS= read -r PATCH; do
     [ -n "$PATCH" ] || continue
     LOG "- Applying $(basename "$PATCH")"
@@ -505,7 +220,6 @@ if [ "${FLOPPY_KERNEL_SKIP_BUILD:-0}" = "1" ]; then
     _FLOPPY_CLEAN_BUILD_TREE
     _FLOPPY_RELEASE_LOCK
     unset -f _FLOPPY_CLEAN_BUILD_TREE _FLOPPY_RELEASE_LOCK
-    unset -f _FLOPPY_IMPORT_MALI_R44 _FLOPPY_IMPORT_MALI_R49
     unset -f _FLOPPY_PATCH_LITERAL _FLOPPY_SET_MODE_DEFAULT
     unset -f _FLOPPY_VERIFY_KSUNEXT_BUILD
     return 0
@@ -548,46 +262,6 @@ LOG "- KernelSU Next manual hooks, synchronous boot events, and SUSFS are built 
 LOG "- SELinux mode $FLOPPY_SELINUX_MODE is embedded with command-line override support"
 LOG_STEP_OUT
 
-LOG_STEP_IN "- Verifying the built Mali kernel driver"
-case "$T2S_MALI_DDK" in
-    r49p0)
-        MALI_KERNEL_MODULE_REL="drivers/gpu/arm/bv_r49p0/mali_kbase.ko"
-        MALI_DDK_RELEASE="r49p0-00eac0"
-        MALI_DDK_UK_ABI="11.45"
-        MALI_DDK_DONOR="$MALI_R49_BACKPORT_COMMIT"
-        ;;
-    r44p0)
-        MALI_KERNEL_MODULE_REL="drivers/gpu/arm/v_r44p0/mali_kbase.ko"
-        MALI_DDK_RELEASE="r44p0-01eac0"
-        MALI_DDK_UK_ABI="11.39"
-        MALI_DDK_DONOR="$MALI_R44_KERNEL_COMMIT"
-        ;;
-    r38p1)
-        MALI_KERNEL_MODULE_REL="drivers/gpu/arm/v_r38p1/mali_kbase.ko"
-        MALI_DDK_RELEASE="r38p1-01eac0"
-        MALI_DDK_UK_ABI="11.35"
-        MALI_DDK_DONOR="floppy"
-        ;;
-esac
-MALI_KERNEL_MODULE="$KERNEL_SOURCE_DIR/out/$MALI_KERNEL_MODULE_REL"
-if [ ! -f "$MALI_KERNEL_MODULE" ]; then
-    _FLOPPY_CLEAN_BUILD_TREE
-    ABORT "Built Mali kernel module not found: $MALI_KERNEL_MODULE_REL"
-fi
-if ! strings "$MALI_KERNEL_MODULE" | \
-        grep -F "version=$MALI_DDK_RELEASE (UK version $MALI_DDK_UK_ABI)" >/dev/null; then
-    _FLOPPY_CLEAN_BUILD_TREE
-    ABORT "Built Mali kernel module release/UK ABI does not match $MALI_DDK_RELEASE"
-fi
-if [ ! -f "$KERNEL_SOURCE_DIR/out/modules.order" ] || \
-        ! grep -qF "$MALI_KERNEL_MODULE_REL" "$KERNEL_SOURCE_DIR/out/modules.order"; then
-    _FLOPPY_CLEAN_BUILD_TREE
-    ABORT "Built Mali kernel module is missing from modules.order"
-fi
-MALI_KERNEL_MODULE_SHA256="$(sha256sum "$MALI_KERNEL_MODULE" | cut -d ' ' -f 1)"
-LOG "- KMD/UK ABI: $MALI_DDK_RELEASE / $MALI_DDK_UK_ABI"
-LOG_STEP_OUT
-
 LOG_STEP_IN "- Installing FloppyKernel images"
 for IMAGE_MAP in \
     "build/images/boot_oneui.img:boot.img" \
@@ -614,16 +288,9 @@ BOOT_IMAGE_SHA256="$(sha256sum "$WORK_DIR/kernel/boot.img" | cut -d ' ' -f 1)"
 VENDOR_BOOT_IMAGE_SHA256="$(sha256sum "$WORK_DIR/kernel/vendor_boot.img" | cut -d ' ' -f 1)"
 {
     printf 'target=%s\n' "$TARGET_CODENAME"
-    printf 'selector=%s\n' "$T2S_MALI_DDK"
-    printf 'ddk=%s\n' "$MALI_DDK_RELEASE"
-    printf 'uk_abi=%s\n' "$MALI_DDK_UK_ABI"
     printf 'floppy_commit=%s\n' "$KERNEL_COMMIT"
-    printf 'donor=%s\n' "$MALI_DDK_DONOR"
-    printf 'kernel_module_sha256=%s\n' "$MALI_KERNEL_MODULE_SHA256"
     printf 'boot_sha256=%s\n' "$BOOT_IMAGE_SHA256"
     printf 'vendor_boot_sha256=%s\n' "$VENDOR_BOOT_IMAGE_SHA256"
-} > "$KERNEL_MALI_MANIFEST.tmp"
-mv -f "$KERNEL_MALI_MANIFEST.tmp" "$KERNEL_MALI_MANIFEST"
 LOG "- FloppyKernel commit: $KERNEL_COMMIT"
 LOG_STEP_OUT
 
@@ -634,19 +301,10 @@ unset FLOPPY_KERNEL_REPO FLOPPY_KERNEL_BRANCH
 unset FLOPPY_ANYKERNEL_REPO FLOPPY_ANYKERNEL_BRANCH
 unset FLOPPY_KERNEL_BUILD_ARGS FLOPPY_KERNEL_JOBS
 unset FLOPPY_BPF_SPOOF_MODE FLOPPY_SELINUX_MODE
-unset T2S_MALI_DDK MALI_R44_KERNEL_REPO MALI_R44_KERNEL_COMMIT
-unset MALI_R49_BACKPORT_REPO MALI_R49_BACKPORT_COMMIT
-unset MALI_R49_UPSTREAM_REPO MALI_R49_UPSTREAM_COMMIT
 unset KERNEL_CACHE_DIR KERNEL_WORKSPACE_DIR KERNEL_BUILD_DIR KERNEL_SOURCE_DIR
-unset ANYKERNEL_DIR KERNEL_ARTIFACT_DIR KERNEL_MALI_MANIFEST KERNEL_LOCK_FILE
-unset KERNEL_COMMIT KERNEL_COMMIT_SHORT MALI_R44_KERNEL_CACHE_DIR
-unset MALI_R49_BACKPORT_CACHE_DIR MALI_R49_UPSTREAM_CACHE_DIR
 unset IMAGE_MAP SOURCE_IMAGE TARGET_IMAGE KERNEL_ZIP PATCH
 unset AOSP_CLANG_DIR
-unset MALI_KERNEL_MODULE_REL MALI_KERNEL_MODULE MALI_KERNEL_MODULE_SHA256
-unset MALI_DDK_RELEASE MALI_DDK_UK_ABI MALI_DDK_DONOR
 unset BOOT_IMAGE_SHA256 VENDOR_BOOT_IMAGE_SHA256 FLOPPY_LOCK_FD
 unset -f _FLOPPY_CLEAN_BUILD_TREE _FLOPPY_RELEASE_LOCK
-unset -f _FLOPPY_IMPORT_MALI_R44 _FLOPPY_IMPORT_MALI_R49
 unset -f _FLOPPY_PATCH_LITERAL _FLOPPY_SET_MODE_DEFAULT
 unset -f _FLOPPY_VERIFY_KSUNEXT_BUILD

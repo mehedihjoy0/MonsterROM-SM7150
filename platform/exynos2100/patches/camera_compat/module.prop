@@ -1,3 +1,0 @@
-name=Camera compatibility
-author=ditternation
-description=Suppress optional One UI 9 SamsungCamera vendor tag lookups unsupported by Exynos2100 HALs.

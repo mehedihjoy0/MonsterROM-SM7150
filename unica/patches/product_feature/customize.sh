@@ -529,12 +529,12 @@ if [[ "$SOURCE_LCD_CONFIG_HFR_MODE" != "$TARGET_LCD_CONFIG_HFR_MODE" ]]; then
         "$TARGET_LCD_CONFIG_HFR_MODE"
     SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
         "smali_classes3/com/samsung/android/settings/display/SecDisplayUtils.smali" "replace" \
-        "getHighRefreshRateSeamlessType(I)I" \
+        "getHighRefreshRateSeamlessType(Landroid/content/Context;I)I" \
         "$SOURCE_LCD_CONFIG_HFR_MODE" \
         "$TARGET_LCD_CONFIG_HFR_MODE" || true
     SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
         "smali_classes3/com/samsung/android/settings/display/SecDisplayUtils.smali" "replace" \
-        "isSupportMaxHS60RefreshRate(I)Z" \
+        "isSupportMaxHS60RefreshRate(Landroid/content/Context;I)Z" \
         "$SOURCE_LCD_CONFIG_HFR_MODE" \
         "$TARGET_LCD_CONFIG_HFR_MODE"
     SMALI_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
@@ -575,12 +575,12 @@ if [[ "$SOURCE_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE" != "$TARGET_LCD_CONFIG_HFR
             "${TARGET_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE//none/}"
         SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
             "smali_classes3/com/samsung/android/settings/display/SecDisplayUtils.smali" "replace" \
-            "getHighRefreshRateSupportedValues(I)[Ljava/lang/String;" \
+            "getHighRefreshRateSupportedValues(Landroid/content/Context;I)[Ljava/lang/String;" \
             "$SOURCE_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE" \
             "${TARGET_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE//none/}" || true
         SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
             "smali_classes3/com/samsung/android/settings/display/SecDisplayUtils.smali" "replace" \
-            "isSupportMaxHS60RefreshRate(I)Z" \
+            "isSupportMaxHS60RefreshRate(Landroid/content/Context;I)Z" \
             "$SOURCE_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE" \
             "${TARGET_LCD_CONFIG_HFR_SUPPORTED_REFRESH_RATE//none/}" || true
         SMALI_PATCH "system_ext" "priv-app/SystemUI/SystemUI.apk" \

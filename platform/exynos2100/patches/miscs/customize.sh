@@ -1,3 +1,6 @@
+LOG_STEP_IN "- Setting FUSE passthrough"
+SET_PROP "vendor" "persist.sys.fuse.passthrough.enable" "true"
+LOG_STEP_OUT
 LOG "- Disabling encryption"
 # Encryption
 LINE=$(sed -n "/^\/dev\/block\/by-name\/userdata/=" "$WORK_DIR/vendor/etc/fstab.exynos2100")
@@ -16,6 +19,15 @@ else
 fi
 LOG_STEP_OUT
 
+LOG_STEP_IN "- Removing unsupported Qualcomm location/QCC stack"
+GET_SYSTEM_EXT()
+{
+    if $TARGET_OS_BUILD_SYSTEM_EXT_PARTITION; then
+        echo "system_ext"
+    else
+        echo "system/system/system_ext"
+    fi
+}
 _SED_DELETE_IF_EXISTS()
 {
     local FILE="$1"
@@ -29,10 +41,28 @@ _FOR_EACH_EXYNOS_INIT()
 {
     local SCRIPT="$1"
     local FILE
+    for INIT_RC in \
+        "$WORK_DIR/vendor/etc/init/init.exynos2100.rc"; do
+        _SED_DELETE_IF_EXISTS "$INIT_RC" "$SED_EXPR"
 
     while IFS= read -r FILE; do
         sed -i "$SCRIPT" "$FILE"
-    done < <(find "$WORK_DIR/vendor/etc/init" -maxdepth 1 -type f -name 'init*.rc' | LC_ALL=C sort)
+    done < <
+    _DISABLE_PERFETTO_TRACED()
+{
+    local PERFETTO_RC="$WORK_DIR/system/system/etc/init/perfetto.rc"
+
+    [ -f "$PERFETTO_RC" ] || return 0
+
+    LOG "- Disabling Perfetto traced daemon for legacy Exynos kernel"
+    sed -i \
+        -e 's/^\([[:space:]]*\)setprop persist\.traced\.enable 1$/\1# setprop persist.traced.enable 1/g' \
+        -e 's/^\([[:space:]]*\)start traced$/\1# start traced/g' \
+        -e 's/^\([[:space:]]*\)start traced_relay$/\1# start traced_relay/g' \
+        -e 's/^\([[:space:]]*\)start traced_probes$/\1# start traced_probes/g' \
+        -e 's/^\([[:space:]]*\)wait_for_prop sys\.trace\.traced_started 1$/\1# wait_for_prop sys.trace.traced_started 1/g' \
+        "$PERFETTO_RC"
+    SET_PROP_IF_DIFF "system" "persist.traced.enable" "0"
 }
 
 _FIX_STRONGBOX_KEYMASTER_RC()
@@ -630,6 +660,7 @@ ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.cil
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.compat.cil" 0 0 644 "u:object_r:system_file:s0"
 
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/ueventd.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
+ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "ueventd.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/bluetooth_audio_policy_configuration.xml" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "etc/init/android.hardware.sensors@2.0-service-multihal.rc" 0 0 644 "u:object_r:vendor_configs_file:s0"
 ADD_TO_WORK_DIR "platform/exynos2100/patches/miscs" "vendor" "bin/monsterrom_wait_sensors_ready.sh" 0 2000 755 "u:object_r:vendor_file:s0"

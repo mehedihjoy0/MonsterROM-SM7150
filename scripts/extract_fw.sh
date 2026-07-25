@@ -351,8 +351,7 @@ for i in "${FIRMWARES[@]}"; do
 
     LATEST_FIRMWARE="$(GET_LATEST_FIRMWARE "$MODEL" "$CSC")"
     if [ ! "$LATEST_FIRMWARE" ]; then
-        LOGE "Latest available firmware could not be fetched"
-        exit 1
+        LOGE "Latest available firmware could not be fetched, doing manually"
     fi
 
     LOG_STEP_IN "- Processing $MODEL firmware with $CSC CSC"

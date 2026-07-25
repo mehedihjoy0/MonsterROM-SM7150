@@ -4,13 +4,13 @@ Date: Thu, 5 Apr 2018 10:01:19 +0800
 Subject: [PATCH] Disable vendor mismatch warning
 
 ---
- ...gerService$$ExternalSyntheticLambda7.smali | 16 +---
+ ...gerService$$ExternalSyntheticLambda8.smali | 16 +---
  1 file changed, 1 insertion(+), 15 deletions(-)
 
-diff --git a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda7.smali b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda7.smali
+diff --git a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali
 index a55014bf1..f80efb330 100644
---- a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda7.smali
-+++ b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda7.smali
+--- a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali
++++ b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali
 @@ -179,26 +179,10 @@
      :try_start_3
      const-string v2, "ActivityTaskManager"

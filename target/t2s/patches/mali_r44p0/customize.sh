@@ -1,9 +1,19 @@
 SKIPUNZIP=1
 
 T2S_MALI_DDK="${T2S_MALI_DDK:-r44p0}"
+# Keep the proven r44 KMD while backporting only the newer Pixel G78 UMD.
+T2S_MALI_UMD="${T2S_MALI_UMD:-r49p0}"
 case "$T2S_MALI_DDK" in
-    r38p1|r44p0) ;;
-    *) ABORT "T2S_MALI_DDK must be r38p1 or r44p0" ;;
+    r38p1|r44p0|r49p0) ;;
+    *) ABORT "T2S_MALI_DDK must be r38p1, r44p0, or r49p0" ;;
+esac
+case "$T2S_MALI_UMD" in
+    r38p1|r44p0|r49p0) ;;
+    *) ABORT "T2S_MALI_UMD must be r38p1, r44p0, or r49p0" ;;
+esac
+case "$T2S_MALI_DDK:$T2S_MALI_UMD" in
+    r38p1:r38p1|r44p0:r44p0|r44p0:r49p0|r49p0:r49p0) ;;
+    *) ABORT "Unsupported Mali KMD/UMD pairing: $T2S_MALI_DDK/$T2S_MALI_UMD" ;;
 esac
 
 MALI_KERNEL_MANIFEST="$SRC_DIR/out/kernel-builds/latest-mali-ddk.txt"
@@ -105,6 +115,11 @@ _T2S_MALI_VERIFY_KERNEL_PAIRING()
             EXPECTED_ABI="11.35"
             EXPECTED_DONOR="floppy"
             ;;
+        r49p0)
+            EXPECTED_RELEASE="r49p0-00eac0"
+            EXPECTED_ABI="11.45"
+            EXPECTED_DONOR="3aa1f7b4b02dff89881cd283ee56c5854444a514"
+            ;;
     esac
     [ "$(_T2S_MALI_MANIFEST_VALUE ddk)" = "$EXPECTED_RELEASE" ] || \
         ABORT "Mali kernel release does not match $EXPECTED_RELEASE"
@@ -124,7 +139,8 @@ _T2S_MALI_VERIFY_KERNEL_PAIRING()
     [ "$(_T2S_MALI_MANIFEST_VALUE vendor_boot_sha256)" = "$VENDOR_BOOT_HASH" ] || \
         ABORT "vendor_boot.img no longer matches the verified Mali kernel build"
 
-    LOG "- KMD/UMD pairing: $EXPECTED_RELEASE, Job Manager UK ABI $EXPECTED_ABI"
+    LOG "- KMD: $EXPECTED_RELEASE, Job Manager UK ABI $EXPECTED_ABI"
+    LOG "- UMD selector: $T2S_MALI_UMD"
 }
 
 _T2S_MALI_VERIFY_R44_SOURCE()
@@ -523,11 +539,15 @@ for TOOL in base64 cmp readelf sha256sum strings; do
     command -v "$TOOL" >/dev/null || ABORT "Required Mali validation tool is missing: $TOOL"
 done
 
-LOG_STEP_IN "- Verifying matched Mali kernel/userspace ABI"
+LOG_STEP_IN "- Verifying Mali kernel/userspace compatibility"
 _T2S_MALI_VERIFY_KERNEL_PAIRING
 LOG_STEP_OUT
 
-case "$T2S_MALI_DDK" in
+case "$T2S_MALI_UMD" in
+    r49p0)
+        source "$MODPATH/r49p0.sh"
+        ;;
+
     r44p0)
         LOG_STEP_IN "- Preparing Pixel 6 Mali r44p0 userspace"
         if [ -n "${T2S_MALI_R44P0_DONOR_DIR:-}" ]; then
@@ -622,8 +642,9 @@ case "$T2S_MALI_DDK" in
         ;;
 esac
 
-unset T2S_MALI_DDK T2S_MALI_R44P0_DONOR_DIR T2S_MALI_R44P0_LIBDRM_DIR
-unset T2S_MALI_V34_DONOR_DIR T2S_MALI_R38P1_DONOR_DIR
+unset T2S_MALI_DDK T2S_MALI_UMD
+unset T2S_MALI_R44P0_DONOR_DIR T2S_MALI_R44P0_LIBDRM_DIR
+unset T2S_MALI_R49P0_DONOR_DIR T2S_MALI_V34_DONOR_DIR T2S_MALI_R38P1_DONOR_DIR
 unset MALI_KERNEL_MANIFEST MALI_R44_REPOSITORY MALI_R44_COMMIT MALI_R44_BASE_URL
 unset MALI_R44_CACHE_DIR MALI_R44_LOCAL_DONOR_DIR MALI_R44_SOURCE_DIR
 unset MALI_R44_FACTORY_URL MALI_R44_FACTORY_VENDOR_RANGE

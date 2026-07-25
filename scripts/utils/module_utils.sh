@@ -74,15 +74,15 @@ GET_GALAXY_STORE_DOWNLOAD_URL()
     local ONEUI
     local PROTOCOL
 
-    # Galaxy S26 Ultra EUR_OPENX
-    DEVICES=("SM-S948B")
+    # Galaxy Z Fold8 Ultra EUR_OPENX
+    DEVICES=("SM-F976B")
 
     OS="$(GET_PROP "system" "ro.build.version.sdk")"
     ONEUI="$(GET_PROP "system" "ro.build.version.oneui")"
 
     if [ ! "$OS" ]; then
-        # Fallback to Android 16
-        OS="36"
+        # Fallback to Android 17
+        OS="37"
     fi
     if [ ! "$ONEUI" ]; then
         # Fallback to One UI 9.0
