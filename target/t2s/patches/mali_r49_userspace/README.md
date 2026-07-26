@@ -1,9 +1,9 @@
 # Mali r49p0 userspace backport
 
-This experimental t2s module is disabled by default. On-device testing with
-the Fold8 One UI 9 source and Exynos2100 vendor stopped at the Samsung splash
-before ADB became available, so normal releases retain the target's proven
-Mali userspace.
+This experimental t2s module is disabled by default. Its r49p0 userspace
+expects Job Manager UK ABI 11.45, while FloppyKernel intentionally retains
+the r38p1 driver and UK ABI 11.35. Normal releases instead install the matched
+Android 13 r38p1 compatibility userspace.
 
 Set `T2S_ENABLE_EXPERIMENTAL_MALI_R49=1` in the build environment to opt in.
 Do not distribute an opted-in build without an explicit experimental warning.
@@ -21,5 +21,7 @@ dependencies, filesystem metadata, and SELinux labels. It also hashes
 `boot.img` and `vendor_boot.img` before and after installation and aborts if
 either kernel artifact changes.
 
-The r49p0 UMD with the unchanged r38p1 KMD is intentionally experimental and
-must be validated on-device for GPU UAPI negotiation and rendering stability.
+The splash failure captured on July 26 came from an older ZIP that contained
+the Android 11 r38p0 userspace, not from this r49 module. The r49p0 UMD with
+the unchanged r38p1 KMD remains intentionally experimental and must not be
+treated as a boot-safe release configuration.

@@ -19,6 +19,7 @@ KERNEL_BUILD_DIR="$TMP_DIR/floppykernel"
 KERNEL_SOURCE_DIR="$KERNEL_BUILD_DIR/source"
 ANYKERNEL_DIR="$KERNEL_BUILD_DIR/anykernel"
 KERNEL_ARTIFACT_DIR="$SRC_DIR/out/kernel-builds"
+KERNEL_MALI_MANIFEST="$KERNEL_ARTIFACT_DIR/latest-mali-ddk.txt"
 KERNEL_LOCK_FILE="$SRC_DIR/out/kernel-cache/floppy-build.lock"
 
 _FLOPPY_CLEAN_BUILD_TREE()
@@ -84,6 +85,19 @@ _FLOPPY_VERIFY_KSUNEXT_BUILD()
     fi
 }
 
+_FLOPPY_VERIFY_MALI_R38_BUILD()
+{
+    local KERNEL_MODULE="$KERNEL_SOURCE_DIR/out/drivers/gpu/arm/v_r38p1/mali_kbase.ko"
+    local ABI_HEADER="$KERNEL_SOURCE_DIR/include/uapi/gpu/arm/v_r38p1/jm/mali_kbase_jm_ioctl.h"
+
+    [ -f "$KERNEL_MODULE" ] || \
+        ABORT "Built FloppyKernel is missing the Mali r38p1 kernel module"
+    strings "$KERNEL_MODULE" | grep -F 'r38p1-01eac0' >/dev/null || \
+        ABORT "Built Mali kernel module is not r38p1-01eac0"
+    grep -qF '#define BASE_UK_VERSION_MINOR 35' "$ABI_HEADER" || \
+        ABORT "Built Mali kernel module does not expose Job Manager UK ABI 11.35"
+}
+
 _FLOPPY_PATCH_LITERAL()
 {
     local FILE="$1"
@@ -139,6 +153,7 @@ LOG "- Waiting for the exclusive FloppyKernel build lock"
 flock "$FLOPPY_LOCK_FD"
 # Never allow an old successful build to authorize new userspace after a
 # preparation or compilation failure.
+rm -f "$KERNEL_MALI_MANIFEST" "$KERNEL_MALI_MANIFEST.tmp"
 
 LOG_STEP_IN "- Updating FloppyKernel source"
 mkdir -p "$(dirname "$KERNEL_CACHE_DIR")" "$KERNEL_WORKSPACE_DIR"
@@ -219,9 +234,10 @@ if [ "${FLOPPY_KERNEL_SKIP_BUILD:-0}" = "1" ]; then
     LOG "- FLOPPY_KERNEL_SKIP_BUILD=1, source preparation verified"
     _FLOPPY_CLEAN_BUILD_TREE
     _FLOPPY_RELEASE_LOCK
+    unset KERNEL_MALI_MANIFEST
     unset -f _FLOPPY_CLEAN_BUILD_TREE _FLOPPY_RELEASE_LOCK
     unset -f _FLOPPY_PATCH_LITERAL _FLOPPY_SET_MODE_DEFAULT
-    unset -f _FLOPPY_VERIFY_KSUNEXT_BUILD
+    unset -f _FLOPPY_VERIFY_KSUNEXT_BUILD _FLOPPY_VERIFY_MALI_R38_BUILD
     return 0
 fi
 
@@ -262,6 +278,11 @@ LOG "- KernelSU Next manual hooks, synchronous boot events, and SUSFS are built 
 LOG "- SELinux mode $FLOPPY_SELINUX_MODE is embedded with command-line override support"
 LOG_STEP_OUT
 
+LOG_STEP_IN "- Verifying Mali r38p1 kernel ABI"
+_FLOPPY_VERIFY_MALI_R38_BUILD
+LOG "- Mali KMD: r38p1-01eac0, Job Manager UK ABI 11.35"
+LOG_STEP_OUT
+
 LOG_STEP_IN "- Installing FloppyKernel images"
 for IMAGE_MAP in \
     "build/images/boot_oneui.img:boot.img" \
@@ -286,10 +307,20 @@ fi
 printf '%s\n' "$KERNEL_COMMIT" > "$KERNEL_ARTIFACT_DIR/latest-commit.txt"
 BOOT_IMAGE_SHA256="$(sha256sum "$WORK_DIR/kernel/boot.img" | cut -d ' ' -f 1)"
 VENDOR_BOOT_IMAGE_SHA256="$(sha256sum "$WORK_DIR/kernel/vendor_boot.img" | cut -d ' ' -f 1)"
+MALI_MODULE_SHA256="$(
+    sha256sum "$KERNEL_SOURCE_DIR/out/drivers/gpu/arm/v_r38p1/mali_kbase.ko" |
+        cut -d ' ' -f 1
+)"
+{
     printf 'target=%s\n' "$TARGET_CODENAME"
     printf 'floppy_commit=%s\n' "$KERNEL_COMMIT"
+    printf 'ddk=%s\n' "r38p1-01eac0"
+    printf 'uk_abi=%s\n' "11.35"
+    printf 'kernel_module_sha256=%s\n' "$MALI_MODULE_SHA256"
     printf 'boot_sha256=%s\n' "$BOOT_IMAGE_SHA256"
     printf 'vendor_boot_sha256=%s\n' "$VENDOR_BOOT_IMAGE_SHA256"
+} > "$KERNEL_MALI_MANIFEST.tmp"
+mv -f "$KERNEL_MALI_MANIFEST.tmp" "$KERNEL_MALI_MANIFEST"
 LOG "- FloppyKernel commit: $KERNEL_COMMIT"
 LOG_STEP_OUT
 
@@ -301,9 +332,10 @@ unset FLOPPY_ANYKERNEL_REPO FLOPPY_ANYKERNEL_BRANCH
 unset FLOPPY_KERNEL_BUILD_ARGS FLOPPY_KERNEL_JOBS
 unset FLOPPY_BPF_SPOOF_MODE FLOPPY_SELINUX_MODE
 unset KERNEL_CACHE_DIR KERNEL_WORKSPACE_DIR KERNEL_BUILD_DIR KERNEL_SOURCE_DIR
+unset KERNEL_MALI_MANIFEST
 unset IMAGE_MAP SOURCE_IMAGE TARGET_IMAGE KERNEL_ZIP PATCH
 unset AOSP_CLANG_DIR
-unset BOOT_IMAGE_SHA256 VENDOR_BOOT_IMAGE_SHA256 FLOPPY_LOCK_FD
+unset BOOT_IMAGE_SHA256 VENDOR_BOOT_IMAGE_SHA256 MALI_MODULE_SHA256 FLOPPY_LOCK_FD
 unset -f _FLOPPY_CLEAN_BUILD_TREE _FLOPPY_RELEASE_LOCK
 unset -f _FLOPPY_PATCH_LITERAL _FLOPPY_SET_MODE_DEFAULT
-unset -f _FLOPPY_VERIFY_KSUNEXT_BUILD
+unset -f _FLOPPY_VERIFY_KSUNEXT_BUILD _FLOPPY_VERIFY_MALI_R38_BUILD

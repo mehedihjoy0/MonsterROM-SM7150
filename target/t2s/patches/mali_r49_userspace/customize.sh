@@ -1,8 +1,8 @@
 SKIPUNZIP=1
 
 if [ "${T2S_ENABLE_EXPERIMENTAL_MALI_R49:-0}" != "1" ]; then
-    LOGW "Mali r49p0 userspace is disabled after the on-device splash hang"
-    LOG "- Keeping the target Exynos Mali userspace and r38p1 kernel driver"
+    LOGW "Mali r49p0 userspace is disabled because its UK ABI does not match r38p1"
+    LOG "- Keeping the Android 13 r38p1 userspace paired with Floppy's r38p1 KMD"
     return 0
 fi
 
