@@ -1,0 +1,4 @@
+id=mali_r49_userspace
+name=Mali r49p0 userspace backport (experimental)
+author=ditternation
+description=Installs a pinned Pixel 6 Mali-G78 r49p0 UMD with private runtime SONAMEs while enforcing byte-identical boot and vendor_boot images.

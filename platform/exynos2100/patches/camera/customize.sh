@@ -48,13 +48,6 @@ if [[ "$TARGET_CODENAME" == "p3s" ]]; then
 fi
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libveengine.arcsoft.so" 0 0 644 "u:object_r:system_lib_file:s0"
 
-if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
-    # Upgrade midas blobs
-    ADD_TO_WORK_DIR "r9sxxx" "vendor" "etc/midas/midas_config.json" 0 0 644 "u:object_r:vendor_configs_file:s0"
-fi
-
-LOG "- Fixing MIDAS model detection"
-EVAL "sed -i \"s/$TARGET_CODENAME/r0s/g\" \"$WORK_DIR/vendor/etc/midas/midas_config.json\""
 LOG_STEP_IN "- Replacing camera blobs"
 BLOBS_LIST="
 system/lib64/libae_bracket_hdr.arcsoft.so
@@ -108,5 +101,3 @@ do
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "$blob" 0 0 644 "u:object_r:system_lib_file:s0" &
 done
 wait $(jobs -p) || exit 1
-
-

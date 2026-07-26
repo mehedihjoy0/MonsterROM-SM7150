@@ -1,47 +1,46 @@
-From f33a536d4bf7cf2f8acbb087951c8a298cfc76da Mon Sep 17 00:00:00 2001
-From: Salvo Giangreco <giangrecosalvo9@gmail.com>
-Date: Mon, 8 Sep 2025 22:24:01 +0200
-Subject: [PATCH] Disable virtual vibration support
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Codex <codex@openai.com>
+Date: Sun, 26 Jul 2026 12:00:00 +0200
+Subject: [PATCH] Disable virtual vibration support on One UI 9
 
----
 diff --git a/smali_classes3/com/samsung/android/settings/asbase/audio/SoundSettings$3.smali b/smali_classes3/com/samsung/android/settings/asbase/audio/SoundSettings$3.smali
-index 4037135..14e5eca 100644
+index ff790c7..7275dc6 100644
 --- a/smali_classes3/com/samsung/android/settings/asbase/audio/SoundSettings$3.smali
 +++ b/smali_classes3/com/samsung/android/settings/asbase/audio/SoundSettings$3.smali
-@@ -167,6 +167,14 @@
- 
+@@ -183,6 +183,14 @@
      invoke-virtual {v0, p1}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
  
-+    move-object p1, p0
+     :cond_7
++    const-string p1, "vibration_sound_enabled"
 +
-+    check-cast p1, Ljava/util/ArrayList;
++    move-object v0, p0
 +
-+    const-string/jumbo v0, "vibration_sound_enabled"
++    check-cast v0, Ljava/util/ArrayList;
 +
-+    invoke-virtual {p1, v0}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
++    invoke-virtual {v0, p1}, Ljava/util/ArrayList;->add(Ljava/lang/Object;)Z
 +
-     :cond_6
-     invoke-static {}, Landroid/app/ActivityManager;->getCurrentUser()I
+     const-string p1, "dnd_enabled"
  
+     move-object v0, p0
 diff --git a/smali_classes3/com/samsung/android/settings/asbase/reset/ResetSoundSystemFeedbackSettings$1.smali b/smali_classes3/com/samsung/android/settings/asbase/reset/ResetSoundSystemFeedbackSettings$1.smali
-index c298474..bb075ac 100644
+index 9b5c8f0..c2a7a4b 100644
 --- a/smali_classes3/com/samsung/android/settings/asbase/reset/ResetSoundSystemFeedbackSettings$1.smali
 +++ b/smali_classes3/com/samsung/android/settings/asbase/reset/ResetSoundSystemFeedbackSettings$1.smali
-@@ -349,9 +349,6 @@
+@@ -349,9 +349,5 @@
  
      invoke-static {p0, p1, v2}, Landroid/provider/Settings$System;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
  
--    const-string/jumbo p1, "vibration_sound_enabled"
+-    const-string p1, "vibration_sound_enabled"
 -
 -    invoke-static {p0, p1, v2}, Landroid/provider/Settings$System;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
- 
+-
      return-void
  .end method
 diff --git a/smali_classes3/com/samsung/android/settings/asbase/vibration/VirtualVibrationSoundPreferenceController.smali b/smali_classes3/com/samsung/android/settings/asbase/vibration/VirtualVibrationSoundPreferenceController.smali
-index c80d80e..0db16a7 100644
+index 38668a6..7ee755f 100644
 --- a/smali_classes3/com/samsung/android/settings/asbase/vibration/VirtualVibrationSoundPreferenceController.smali
 +++ b/smali_classes3/com/samsung/android/settings/asbase/vibration/VirtualVibrationSoundPreferenceController.smali
-@@ -195,7 +195,7 @@
+@@ -177,7 +177,7 @@
  .method public getAvailabilityStatus()I
      .locals 0
  
@@ -50,7 +49,7 @@ index c80d80e..0db16a7 100644
  
      return p0
  .end method
-@@ -551,51 +551,33 @@
+@@ -533,51 +533,33 @@
  .end method
  
  .method public setValue(Lcom/samsung/android/settings/cube/ControlValue;)Lcom/samsung/android/settings/cube/ControlResult;
@@ -75,34 +74,34 @@ index c80d80e..0db16a7 100644
 -
      move-result-object p0
  
--    const-string/jumbo v1, "vibration_sound_enabled"
--
--    invoke-static {p0, v1, p1}, Landroid/provider/Settings$System;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
+-    const-string v1, "vibration_sound_enabled"
 +    new-instance p1, Lcom/samsung/android/settings/cube/ControlResult;
  
--    new-instance p0, Lcom/samsung/android/settings/cube/ControlResult;
+-    invoke-static {p0, v1, p1}, Landroid/provider/Settings$System;->putInt(Landroid/content/ContentResolver;Ljava/lang/String;I)Z
 +    invoke-direct {p1}, Ljava/lang/Object;-><init>()V
  
--    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
+-    new-instance p0, Lcom/samsung/android/settings/cube/ControlResult;
 +    iput-object p0, p1, Lcom/samsung/android/settings/cube/ControlResult;->mKey:Ljava/lang/String;
  
--    iput-object v0, p0, Lcom/samsung/android/settings/cube/ControlResult;->mKey:Ljava/lang/String;
+-    invoke-direct {p0}, Ljava/lang/Object;-><init>()V
 +    sget-object p0, Lcom/samsung/android/settings/cube/ControlResult$ResultCode;->FAIL:Lcom/samsung/android/settings/cube/ControlResult$ResultCode;
  
--    sget-object p1, Lcom/samsung/android/settings/cube/ControlResult$ResultCode;->SUCCESS:Lcom/samsung/android/settings/cube/ControlResult$ResultCode;
+-    iput-object v0, p0, Lcom/samsung/android/settings/cube/ControlResult;->mKey:Ljava/lang/String;
 +    iput-object p0, p1, Lcom/samsung/android/settings/cube/ControlResult;->mResultCode:Lcom/samsung/android/settings/cube/ControlResult$ResultCode;
  
--    iput-object p1, p0, Lcom/samsung/android/settings/cube/ControlResult;->mResultCode:Lcom/samsung/android/settings/cube/ControlResult$ResultCode;
+-    sget-object p1, Lcom/samsung/android/settings/cube/ControlResult$ResultCode;->SUCCESS:Lcom/samsung/android/settings/cube/ControlResult$ResultCode;
 +    sget-object p0, Lcom/samsung/android/settings/cube/ControlResult$ErrorCode;->NOT_SUPPORT_DEVICE:Lcom/samsung/android/settings/cube/ControlResult$ErrorCode;
  
--    const/4 p1, 0x0
+-    iput-object p1, p0, Lcom/samsung/android/settings/cube/ControlResult;->mResultCode:Lcom/samsung/android/settings/cube/ControlResult$ResultCode;
 +    iput-object p0, p1, Lcom/samsung/android/settings/cube/ControlResult;->mErrorCode:Lcom/samsung/android/settings/cube/ControlResult$ErrorCode;
  
+-    const/4 p1, 0x0
+-
 -    iput-object p1, p0, Lcom/samsung/android/settings/cube/ControlResult;->mErrorCode:Lcom/samsung/android/settings/cube/ControlResult$ErrorCode;
+-
+-    const-string p1, ""
 +    const-string p0, ""
  
--    const-string p1, ""
--
 -    iput-object p1, p0, Lcom/samsung/android/settings/cube/ControlResult;->mErrorMsg:Ljava/lang/String;
 +    iput-object p0, p1, Lcom/samsung/android/settings/cube/ControlResult;->mErrorMsg:Ljava/lang/String;
  
@@ -114,4 +113,4 @@ index c80d80e..0db16a7 100644
  
  .method public bridge synthetic useDynamicSliceSummary()Z
 -- 
-2.51.1
+2.53.0

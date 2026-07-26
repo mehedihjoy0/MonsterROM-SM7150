@@ -150,6 +150,36 @@ else
     fi
 fi
 
+# SEC_PRODUCT_FEATURE_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND
+if $SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
+    if ! $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
+        APPLY_PATCH "system" "system/framework/framework.jar" \
+            "$MODPATH/audio/virtual_vib/framework.jar/0001-Disable-virtual-vibration-support.patch"
+        APPLY_PATCH "system" "system/framework/services.jar" \
+            "$MODPATH/audio/virtual_vib/services.jar/0001-Disable-virtual-vibration-support.patch"
+        if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge "37" ]; then
+            LOG "- Keeping linked One UI 9 virtual-vibration stubs"
+        else
+            SMALI_PATCH "system" "system/framework/services.jar" \
+                "smali/com/android/server/audio/BtHelper\$\$ExternalSyntheticLambda0.smali" "remove"
+            EVAL "sed -i \"/.source/q\" \"$APKTOOL_DIR/system/framework/services.jar/smali_classes2/com/android/server/vibrator/VibratorManagerInternal.smali\""
+            SMALI_PATCH "system" "system/framework/services.jar" \
+                "smali_classes2/com/android/server/vibrator/VibratorManagerService\$SamsungBroadcastReceiver\$\$ExternalSyntheticLambda1.smali" "remove"
+            SMALI_PATCH "system" "system/framework/services.jar" \
+                "smali_classes2/com/android/server/vibrator/VirtualVibSoundHelper.smali" "remove"
+        fi
+        APPLY_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
+            "$MODPATH/audio/virtual_vib/SecSettings.apk/0001-Disable-virtual-vibration-support.patch"
+        APPLY_PATCH "system" "system/priv-app/SettingsProvider/SettingsProvider.apk" \
+            "$MODPATH/audio/virtual_vib/SettingsProvider.apk/0001-Disable-virtual-vibration-support.patch"
+    fi
+else
+    if $TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND; then
+        # TODO handle this condition
+        LOG_MISSING_PATCHES "SOURCE_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND" "TARGET_AUDIO_SUPPORT_VIRTUAL_VIBRATION_SOUND"
+    fi
+fi
+
 # SEC_PRODUCT_FEATURE_COMMON_CONFIG_MDNIE_MODE
 if [[ "$SOURCE_COMMON_CONFIG_MDNIE_MODE" != "$TARGET_COMMON_CONFIG_MDNIE_MODE" ]]; then
     SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_COMMON_CONFIG_MDNIE_MODE" "$TARGET_COMMON_CONFIG_MDNIE_MODE"
@@ -731,6 +761,19 @@ elif $SOURCE_WLAN_SUPPORT_MBO && ! $TARGET_WLAN_SUPPORT_MBO; then
         "smali/com/samsung/android/server/wifi/SemFrameworkFacade.smali" "return" \
         "isMBOSupported()Z" \
         "false"
+fi
+
+# SEC_PRODUCT_FEATURE_WLAN_SUPPORT_MIMO
+if ! $SOURCE_WLAN_SUPPORT_MIMO && $TARGET_WLAN_SUPPORT_MIMO; then
+    SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
+        "smali/com/samsung/android/server/wifi/SemWifiServiceImpl.smali" "return" \
+        "getNumOfWifiAnt()I" \
+        "2"
+elif $SOURCE_WLAN_SUPPORT_MIMO && ! $TARGET_WLAN_SUPPORT_MIMO; then
+    SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
+        "smali/com/samsung/android/server/wifi/SemWifiServiceImpl.smali" "return" \
+        "getNumOfWifiAnt()I" \
+        "1"
 fi
 
 # SEC_PRODUCT_FEATURE_WLAN_SUPPORT_MOBILEAP_5G_BASEDON_COUNTRY
