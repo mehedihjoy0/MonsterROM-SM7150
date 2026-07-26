@@ -1,6 +1,14 @@
 # Mali r49p0 userspace backport
 
-This experimental t2s module replaces only the 32-bit and 64-bit Mali UMD and
+This experimental t2s module is disabled by default. On-device testing with
+the Fold8 One UI 9 source and Exynos2100 vendor stopped at the Samsung splash
+before ADB became available, so normal releases retain the target's proven
+Mali userspace.
+
+Set `T2S_ENABLE_EXPERIMENTAL_MALI_R49=1` in the build environment to opt in.
+Do not distribute an opted-in build without an explicit experimental warning.
+
+When enabled, the module replaces only the 32-bit and 64-bit Mali UMD and
 Vulkan shim. It does not patch, replace, or select a kernel driver.
 
 The source files come from the pinned Pixel 6 AP41.240726.009 vendor image.

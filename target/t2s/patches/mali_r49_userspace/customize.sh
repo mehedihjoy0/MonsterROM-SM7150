@@ -1,5 +1,11 @@
 SKIPUNZIP=1
 
+if [ "${T2S_ENABLE_EXPERIMENTAL_MALI_R49:-0}" != "1" ]; then
+    LOGW "Mali r49p0 userspace is disabled after the on-device splash hang"
+    LOG "- Keeping the target Exynos Mali userspace and r38p1 kernel driver"
+    return 0
+fi
+
 # This module deliberately swaps only vendor userspace. Hashing both packaged
 # kernel images makes that boundary enforceable instead of relying on convention.
 MALI_R49_BOOT_IMAGE="$WORK_DIR/kernel/boot.img"
