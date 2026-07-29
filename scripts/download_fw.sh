@@ -113,7 +113,13 @@ PREPARE_SCRIPT "$@"
 for i in "${FIRMWARES[@]}"; do
     PARSE_FIRMWARE_STRING "$i" || exit 1
 
-    LATEST_FIRMWARE="$(GET_LATEST_FIRMWARE "$MODEL" "$CSC")"
+    # Override FUS version query for SM-F976B
+    if [ "$MODEL" == "SM-F976B" ]; then
+        LATEST_FIRMWARE="F976BXXU1AZFW/F976BOXM1AZFW/F976BXXU1AZFW/F976BXXU1AZFW"
+    else
+        LATEST_FIRMWARE="$(GET_LATEST_FIRMWARE "$MODEL" "$CSC")"
+    fi
+
     if [ ! "$LATEST_FIRMWARE" ]; then
         LOGE "Latest available firmware could not be fetched"
         exit 1
@@ -151,17 +157,31 @@ for i in "${FIRMWARES[@]}"; do
     LOG "- Downloading firmware..."
     [ -f "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" ] && rm -rf "$ODIN_DIR/${MODEL}_${CSC}"
     mkdir -p "$ODIN_DIR/${MODEL}_${CSC}"
-    # Anan's samloader stores its logs in the current working directory, let's move into OUT_DIR just for this time
-    (
-    cd "$OUT_DIR" || exit 1
-    samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download -O "$ODIN_DIR/${MODEL}_${CSC}" 1> /dev/null || exit 1
-    )
 
-    ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
-    if [ ! "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
-        LOG "\033[0;31m! Download failed\033[0m"
-        exit 1
-    fi
+    COUNT=1
+    # Loop infinitely until download succeeds
+    while true; do
+        # Anan's samloader stores its logs in the current working directory, let's move into OUT_DIR just for this time
+        (
+            cd "$OUT_DIR" || exit 1
+            if [ "$MODEL" == "SM-F976B" ]; then
+                samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download -v "F976BXXU1AZFW/F976BOXM1AZFW/F976BXXU1AZFW/F976BXXU1AZFW" -O "$ODIN_DIR/${MODEL}_${CSC}" 1> /dev/null
+            else
+                samloader -m "$MODEL" -r "$CSC" -i "$IMEI" -s "$SERIAL_NO" download -O "$ODIN_DIR/${MODEL}_${CSC}" 1> /dev/null
+            fi
+        )
+
+        ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
+        if [ ! "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
+            LOG "\033[0;31m! Download failed (attempt $COUNT)\033[0m"
+            COUNT=$((COUNT + 1))
+            sleep 2
+            continue
+        fi
+
+        # Exit retry loop once zip file is present
+        break
+    done
 
     LOG "- Extracting $(basename "$ZIP_FILE")..."
     EVAL "unzip -o \"$ZIP_FILE\" -d \"$ODIN_DIR/${MODEL}_${CSC}\" && rm -rf \"$ZIP_FILE\"" || exit 1
