@@ -4,7 +4,7 @@ Date: Thu, 5 Apr 2018 10:01:19 +0800
 Subject: [PATCH] Disable vendor mismatch warning
 
 ---
- ...gerService$$ExternalSyntheticLambda8.smali | 16 +---
+ ...gerService$$ExternalSyntheticLambda7.smali | 16 +---
  1 file changed, 1 insertion(+), 15 deletions(-)
 
 diff --git a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali
