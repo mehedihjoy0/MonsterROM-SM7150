@@ -1,0 +1,22 @@
+From: devcore94 <ditternation@outlook.com>
+Subject: [PATCH] camera: avoid Clang 22 CSI v4 optimizer crash
+
+The AOSP Clang 22 toolchain can crash in the simplifycfg optimizer while
+compiling is-device-csi_v4.c, specifically the is_isr_csi() function. Keep
+the workaround local to this object so the rest of the kernel retains its
+normal optimization level.
+
+Signed-off-by: devcore94 <ditternation@outlook.com>
+
+diff --git a/drivers/media/platform/exynos/camera/Makefile b/drivers/media/platform/exynos/camera/Makefile
+--- a/drivers/media/platform/exynos/camera/Makefile
++++ b/drivers/media/platform/exynos/camera/Makefile
+@@ -58,6 +58,8 @@ ifeq ($(CONFIG_EXYNOS_DEVICE_MIPI_CSIS_VER4),y)
+ fimc-is-objs += is-device-csi_v4.o
+ endif
+ 
++CFLAGS_is-device-csi_v4.o += -O1
++
+ ifeq ($(CONFIG_VIDEO_EXYNOS_PABLO_ISP),m)
+ fimc-is-objs += is-mem_v2.o
+ else

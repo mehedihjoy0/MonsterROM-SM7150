@@ -87,7 +87,7 @@ _FLOPPY_VERIFY_KSUNEXT_BUILD()
 
 _FLOPPY_VERIFY_MALI_R38_BUILD()
 {
-    local KERNEL_MODULE="$KERNEL_SOURCE_DIR/out/drivers/gpu/arm/v_r38p1/mali_kbase.ko"
+    local KERNEL_MODULE="$KERNEL_SOURCE_DIR/out/drivers/gpu/arm/v_r38p1/mali_kbase_r38p1.ko"
     local ABI_HEADER="$KERNEL_SOURCE_DIR/include/uapi/gpu/arm/v_r38p1/jm/mali_kbase_jm_ioctl.h"
 
     [ -f "$KERNEL_MODULE" ] || \
