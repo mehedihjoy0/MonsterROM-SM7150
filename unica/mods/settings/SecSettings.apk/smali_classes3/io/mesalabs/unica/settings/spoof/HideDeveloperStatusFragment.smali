@@ -253,21 +253,9 @@
 
     move-result-object p1
 
-    const-string p2, "id"
+    check-cast p1, Lcom/android/settings/SettingsActivity;
 
-    const-string v0, "switch_bar"
-
-    invoke-static {p2, v0}, Lio/mesalabs/unica/utils/Utils;->getResourceId(Ljava/lang/String;Ljava/lang/String;)I
-
-    move-result p2
-
-    invoke-virtual {p1, p2}, Landroid/app/Activity;->findViewById(I)Landroid/view/View;
-
-    move-result-object p1
-
-    if-eqz p1, :cond_3
-
-    check-cast p1, Lcom/android/settings/widget/SettingsMainSwitchBar;
+    iget-object p1, p1, Lcom/android/settings/SettingsActivity;->mMainSwitch:Lcom/android/settings/widget/SettingsMainSwitchBar;
 
     iput-object p1, p0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->mSwitchBar:Lcom/android/settings/widget/SettingsMainSwitchBar;
 
@@ -303,7 +291,6 @@
 
     invoke-virtual {p0}, Landroidx/appcompat/widget/SeslSwitchBar;->show()V
 
-    :cond_3
     return-object p3
 .end method
 
