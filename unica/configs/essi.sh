@@ -3,7 +3,7 @@
 
 # UN1CA configuration file for Snapdragon devices (qssi)
 
-# Galaxy Z Fold 8 (Snapdragon) (One UI 9.0)
+# Galaxy Z Fold 8 Ultra (Snapdragon) (One UI 9.0)
 SOURCE_FIRMWARE="SM-F976B/INS/RZGL7010G6L"
 SOURCE_EXTRA_FIRMWARES=()
 SOURCE_PLATFORM_SDK_VERSION=37

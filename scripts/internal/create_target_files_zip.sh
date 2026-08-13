@@ -159,8 +159,6 @@ GENERATE_BUILD_INFO
 
 LOG "- Creating zip"
 rm -f "$OUTPUT_FILE"
-# 7-Zip 26.00's ZIP writer crashes on multi-gigabyte archives under WSL2.
-# Info-ZIP has Zip64 support and is already part of the build environment.
 EVAL "cd \"$TMP_DIR\" && zip -q -r -3 -X \"$OUTPUT_FILE\" *" || exit 1
 
 exit 0
