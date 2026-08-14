@@ -128,9 +128,21 @@
 
     move-result-object v3
 
-    invoke-virtual {v3, v1}, Landroid/app/Activity;->findViewById(I)Landroid/view/View;
+    invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getView()Landroid/view/View;
 
     move-result-object v1
+
+    if-nez v1, :cond_anchor_ready
+
+    invoke-virtual {v3}, Landroid/app/Activity;->getWindow()Landroid/view/Window;
+
+    move-result-object v1
+
+    invoke-virtual {v1}, Landroid/view/Window;->getDecorView()Landroid/view/View;
+
+    move-result-object v1
+
+    :cond_anchor_ready
 
     invoke-direct {p1, v2, v1}, Landroidx/appcompat/widget/PopupMenu;-><init>(Landroid/content/Context;Landroid/view/View;)V
 

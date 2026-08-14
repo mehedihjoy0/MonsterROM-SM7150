@@ -17,6 +17,3 @@ on early-init
 # TEEgris - Firmware - t2sksx (kor_single)
 on early-init && property:ro.boot.em.model=SM-G996N
     mount none /vendor/tee_SM-G996N /vendor/tee bind
-
-on property:sys.boot_completed=1
-    restart audioserver

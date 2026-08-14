@@ -1,4 +1,0 @@
-id=mali_r38_userspace
-name=Mali r38p1 One UI 9 compatibility userspace
-author=ditternation
-description=Pairs Floppy's r38p1 KMD with a pinned Android 13 Mali-G78 r38p1 UMD so API 37 can load EGL.

@@ -813,7 +813,6 @@ if ! $SOURCE_WLAN_SUPPORT_MOBILEAP_6G && $TARGET_WLAN_SUPPORT_MOBILEAP_6G; then
         "isSupportMobileAp6G()Z" \
         "true"
 elif $SOURCE_WLAN_SUPPORT_MOBILEAP_6G && ! $TARGET_WLAN_SUPPORT_MOBILEAP_6G; then
-    DELETE_FROM_WORK_DIR "product" "overlay/SoftapOverlay6GHz"
 
     SMALI_PATCH "system" "system/framework/semwifi-service.jar" \
         "smali/com/samsung/android/server/wifi/ap/SemSoftApConfiguration.smali" "replaceall" \

@@ -97,6 +97,18 @@
 
     move-result v0
 
+    if-ltz v0, :cond_default_animation
+
+    const/4 v1, 0x3
+
+    if-gt v0, v1, :cond_default_animation
+
+    goto :cond_animation_index_ready
+
+    :cond_default_animation
+    move v0, v4
+
+    :cond_animation_index_ready
     invoke-virtual {p1, v0}, Landroidx/preference/DropDownPreference;->setValueIndex(I)V
 
     iget-object p1, p0, Lio/mesalabs/unica/settings/ui/LauncherAnimationTypePreferenceController;->mPreference:Landroidx/preference/SecDropDownPreference;

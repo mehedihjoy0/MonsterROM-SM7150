@@ -55,7 +55,7 @@
 .end method
 
 .method public constructor <init>(Landroid/content/Context;Ljava/lang/String;)V
-    .locals 0
+    .locals 1
 
     invoke-direct {p0, p1, p2}, Lcom/android/settings/core/TogglePreferenceController;-><init>(Landroid/content/Context;Ljava/lang/String;)V
 
@@ -69,15 +69,19 @@
 
     iput-object p1, p0, Lio/mesalabs/unica/settings/ui/ForceMaxRefreshRatePreferenceController;->mContentObserver:Landroid/database/ContentObserver;
 
+    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
+
     const/4 p1, 0x0
 
-    invoke-static {p1}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateSeamlessType(I)I
+    invoke-static {v0, p1}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateSeamlessType(Landroid/content/Context;I)I
 
     move-result p1
 
     iput p1, p0, Lio/mesalabs/unica/settings/ui/ForceMaxRefreshRatePreferenceController;->mRefreshRateType:I
 
-    invoke-static {}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateMaxValue()I
+    iget-object v0, p0, Lcom/android/settingslib/core/AbstractPreferenceController;->mContext:Landroid/content/Context;
+
+    invoke-static {v0}, Lcom/samsung/android/settings/display/SecDisplayUtils;->getHighRefreshRateMaxValue(Landroid/content/Context;)I
 
     move-result p1
 

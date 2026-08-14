@@ -141,6 +141,28 @@
 
     move-result-object p3
 
+    check-cast p3, Landroid/view/ViewGroup;
+
+    const-string v0, "layout"
+
+    const-string v1, "sec_settings_main_switch_bar"
+
+    invoke-static {v0, v1}, Lio/mesalabs/unica/utils/Utils;->getResourceId(Ljava/lang/String;Ljava/lang/String;)I
+
+    move-result v0
+
+    const/4 v1, 0x0
+
+    invoke-virtual {p1, v0, p3, v1}, Landroid/view/LayoutInflater;->inflate(ILandroid/view/ViewGroup;Z)Landroid/view/View;
+
+    move-result-object v0
+
+    check-cast v0, Lcom/android/settings/widget/SettingsMainSwitchBar;
+
+    invoke-virtual {p3, v0, v1}, Landroid/view/ViewGroup;->addView(Landroid/view/View;I)V
+
+    iput-object v0, p0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->mSwitchBar:Lcom/android/settings/widget/SettingsMainSwitchBar;
+
     const-string v0, "id"
 
     const-string v1, "recycler_view"
@@ -249,15 +271,7 @@
 
     iput-object v1, p0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->mLoadingViewController:Lcom/android/settings/widget/LoadingViewController;
 
-    invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getActivity()Landroidx/fragment/app/FragmentActivity;
-
-    move-result-object p1
-
-    check-cast p1, Lcom/android/settings/SettingsActivity;
-
-    iget-object p1, p1, Lcom/android/settings/SettingsActivity;->mMainSwitch:Lcom/android/settings/widget/SettingsMainSwitchBar;
-
-    iput-object p1, p0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->mSwitchBar:Lcom/android/settings/widget/SettingsMainSwitchBar;
+    iget-object p1, p0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->mSwitchBar:Lcom/android/settings/widget/SettingsMainSwitchBar;
 
     iget-object p2, p0, Lio/mesalabs/unica/settings/spoof/HideDeveloperStatusFragment;->mContext:Landroid/content/Context;
 

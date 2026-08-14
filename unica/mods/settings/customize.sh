@@ -202,6 +202,18 @@ while IFS= read -r f; do
     fi
 done < <(find "$MODPATH/SecSettings.apk" -type f)
 
+# One UI 9 no longer supplies colorPrimaryDark through SecPreferenceTheme.
+# The UN1CA launcher animation dropdown still resolves that attribute when it
+# inflates its checked-item color state list.
+SEC_SETTINGS_STYLES="$APKTOOL_DIR/system/priv-app/SecSettings/SecSettings.apk/res/values/styles.xml"
+if [ -f "$SEC_SETTINGS_STYLES" ] && \
+        grep -q '<style name="SecPreferenceTheme"' "$SEC_SETTINGS_STYLES" && \
+        ! sed -n '/<style name="SecPreferenceTheme"/,/<\/style>/p' "$SEC_SETTINGS_STYLES" | \
+            grep -q 'name="colorPrimaryDark"'; then
+    sed -i '/<style name="SecPreferenceTheme"/a\        <item name="colorPrimaryDark">?colorPrimary</item>' "$SEC_SETTINGS_STYLES"
+fi
+unset SEC_SETTINGS_STYLES
+
 # Add UN1CA Settings SearchIndexableData registrations
 LOG "- Patching \"smali_classes2/com/android/settings/search/SearchFeatureProviderImpl\$\$ExternalSyntheticLambda0.smali\" in /system/system/priv-app/SecSettings.apk"
 SMALI_PATCH "system" "system/priv-app/SecSettings/SecSettings.apk" \
