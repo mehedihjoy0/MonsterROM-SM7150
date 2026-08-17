@@ -14,33 +14,16 @@ FILE=""
 
 INPUT_FILE=""
 OUTPUT_PATH=""
-BUILD_LOCK_FILE="$APKTOOL_DIR/.build.lock"
 
-if [ -n "$UN1CA_APKTOOL_THREADS" ]; then
-    THREAD_COUNT="$UN1CA_APKTOOL_THREADS"
-else
-    # Default to a single apktool worker to avoid OOM during local WSL builds.
-    THREAD_COUNT=1
-fi
+THREAD_COUNT=$(awk -v max="$(nproc)" '/MemTotal/ {
+  tc = int(($2 + 1048575) / 2097152);
+  print (tc < 1 ? 1 : (tc > max ? max : tc));
+}' /proc/meminfo)
 
 [ -n "$GITHUB_ACTIONS" ] && THREAD_COUNT=1
 
-if [ -n "$UN1CA_APKTOOL_BUILD_JAVA_OPTS" ]; then
-    APKTOOL_BUILD_JAVA_OPTS="$UN1CA_APKTOOL_BUILD_JAVA_OPTS"
-else
-    # Apktool/smali can trip a HotSpot C2 crash on newer OpenJDK 17 WSL hosts.
-    # Keep builds stable by avoiding C2 for apktool build jobs only.
-    APKTOOL_BUILD_JAVA_OPTS="-XX:TieredStopAtLevel=1"
-fi
-
 BUILD()
 {
-    # make_rom backgrounds every package build. Keep only one JVM-heavy build
-    # active at a time so constrained WSL hosts do not invoke the OOM killer.
-    mkdir -p "$APKTOOL_DIR"
-    exec 9>"$BUILD_LOCK_FILE"
-    flock 9 || exit 1
-
     if [ ! -d "$OUTPUT_PATH" ]; then
         LOGE "Folder not found: ${OUTPUT_PATH//$SRC_DIR\//}"
         exit 1
@@ -53,7 +36,7 @@ BUILD()
     cp -a "$OUTPUT_PATH/original/META-INF" "$OUTPUT_PATH/build/apk/META-INF"
 
     # Build APK with --shorten-resource-paths (https://developer.android.com/tools/aapt2#optimize_options)
-    EVAL "env JDK_JAVA_OPTIONS=\"$APKTOOL_BUILD_JAVA_OPTS\" apktool b -j \"$THREAD_COUNT\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
+    EVAL "apktool b -j \"$THREAD_COUNT\" -p \"$FRAMEWORK_DIR\" -srp \"$OUTPUT_PATH\"" || exit 1
 
     local FILE_NAME
     FILE_NAME="$(basename "$INPUT_FILE")"

@@ -7,7 +7,18 @@ fi
 ADD_TARGET_VNDK_APEX() {
     case "$TARGET_BOARD_API_LEVEL" in
         "30")
-            ADD_TO_WORK_DIR "a73xqxx" "system_ext" "apex/com.android.vndk.v30.apex" 0 0 644 "u:object_r:system_file:s0"
+            if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge "37" ] && \
+                    [ "$TARGET_CODENAME" = "t2s" ]; then
+                # Keep the exact G996 VNDK snapshot paired with its vendor,
+                # including the 32-bit libraries required by legacy HALs.
+                ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system_ext" \
+                    "apex/com.android.vndk.v30.apex" 0 0 644 \
+                    "u:object_r:system_file:s0"
+            else
+                ADD_TO_WORK_DIR "a73xqxx" "system_ext" \
+                    "apex/com.android.vndk.v30.apex" 0 0 644 \
+                    "u:object_r:system_file:s0"
+            fi
             ;;
         "31")
             ADD_TO_WORK_DIR "b0qxxx" "system_ext" "apex/com.android.vndk.v31.apex" 0 0 644 "u:object_r:system_file:s0"

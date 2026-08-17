@@ -109,10 +109,7 @@ SMALI_PATCH()
     fi
 
     # Check if provided method is method and exists inside smali
-    if ! awk -v FN="$METHOD" '
-        /^\.method/ && index($0, FN) { found = 1; exit }
-        END { exit found ? 0 : 1 }
-    ' "$FILE_PATH/$SMALI"; then
+    if ! grep "^\.method.*" "$FILE_PATH/$SMALI" | grep -q -F -- "$METHOD" "$FILE_PATH/$SMALI"; then
         LOGE "Method \"$METHOD\" not found in /$PARTITION/$FILE/$SMALI"
 
         local MATCHES
@@ -359,10 +356,7 @@ SMALI_PATCH()
                         next
                     }
                 } else if ($0 ~ /^[[:space:]]*const-string(\/jumbo)?/) {
-                    idx = index($0, "\"" STR "\"")
-                    if (idx > 0) {
-                        $0 = substr($0, 1, idx - 1) "\"" REP "\"" substr($0, idx + length("\"" STR "\""))
-                    }
+                    sub("\"" STR "\"", "\"" REP "\"")
                 } else {
                     line = $0
                     gsub(/^[ \t]+|[ \t]+$/, "", line)

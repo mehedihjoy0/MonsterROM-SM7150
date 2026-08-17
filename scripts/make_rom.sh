@@ -17,16 +17,7 @@ TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" 
 
 GET_WORK_DIR_HASH()
 {
-    local HASH_ROOTS=(
-        "$SRC_DIR/unica"
-        "$SRC_DIR/target/$TARGET_CODENAME"
-    )
-
-    if [ -d "$SRC_DIR/platform/$TARGET_PLATFORM" ]; then
-        HASH_ROOTS+=("$SRC_DIR/platform/$TARGET_PLATFORM")
-    fi
-
-    find "${HASH_ROOTS[@]}" -type f -print0 | \
+    find "$SRC_DIR/unica" "$SRC_DIR/target/$TARGET_CODENAME" -type f -print0 | \
         sort -z | xargs -0 sha1sum | sha1sum | cut -d " " -f 1
 }
 

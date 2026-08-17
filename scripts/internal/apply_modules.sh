@@ -10,7 +10,6 @@ source "$SRC_DIR/scripts/utils/module_utils.sh" || exit 1
 APPLY_MODULE()
 {
     local MODPATH="$1"
-    local MODULE_ID
     local MODNAME
     local MODAUTH
 
@@ -18,14 +17,6 @@ APPLY_MODULE()
         LOGE "Folder not found: ${MODPATH//$SRC_DIR\//}"
         return 1
     fi
-
-    MODULE_ID="$(basename "$MODPATH")"
-    case ":${UN1CA_SKIP_MODULES:-}:" in
-        *":$MODULE_ID:"*)
-            LOG "- Skipping module: $MODULE_ID"
-            return 0
-            ;;
-    esac
 
     if [ -d "$MODPATH/$TARGET_OS_SINGLE_SYSTEM_IMAGE" ]; then
         MODPATH="$MODPATH/$TARGET_OS_SINGLE_SYSTEM_IMAGE"

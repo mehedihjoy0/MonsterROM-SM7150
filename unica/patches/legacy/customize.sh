@@ -53,7 +53,7 @@ BACKPORT_SF_PROPS()
         fi
 
         PROP="debug.sf.show_refresh_rate_overlay_render_rate"
-        VALUE="false"
+        VALUE="true"
         if [ ! "$(GET_PROP "vendor" "$PROP")" ]; then
             LOG "- Adding \"$PROP\" prop with \"$VALUE\" in ${FILE//$WORK_DIR/}"
             EVAL "sed -i \"/ro.surface_flinger.use_content_detection_for_refresh_rate/i $PROP=$VALUE\" \"$FILE\""
@@ -102,6 +102,83 @@ EXTRACT_KERNEL_MODULES() {
             EVAL "cat \"$f\" | gzip -d > \"$TMP_DIR/out/tmp\" && mv -f \"$TMP_DIR/out/tmp\" \"$f\""
         fi
     done < <(find "$TMP_DIR/out" -maxdepth 1 -type f -name "vendor_ramdisk*")
+}
+
+# Android 17 already carries the compatibility fallback removed by AOSP in
+# 42e37234cee15c9f3fcfac0532110abfc8843b99.  Do not replay the Android 16
+# patch against CP2A bytecode: verify the native implementation instead.
+VERIFY_NATIVE_UICC_PHYSICAL_SLOT_COMPAT() {
+    DECODE_APK "system" "system/framework/telephony-common.jar" || return 1
+
+    local DECODED_JAR="$APKTOOL_DIR/system/framework/telephony-common.jar"
+    local MATCHES=()
+    local SMALI
+    local CONSTRUCTOR
+    local COMPAT_BLOCK
+    local PREVIOUS_LINE=0
+    local CURRENT_LINE
+    local ANCHOR
+
+    mapfile -t MATCHES < <(find "$DECODED_JAR" -type f \
+        -path "*/com/android/internal/telephony/uicc/UiccController.smali")
+    if [ "${#MATCHES[@]}" -ne "1" ]; then
+        ABORT "Expected exactly one UiccController.smali in /system/system/framework/telephony-common.jar"
+        return 1
+    fi
+    SMALI="${MATCHES[0]}"
+
+    CONSTRUCTOR="$(awk '
+        /^\.method .* constructor .*<init>\(Landroid\/content\/Context;.*FeatureFlags;\)V$/ {
+            found = 1
+        }
+        found { print }
+        found && /^\.end method$/ { exit }
+    ' "$SMALI")"
+    if [ -z "$CONSTRUCTOR" ]; then
+        ABORT "Android 17 UiccController constructor anchor not found"
+        return 1
+    fi
+
+    COMPAT_BLOCK="$(awk '
+        index($0, "\"ro.vendor.api_level\"") { found = 1 }
+        found { print }
+        found && index($0, "->PROJECT_SIM_NUM:I") { exit }
+    ' <<< "$CONSTRUCTOR")"
+    if [ -z "$COMPAT_BLOCK" ]; then
+        ABORT "Android 17 UiccController physical-slot compatibility block not found"
+        return 1
+    fi
+
+    # Require the control-flow anchors in semantic order.  In particular, the
+    # configured physical-slot count must be raised to mCis.length for legacy
+    # vendor API levels before PROJECT_SIM_NUM is stored.
+    for ANCHOR in \
+        '"ro.vendor.api_level"' \
+        'Landroid/os/SystemProperties;->getInt(Ljava/lang/String;I)I' \
+        '"current vendor api_level: "' \
+        '0x316a4' \
+        'if-gt ' \
+        '"Adjusting numPhysicalSlots for firstApiLevel = "' \
+        'Lcom/android/internal/telephony/uicc/UiccController;->mCis:[Lcom/android/internal/telephony/CommandsInterface;' \
+        'array-length ' \
+        'if-ge p2, ' \
+        'array-length p2, ' \
+        'Lcom/android/internal/telephony/uicc/UiccController;->PROJECT_SIM_NUM:I'; do
+        CURRENT_LINE="$(grep -n -m 1 -F -- "$ANCHOR" <<< "$COMPAT_BLOCK" | cut -d ":" -f 1)"
+        if [ -z "$CURRENT_LINE" ] || [ "$CURRENT_LINE" -le "$PREVIOUS_LINE" ]; then
+            ABORT "Android 17 UiccController compatibility anchor missing or out of order: $ANCHOR"
+            return 1
+        fi
+        PREVIOUS_LINE="$CURRENT_LINE"
+    done
+
+    if [ "$(grep -F -c '"ro.vendor.api_level"' <<< "$CONSTRUCTOR")" -ne "1" ] || \
+            [ "$(grep -F -c '"Adjusting numPhysicalSlots for firstApiLevel = "' <<< "$CONSTRUCTOR")" -ne "1" ]; then
+        ABORT "Android 17 UiccController compatibility anchors are ambiguous"
+        return 1
+    fi
+
+    LOG "- Verified native Android 17 UiccController physical-slot compatibility"
 }
 # ]
 
@@ -162,12 +239,14 @@ fi
 # https://android.googlesource.com/platform/frameworks/opt/telephony/+/42e37234cee15c9f3fcfac0532110abfc8843b99%5E%21/#F0
 if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
     if [ ! "$(GET_PROP "ro.telephony.sim_slots.count")" ] && \
-            ! grep -q "ro.telephony.sim_slots.count" "$WORK_DIR/vendor/bin/secril_config_svc" && \
-            ! grep -q -r "config_num_physical_slots" "$WORK_DIR/vendor/overlay"; then
-        DECODE_APK "system" "system/framework/telephony-common.jar"
-        if ! grep -q "ro.vendor.api_level" \
-                "$APKTOOL_DIR/system/framework/telephony-common.jar/smali/com/android/internal/telephony/uicc/UiccController.smali"; then
-            PATCHED=true
+            { [ ! -f "$WORK_DIR/vendor/bin/secril_config_svc" ] || \
+                ! grep -a -q -F "ro.telephony.sim_slots.count" "$WORK_DIR/vendor/bin/secril_config_svc"; } && \
+            { [ ! -d "$WORK_DIR/vendor/overlay" ] || \
+                ! grep -a -q -r -F "config_num_physical_slots" "$WORK_DIR/vendor/overlay"; }; then
+        PATCHED=true
+        if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge "37" ]; then
+            VERIFY_NATIVE_UICC_PHYSICAL_SLOT_COMPAT
+        else
             APPLY_PATCH "system" "system/framework/telephony-common.jar" \
                 "$MODPATH/ril/telephony-common.jar/0001-Backport-legacy-UiccController-code.patch"
         fi
@@ -300,15 +379,14 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
     if [ -f "$WORK_DIR/kernel/vendor_boot.img" ]; then
         # Check for GKI devices
         EXTRACT_KERNEL_MODULES
-        if find "$TMP_DIR/out" -maxdepth 1 -type f -name "vendor_ramdisk*" | grep -q . && \
-                grep -a -q "SKY_DEFAULT" "$TMP_DIR/out/vendor_ramdisk"* 2> /dev/null; then
+        if grep -q "SKY_DEFAULT" "$TMP_DIR/out/vendor_ramdisk"*; then
             VBOOT_MISSING=false
         fi
     fi
 
     # Check for legacy devices
     EXTRACT_KERNEL_IMAGE
-    if [ -f "$TMP_DIR/out/kernel" ] && grep -a -q "SKY_DEFAULT" "$TMP_DIR/out/kernel" 2> /dev/null; then
+    if grep -q "SKY_DEFAULT" "$TMP_DIR/out/kernel"; then
         KERNEL_MISSING=false
     fi
 
@@ -329,29 +407,13 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
             "onChange(Z)V" \
             "CLOUDY_WORK_MODE" \
             "1"
-        USB_HOST_RESTRICTOR_HANDLER_SMALI="$(
-            find "$APKTOOL_DIR/system/framework/services.jar" -type f \
-                    -name 'UsbHostRestrictor$*.smali' -print0 | \
-                while IFS= read -r -d '' SMALI; do
-                    if grep -qF '.method public final handleMessage(Landroid/os/Message;)V' "$SMALI" && \
-                            grep -qF 'SUNNY_WORK_MODE' "$SMALI" && \
-                            grep -qF 'RAINY_RESTRICT_MODE' "$SMALI"; then
-                        printf '%s\n' "${SMALI#"$APKTOOL_DIR/system/framework/services.jar/"}"
-                        break
-                    fi
-                done
-        )"
-        if [[ -z "$USB_HOST_RESTRICTOR_HANDLER_SMALI" ]]; then
-            ABORT "UsbHostRestrictor mode handler smali is missing"
-            return 1
-        fi
         SMALI_PATCH "system" "system/framework/services.jar" \
-            "$USB_HOST_RESTRICTOR_HANDLER_SMALI" "replace" \
+            "smali_classes2/com/android/server/usb/UsbHostRestrictor\$8.smali" "replace" \
             "handleMessage(Landroid/os/Message;)V" \
             "SUNNY_WORK_MODE" \
             "0"
         SMALI_PATCH "system" "system/framework/services.jar" \
-            "$USB_HOST_RESTRICTOR_HANDLER_SMALI" "replace" \
+            "smali_classes2/com/android/server/usb/UsbHostRestrictor\$8.smali" "replace" \
             "handleMessage(Landroid/os/Message;)V" \
             "RAINY_RESTRICT_MODE" \
             "2"
@@ -365,7 +427,6 @@ if [ "$TARGET_PLATFORM_SDK_VERSION" -lt "36" ]; then
             "onBootPhase(I)V" \
             "CLOUDY_WORK_MODE" \
             "1"
-        unset USB_HOST_RESTRICTOR_HANDLER_SMALI SMALI
     fi
 
     unset VBOOT_MISSING KERNEL_MISSING
@@ -374,15 +435,12 @@ fi
 # Support legacy LED Cover level
 # - Replace deprecated 'android.nfc.NfcAdapter' APIs with 'com.samsung.android.nfc.adapter.ISamsungNfcAdapter'
 if [ -f "$WORK_DIR/system/system/priv-app/LedCoverService/LedCoverService.apk" ]; then
-    NFC_LED_COVER_LEVEL="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NFC_LED_COVER_LEVEL")"
-    if [[ "$NFC_LED_COVER_LEVEL" =~ ^[0-9]+$ ]] && \
-            [ "$NFC_LED_COVER_LEVEL" -ge "30" ] && \
-            [ "$NFC_LED_COVER_LEVEL" -lt "100" ]; then
+    if [ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NFC_LED_COVER_LEVEL")" -ge "30" ] && \
+            [ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_FRAMEWORK_CONFIG_NFC_LED_COVER_LEVEL")" -lt "100" ]; then
         PATCHED=true
         APPLY_PATCH "system" "system/priv-app/LedCoverService/LedCoverService.apk" \
             "$MODPATH/ledcover/LedCoverService.apk/0001-Switch-to-ISamsungNfcAdapter-interface.patch"
     fi
-    unset NFC_LED_COVER_LEVEL
 fi
 
 # Upgrade Segmentation models (pre-API 34)
@@ -444,3 +502,4 @@ fi
 
 unset PATCHED TARGET_FIRMWARE_PATH
 unset -f BACKPORT_SF_PROPS EXTRACT_KERNEL_IMAGE EXTRACT_KERNEL_MODULES
+unset -f VERIFY_NATIVE_UICC_PHYSICAL_SLOT_COMPAT

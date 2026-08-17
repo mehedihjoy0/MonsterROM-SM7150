@@ -338,22 +338,6 @@ _DISABLE_UNSUPPORTED_BT_OFFLOAD()
     SET_PROP "product" "media.stagefright.audio.deep" "false"
 }
 
-_DROP_MISSING_PLAYBACK_RECORD_AUDIO_POLICY()
-{
-    local CONFIG="$WORK_DIR/vendor/etc/audio_policy_configuration_base.xml"
-    local HAL64="$WORK_DIR/vendor/lib64/hw/audio.playback_record.so"
-    local HAL32="$WORK_DIR/vendor/lib/hw/audio.playback_record.so"
-
-    [ -f "$CONFIG" ] || return 0
-    [ -f "$HAL64" ] || [ -f "$HAL32" ] || {
-        if grep -q 'playback_record_audio_policy_configuration\.xml' "$CONFIG"; then
-            LOG "- Removing playback_record audio policy include because its HAL is absent"
-            sed -i '/^[[:space:]]*<xi:include href="playback_record_audio_policy_configuration\.xml"\/>[[:space:]]*$/d' \
-                "$CONFIG"
-        fi
-    }
-}
-
 _DISABLE_UNSUPPORTED_OUI9_INIT_WRITES()
 {
     LOG "- Removing One UI 9 init writes rejected by the Exynos2100 kernel"
@@ -685,7 +669,6 @@ _DROP_INCOMPATIBLE_CIDMANAGER
 _DISABLE_SURFACEFLINGER_SHADER_CACHE
 _DISABLE_UNSUPPORTED_MAINLINE_FEATURES
 _DISABLE_UNSUPPORTED_BT_OFFLOAD
-_DROP_MISSING_PLAYBACK_RECORD_AUDIO_POLICY
 _DISABLE_UNSUPPORTED_OUI9_INIT_WRITES
 _DISABLE_BOOTCHECKER_RESCUE_LOOP
 _DISABLE_ZYGOTE_NEXT_BOOT

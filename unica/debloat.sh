@@ -83,7 +83,7 @@ system/etc/permissions/privapp-permissions-com.samsung.android.game.gamehome.xml
 system/priv-app/GameHome
 "
 
-ADD_TO_WORK_DIR "pa2qxxx" "system" \
+ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" \
     "system/etc/permissions/signature-permissions-com.samsung.android.game.gamehome.xml" \
     0 0 644 "u:object_r:system_file:s0"
 
@@ -105,10 +105,12 @@ app/AssistantShell
 # Google Chrome
 PRODUCT_DEBLOAT+="
 app/Chrome
+app/Chrome64
 "
 
 # Google Duo
 PRODUCT_DEBLOAT+="
+app/Duo
 app/DuoStub
 "
 
@@ -151,7 +153,13 @@ SYSTEM_DEBLOAT+="
 system/priv-app/YourPhone_P1_5
 "
 
-ADD_TO_WORK_DIR "gta9pxxx" "system" "system/priv-app/YourPhone_Stub/YourPhone_Stub.apk" 0 0 644 "u:object_r:system_file:s0"
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -lt "37" ]; then
+    ADD_TO_WORK_DIR "gta9pxxx" "system" \
+        "system/priv-app/YourPhone_Stub/YourPhone_Stub.apk" \
+        0 0 644 "u:object_r:system_file:s0"
+else
+    LOG "- Removing Link to Windows without importing a legacy stub"
+fi
 
 # Live Transcribe
 SYSTEM_DEBLOAT+="
@@ -189,8 +197,11 @@ system/etc/permissions/privapp-permissions-com.samsung.android.dqagent.xml
 system/etc/permissions/privapp-permissions-com.sec.android.diagmonagent.xml
 system/etc/permissions/privapp-permissions-com.sec.android.soagent.xml
 system/priv-app/DeviceQualityAgent36
+system/priv-app/DeviceQualityAgent38
 system/priv-app/DiagMonAgent95
+system/priv-app/DiagMonAgent97
 system/priv-app/SOAgent76
+system/priv-app/SOAgent77
 "
 
 SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CONTEXTSERVICE_ENABLE_SURVEY_MODE" --delete

@@ -17,17 +17,9 @@ overlay/SoftapOverlayQC
 # DevGPUDriver
 SYSTEM_DEBLOAT+="
 system/priv-app/DevGPUDriver-EX2200
-system/priv-app/DevGPUDriver-EX2600
 "
 
 # GameDriver
 SYSTEM_DEBLOAT+="
 system/priv-app/GameDriver-EX2200
-system/priv-app/GameDriver-EX2600
-"
-
-# Qualcomm location service inherited from the Snapdragon base
-SYSTEM_DEBLOAT+="
-system_ext/bin/loc_sys_service
-system_ext/etc/init/loc_sys_service.rc
 "

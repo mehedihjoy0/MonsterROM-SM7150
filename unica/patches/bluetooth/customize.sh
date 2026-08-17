@@ -154,24 +154,6 @@ REPACK_PAYLOAD()
     EVAL "7z a -tzip -mx=0 -mmt=$(nproc) \"$1\" \"$TMP_DIR/apex_pubkey\""
 }
 
-ALIGN_APEX()
-{
-    local ZIPALIGN
-    local ALIGNED="$1.aligned"
-
-    ZIPALIGN="$(command -v zipalign || true)"
-    if [ ! "$ZIPALIGN" ] && [ -x "$SRC_DIR/out/tools/bin/zipalign" ]; then
-        ZIPALIGN="$SRC_DIR/out/tools/bin/zipalign"
-    fi
-    if [ ! "$ZIPALIGN" ]; then
-        ABORT "zipalign is required to align the rebuilt Bluetooth APEX"
-    fi
-
-    LOG "- Aligning $(basename "$1") ZIP entries"
-    EVAL "\"$ZIPALIGN\" -p -f 4 \"$1\" \"$ALIGNED\""
-    mv -f "$ALIGNED" "$1"
-}
-
 SIGN_APEX()
 {
     LOG "- Signing $(basename "$1") with platform keys"
@@ -327,10 +309,10 @@ elif xxd -p -c 0 "$TMP_DIR/apex_payload/lib64/libbluetooth_jni.so" | grep -q "88
     LOG "- Patching \"8876523948050037\" to \"887652392a000014\" in apex_payload/lib64/libbluetooth_jni.so"
     HEX_PATCH "$TMP_DIR/apex_payload/lib64/libbluetooth_jni.so" \
         "8876523948050037" "887652392a000014" > /dev/null
-elif xxd -p -c 0 "$TMP_DIR/apex_payload/lib64/libbluetooth_jni.so" | grep -q "741640b91406f837"; then
-    LOG "- Patching \"741640b91406f837\" to \"741640b930000014\" in apex_payload/lib64/libbluetooth_jni.so"
+elif xxd -p -c 0 "$TMP_DIR/apex_payload/lib64/libbluetooth_jni.so" | grep -q "e863403948050037"; then
+    LOG "- Patching \"e863403948050037\" to \"e86340392a000014\" in apex_payload/lib64/libbluetooth_jni.so"
     HEX_PATCH "$TMP_DIR/apex_payload/lib64/libbluetooth_jni.so" \
-        "741640b91406f837" "741640b930000014" > /dev/null
+        "e863403948050037" "e86340392a000014" > /dev/null
 else
     ABORT "No known VaultKeeper patch available for libbluetooth_jni.so"
 fi
@@ -340,7 +322,6 @@ BUILD_APK_IN_APEX "$TMP_DIR/apex_payload/javalib/framework-bluetooth.jar"
 BUILD_PAYLOAD
 SIGN_PAYLOAD "$WORK_DIR/system/system/apex/com.android.bt.apex"
 REPACK_PAYLOAD "$WORK_DIR/system/system/apex/com.android.bt.apex"
-ALIGN_APEX "$WORK_DIR/system/system/apex/com.android.bt.apex"
 SIGN_APEX "$WORK_DIR/system/system/apex/com.android.bt.apex"
 
 rm -rf "$TMP_DIR"
@@ -348,4 +329,4 @@ rm -rf "$TMP_DIR"
 unset BLUETOOTH_APK BLUETOOTH_APK_RELATIVE_PATH BLUETOOTH_APK_WORK_PATH SOURCE_FIRMWARE_PATH
 unset -f BUILD_APK_IN_APEX BUILD_PAYLOAD DECODE_APK_IN_APEX \
     EXTRACT_PAYLOAD LOG_MISSING_PATCHES REPACK_PAYLOAD \
-    ALIGN_APEX SIGN_APEX SIGN_PAYLOAD
+    SIGN_APEX SIGN_PAYLOAD

@@ -12,151 +12,62 @@ LOG_MISSING_PATCHES()
     fi
 }
 
-SET_FLOATING_FEATURE_CONFIG_IN_FILE()
+# VALIDATE_CAMERA_MODEL_MANIFEST <manifest>
+VALIDATE_CAMERA_MODEL_MANIFEST()
 {
-    local FILE="$1"
-    local CONFIG="$2"
-    local VALUE="$3"
+    local MANIFEST="$1"
+    local MODEL_PATH
+    local WORK_FILE
 
-    [ -f "$FILE" ] || return 0
-
-    if grep -q "$CONFIG" "$FILE"; then
-        LOG "- Replacing \"$CONFIG\" config with \"$VALUE\" in ${FILE//$WORK_DIR/}"
-        sed -i "$(sed -n "/<${CONFIG}>/=" "$FILE") c\ \ \ \ <${CONFIG}>${VALUE}</${CONFIG}>" "$FILE"
-    else
-        LOG "- Adding \"$CONFIG\" config with \"$VALUE\" in ${FILE//$WORK_DIR/}"
-        sed -i "/<\/SecFloatingFeatureSet>/d" "$FILE"
-        if ! grep -q "Added by unica/patches/camera" "$FILE"; then
-            echo "    <!-- Added by unica/patches/camera/customize.sh -->" >> "$FILE"
-        fi
-        echo "    <${CONFIG}>${VALUE}</${CONFIG}>" >> "$FILE"
-        echo "</SecFloatingFeatureSet>" >> "$FILE"
+    if [ ! -s "$MANIFEST" ]; then
+        ABORT "Missing camera model manifest: ${MANIFEST//$WORK_DIR/}"
     fi
-}
+    if command -v python3 > /dev/null 2>&1 && \
+            ! python3 -m json.tool "$MANIFEST" > /dev/null 2>&1; then
+        ABORT "Malformed camera model manifest: ${MANIFEST//$WORK_DIR/}"
+    fi
 
-NORMALIZE_CAMERA_VENDOR_LIB_INFO()
-{
-    local VALUE="$1"
-    local ITEM
-    local NORMALIZED
-    local OLD_IFS
-
-    OLD_IFS="$IFS"
-    IFS=","
-    for ITEM in $VALUE; do
-        IFS="$OLD_IFS"
-        [ "$ITEM" ] || continue
-
-        case ",$NORMALIZED," in
-            *",$ITEM,"*) ;;
-            *) NORMALIZED="${NORMALIZED:+$NORMALIZED,}$ITEM" ;;
-        esac
-        IFS=","
-    done
-    IFS="$OLD_IFS"
-
-    echo "$NORMALIZED"
-}
-
-GET_CAMERA_VENDOR_LIB_FEATURE()
-{
-    local VALUE="$1"
-    local FEATURE="$2"
-    local ITEM
-    local OLD_IFS
-
-    OLD_IFS="$IFS"
-    IFS=","
-    for ITEM in $VALUE; do
-        IFS="$OLD_IFS"
-        case "$ITEM" in
-            "$FEATURE".*)
-                echo "$ITEM"
-                IFS="$OLD_IFS"
-                return 0
+    while IFS= read -r MODEL_PATH; do
+        case "$MODEL_PATH" in
+            /system/*)
+                WORK_FILE="$WORK_DIR/system/system/${MODEL_PATH#/system/}"
                 ;;
-            "$FEATURE")
-                echo "${FEATURE}.samsung.v2"
-                IFS="$OLD_IFS"
-                return 0
-                ;;
-        esac
-        IFS=","
-    done
-    IFS="$OLD_IFS"
-
-    return 1
-}
-
-REPLACE_CAMERA_VENDOR_LIB_FEATURE()
-{
-    local VALUE="$1"
-    local FEATURE="$2"
-    local FEATURE_TOKEN="$3"
-    local ITEM
-    local NORMALIZED
-    local REPLACED=false
-    local OLD_IFS
-
-    OLD_IFS="$IFS"
-    IFS=","
-    for ITEM in $VALUE; do
-        IFS="$OLD_IFS"
-        [ "$ITEM" ] || continue
-
-        case "$ITEM" in
-            "$FEATURE"|"$FEATURE".*)
-                if ! $REPLACED; then
-                    NORMALIZED="${NORMALIZED:+$NORMALIZED,}$FEATURE_TOKEN"
-                    REPLACED=true
-                fi
+            /vendor/*)
+                WORK_FILE="$WORK_DIR/vendor/${MODEL_PATH#/vendor/}"
                 ;;
             *)
-                case ",$NORMALIZED," in
-                    *",$ITEM,"*) ;;
-                    *) NORMALIZED="${NORMALIZED:+$NORMALIZED,}$ITEM" ;;
-                esac
+                continue
                 ;;
         esac
-        IFS=","
-    done
-    IFS="$OLD_IFS"
 
-    if ! $REPLACED; then
-        NORMALIZED="${NORMALIZED:+$NORMALIZED,}$FEATURE_TOKEN"
-    fi
-
-    echo "$NORMALIZED"
-}
-
-APPEND_CAMERA_VENDOR_LIB_INFO()
-{
-    local VALUE="$1"
-    local FEATURE="$2"
-
-    VALUE="$(NORMALIZE_CAMERA_VENDOR_LIB_INFO "$VALUE")"
-    if [[ ",$VALUE," != *",$FEATURE,"* ]]; then
-        if [ "$VALUE" ]; then
-            VALUE="$VALUE,$FEATURE"
-        else
-            VALUE="$FEATURE"
+        if [[ "$MODEL_PATH" == */ ]] && [ ! -d "$WORK_FILE" ]; then
+            ABORT "Camera manifest references a missing model directory: $MODEL_PATH"
+        elif [[ "$MODEL_PATH" != */ ]] && [ ! -s "$WORK_FILE" ]; then
+            ABORT "Camera manifest references a missing model: $MODEL_PATH"
         fi
-    fi
-
-    echo "$VALUE"
+    done < <(grep -o -E '"/(system|vendor)/[^"]+"' "$MANIFEST" 2> /dev/null | tr -d '"' || true)
 }
 
-APPEND_CAMERA_SDK_FEATURE_INFO()
+# IS_PORTABLE_TFLITE <file>
+IS_PORTABLE_TFLITE()
 {
-    APPEND_CAMERA_VENDOR_LIB_INFO "$1" "$2"
+    [ -s "$1" ] && [[ "$(dd if="$1" bs=1 skip=4 count=4 2> /dev/null)" == "TFL3" ]]
 }
 # ]
 
 SOURCE_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$SOURCE_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$SOURCE_FIRMWARE")"
 TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
 
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 37 ] && \
+        [ ! -d "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/cameradata/portrait_data" ]; then
+    ABORT "Target camera portrait model directory is missing"
+fi
 DELETE_FROM_WORK_DIR "system" "system/cameradata/portrait_data"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/cameradata/portrait_data" 0 0 755 "u:object_r:system_file:s0"
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 37 ]; then
+    VALIDATE_CAMERA_MODEL_MANIFEST \
+        "$WORK_DIR/system/system/cameradata/portrait_data/single_bokeh_feature.json"
+fi
 if [ -f "$SRC_DIR/target/$TARGET_CODENAME/camera/singletake/service-feature.xml" ]; then
     LOG "- Adding /system/system/cameradata/singletake/service-feature.xml"
     EVAL "cp -a \"$SRC_DIR/target/$TARGET_CODENAME/camera/singletake/service-feature.xml\" \"$WORK_DIR/system/system/cameradata/singletake/service-feature.xml\""
@@ -234,50 +145,78 @@ elif ! grep -q "SUPPORT_SINGLE_TAKE_HIGHLIGHT_VIDEOS.*true" "$FW_DIR/$SOURCE_FIR
 fi
 
 # SEC_PRODUCT_FEATURE_CAMERA_SINGLETAKE_SOLUTIONS
-if ! grep -q "ENABLE_SINGLE_TAKE_LITE.*true" "$WORK_DIR/system/system/cameradata/singletake/service-feature.xml" 2>/dev/null && \
-        ! grep -q "SUPPORT_SMART_CROP.*false" "$WORK_DIR/system/system/cameradata/singletake/service-feature.xml" 2>/dev/null; then
-    if [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/etc/singletake/SmartCrop" ]; then
-        if [ ! -d "$WORK_DIR/vendor/etc/singletake/SmartCrop" ] || \
-                [ "$TARGET_PLATFORM_SDK_VERSION" -lt "$SOURCE_PLATFORM_SDK_VERSION" ]; then
-            ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
-                "etc/singletake/SmartCrop/SmartCrop.tflite" 0 0 644 "u:object_r:vendor_configs_file:s0"
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 37 ]; then
+    if ! grep -q "ENABLE_SINGLE_TAKE_LITE.*true" "$WORK_DIR/system/system/cameradata/singletake/service-feature.xml" 2>/dev/null && \
+            ! grep -q "SUPPORT_SMART_CROP.*false" "$WORK_DIR/system/system/cameradata/singletake/service-feature.xml" 2>/dev/null; then
+        # One UI 9's libfixsal still names this exact portable fallback. Keep the
+        # target copy instead of requesting the removed Android 17 source path.
+        if ! IS_PORTABLE_TFLITE "$WORK_DIR/vendor/etc/singletake/SmartCrop/SmartCrop.tflite"; then
+            LOGW "Target SmartCrop model is unavailable; disabling Single Take Smart Crop"
+            EVAL "sed -i '/name=\"SUPPORT_SMART_CROP\"/s/value=\"true\"/value=\"false\"/' \"$WORK_DIR/system/system/cameradata/singletake/service-feature.xml\""
         fi
-    elif [ -d "$WORK_DIR/vendor/etc/singletake/SmartCrop" ]; then
-        : # SmartCrop already present in work dir from target firmware; nothing to do
-    else
-        # TODO handle this condition
-        # shellcheck disable=SC2034
-        SOURCE_SUPPORT_SMART_CROP=false
-        # shellcheck disable=SC2034
-        TARGET_SUPPORT_SMART_CROP=true
-        LOG_MISSING_PATCHES "SOURCE_SUPPORT_SMART_CROP" "TARGET_SUPPORT_SMART_CROP"
-        unset SOURCE_SUPPORT_SMART_CROP TARGET_SUPPORT_SMART_CROP
     fi
 else
-    if [ -d "$WORK_DIR/vendor/etc/singletake/SmartCrop" ]; then
-        DELETE_FROM_WORK_DIR "vendor" "etc/singletake/SmartCrop"
+    if ! grep -q "ENABLE_SINGLE_TAKE_LITE.*true" "$WORK_DIR/system/system/cameradata/singletake/service-feature.xml" 2>/dev/null && \
+            ! grep -q "SUPPORT_SMART_CROP.*false" "$WORK_DIR/system/system/cameradata/singletake/service-feature.xml" 2>/dev/null; then
+        if [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/etc/singletake/SmartCrop" ]; then
+            if [ ! -d "$WORK_DIR/vendor/etc/singletake/SmartCrop" ] || \
+                    [ "$TARGET_PLATFORM_SDK_VERSION" -lt "$SOURCE_PLATFORM_SDK_VERSION" ]; then
+                ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+                    "etc/singletake/SmartCrop/SmartCrop.tflite" 0 0 644 "u:object_r:vendor_configs_file:s0"
+            fi
+        else
+            # TODO handle this condition
+            # shellcheck disable=SC2034
+            SOURCE_SUPPORT_SMART_CROP=false
+            # shellcheck disable=SC2034
+            TARGET_SUPPORT_SMART_CROP=true
+            LOG_MISSING_PATCHES "SOURCE_SUPPORT_SMART_CROP" "TARGET_SUPPORT_SMART_CROP"
+            unset SOURCE_SUPPORT_SMART_CROP TARGET_SUPPORT_SMART_CROP
+        fi
+    else
+        if [ -d "$WORK_DIR/vendor/etc/singletake/SmartCrop" ]; then
+            DELETE_FROM_WORK_DIR "vendor" "etc/singletake/SmartCrop"
+        fi
     fi
 fi
 
 # SEC_PRODUCT_FEATURE_CAMERA_CONFIG_ACTION_CLASSIFIER
 SOURCE_CAMERA_CONFIG_ACTION_CLASSIFIER="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_ACTION_CLASSIFIER")"
 TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_ACTION_CLASSIFIER")"
-if [ "$SOURCE_CAMERA_CONFIG_ACTION_CLASSIFIER" ]; then
-    if [ "$TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER" ]; then
-        if [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/etc/singletake/dynamic_viewing" ]; then
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 37 ] && { \
+        [ ! -f "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/lib64/libVideoClassifier.camera.samsung.so" ] || \
+        [ ! -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/etc/singletake/dynamic_viewing" ];
+}; then
+    # Android 17 removed both the legacy consumer and its model directory.
+    # Keeping the old feature flag would only make Single Take request a backend
+    # which is no longer present in the source framework.
+    LOG "- Disabling legacy Single Take action classifier"
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_ACTION_CLASSIFIER" --delete
+    if [ -d "$WORK_DIR/vendor/etc/singletake/dynamic_viewing" ]; then
+        DELETE_FROM_WORK_DIR "vendor" "etc/singletake/dynamic_viewing"
+    fi
+    if [ -f "$WORK_DIR/system/system/lib64/libVideoClassifier.camera.samsung.so" ]; then
+        DELETE_FROM_WORK_DIR "system" "system/lib64/libVideoClassifier.camera.samsung.so"
+    fi
+    if [ -f "$WORK_DIR/system/system/lib64/libtensorflowLite2_11_0_dynamic_camera.so" ]; then
+        DELETE_FROM_WORK_DIR "system" "system/lib64/libtensorflowLite2_11_0_dynamic_camera.so"
+    fi
+else
+    if [ "$SOURCE_CAMERA_CONFIG_ACTION_CLASSIFIER" ]; then
+        if [ "$TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER" ]; then
             if [ -d "$WORK_DIR/vendor/etc/singletake/dynamic_viewing" ]; then
                 DELETE_FROM_WORK_DIR "vendor" "etc/singletake/dynamic_viewing"
             fi
             ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/singletake/dynamic_viewing" 0 2000 755 "u:object_r:vendor_configs_file:s0"
+        else
+            DELETE_FROM_WORK_DIR "system" "system/lib64/libVideoClassifier.camera.samsung.so"
+            DELETE_FROM_WORK_DIR "system" "system/lib64/libtensorflowLite2_11_0_dynamic_camera.so"
         fi
     else
-        DELETE_FROM_WORK_DIR "system" "system/lib64/libVideoClassifier.camera.samsung.so"
-        DELETE_FROM_WORK_DIR "system" "system/lib64/libtensorflowLite2_11_0_dynamic_camera.so"
-    fi
-else
-    if [ "$TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER" ]; then
-        # TODO handle this condition
-        LOG_MISSING_PATCHES "SOURCE_CAMERA_CONFIG_ACTION_CLASSIFIER" "TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER"
+        if [ "$TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER" ]; then
+            # TODO handle this condition
+            LOG_MISSING_PATCHES "SOURCE_CAMERA_CONFIG_ACTION_CLASSIFIER" "TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER"
+        fi
     fi
 fi
 
@@ -351,17 +290,41 @@ fi
 # SEC_PRODUCT_FEATURE_GALLERY_CONFIG_PET_CLUSTER_VERSION
 SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_PET_CLUSTER_VERSION")"
 TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_PET_CLUSTER_VERSION")"
-if [[ "$SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION" != "None" ]]; then
-    if [[ "$TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION" == "None" ]]; then
-        DELETE_FROM_WORK_DIR "system" "system/etc/default-permissions/default-permissions-com.samsung.petservice.xml"
-        DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.petservice.xml"
-        DELETE_FROM_WORK_DIR "system" "system/lib64/libPetClustering.camera.samsung.so"
-        DELETE_FROM_WORK_DIR "system" "system/priv-app/PetService"
+STOCK_TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_PET_CLUSTER_VERSION")"
+if [ "$SOURCE_PLATFORM_SDK_VERSION" -ge 37 ] && { \
+        [[ "$STOCK_TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION" == "None" ]] || \
+        [ ! -f "$FW_DIR/$TARGET_FIRMWARE_PATH/vendor/lib64/libPetDetector_v1.camera.samsung.so" ];
+}; then
+    # PetService in the Android 17 source uses libPetDetector_v1 and the new
+    # aic_pet_detector contract. The Exynos 2100 vendor exposes neither.
+    LOG "- Disabling PetService on the target vendor"
+    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_PET_CLUSTER_VERSION" "None"
+    TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION="None"
+    if grep -q 'name="SUPPORT_PET_DETECTION".*value="true"' \
+            "$WORK_DIR/system/system/cameradata/singletake/service-feature.xml" 2> /dev/null; then
+        EVAL "sed -i '/name=\"SUPPORT_PET_DETECTION\"/s/value=\"true\"/value=\"false\"/' \"$WORK_DIR/system/system/cameradata/singletake/service-feature.xml\""
     fi
+    [ ! -f "$WORK_DIR/system/system/etc/default-permissions/default-permissions-com.samsung.petservice.xml" ] || \
+        DELETE_FROM_WORK_DIR "system" "system/etc/default-permissions/default-permissions-com.samsung.petservice.xml"
+    [ ! -f "$WORK_DIR/system/system/etc/permissions/privapp-permissions-com.samsung.petservice.xml" ] || \
+        DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.petservice.xml"
+    [ ! -f "$WORK_DIR/system/system/lib64/libPetClustering.camera.samsung.so" ] || \
+        DELETE_FROM_WORK_DIR "system" "system/lib64/libPetClustering.camera.samsung.so"
+    [ ! -d "$WORK_DIR/system/system/priv-app/PetService" ] || \
+        DELETE_FROM_WORK_DIR "system" "system/priv-app/PetService"
 else
-    if [[ "$TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION" != "None" ]]; then
-        # TODO handle this condition
-        LOG_MISSING_PATCHES "SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION" "TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION"
+    if [[ "$SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION" != "None" ]]; then
+        if [[ "$TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION" == "None" ]]; then
+            DELETE_FROM_WORK_DIR "system" "system/etc/default-permissions/default-permissions-com.samsung.petservice.xml"
+            DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.petservice.xml"
+            DELETE_FROM_WORK_DIR "system" "system/lib64/libPetClustering.camera.samsung.so"
+            DELETE_FROM_WORK_DIR "system" "system/priv-app/PetService"
+        fi
+    else
+        if [[ "$TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION" != "None" ]]; then
+            # TODO handle this condition
+            LOG_MISSING_PATCHES "SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION" "TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION"
+        fi
     fi
 fi
 
@@ -397,66 +360,8 @@ fi
 if ! grep -q "SUPPORT_SINGLE_TAKE_BURST_CAPTURE.*true" "$WORK_DIR/system/system/cameradata/camera-feature.xml" 2> /dev/null; then
     DELETE_FROM_WORK_DIR "system" "system/lib64/libBestPhoto.camera.samsung.so"
 fi
-SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO")"
-TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO")"
-VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW="$(GET_FLOATING_FEATURE_CONFIG "$WORK_DIR/vendor/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO")"
-SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO="$(NORMALIZE_CAMERA_VENDOR_LIB_INFO "$SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW")"
-TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO="$(NORMALIZE_CAMERA_VENDOR_LIB_INFO "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW")"
-VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO="$(NORMALIZE_CAMERA_VENDOR_LIB_INFO "$VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW")"
-CAMERA_IMAGE_CODEC_FEATURE="$(GET_CAMERA_VENDOR_LIB_FEATURE "$SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO" "image_codec")"
-if [ "$CAMERA_IMAGE_CODEC_FEATURE" ] && \
-        [[ ",$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO," != *",$CAMERA_IMAGE_CODEC_FEATURE,"* ]]; then
-    LOG "- Enabling Samsung image codec camera node ($CAMERA_IMAGE_CODEC_FEATURE)"
-    TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO="$(REPLACE_CAMERA_VENDOR_LIB_FEATURE \
-        "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO" "image_codec" "$CAMERA_IMAGE_CODEC_FEATURE")"
-fi
-if [[ "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO" != "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW" ]]; then
-    SET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO"
-fi
-if [ "$CAMERA_IMAGE_CODEC_FEATURE" ] && \
-        [[ ",$VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO," != *",$CAMERA_IMAGE_CODEC_FEATURE,"* ]]; then
-    LOG "- Enabling Samsung image codec camera node in vendor feature config ($CAMERA_IMAGE_CODEC_FEATURE)"
-    VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO="$(REPLACE_CAMERA_VENDOR_LIB_FEATURE \
-        "$VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO" "image_codec" "$CAMERA_IMAGE_CODEC_FEATURE")"
-fi
-if [[ "$VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO" != "$VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW" ]]; then
-    SET_FLOATING_FEATURE_CONFIG_IN_FILE \
-        "$WORK_DIR/vendor/etc/floating_feature.xml" \
-        "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO" \
-        "$VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO"
-fi
-
-SOURCE_CAMERA_CONFIG_SDK_FEATURE_INFO="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_SDK_FEATURE_INFO")"
-TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_SDK_FEATURE_INFO")"
-TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW="$TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO"
-if [[ "$SOURCE_CAMERA_CONFIG_SDK_FEATURE_INFO" == *"exposure_table_control"* ]]; then
-    TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW="$(APPEND_CAMERA_SDK_FEATURE_INFO \
-        "$TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW" "exposure_table_control")"
-fi
-if [[ "$SOURCE_CAMERA_CONFIG_SDK_FEATURE_INFO" == *"selfie_tone"* ]] && \
-        grep -q "SUPPORT_SELFIE_TONE_MODE.*true" "$WORK_DIR/system/system/cameradata/camera-feature.xml" 2> /dev/null; then
-    TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW="$(APPEND_CAMERA_SDK_FEATURE_INFO \
-        "$TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW" "selfie_tone")"
-fi
-if [[ "$SOURCE_CAMERA_CONFIG_SDK_FEATURE_INFO" == *"physical_camera_tele:camera_id=52"* ]] && \
-        grep -q "BACK_TELE_CAMERA_ID.*52" "$WORK_DIR/system/system/cameradata/camera-feature.xml" 2> /dev/null; then
-    TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW="$(APPEND_CAMERA_SDK_FEATURE_INFO \
-        "$TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW" "physical_camera_tele:camera_id=52")"
-fi
-if [[ "$TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW" != "$TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO" ]]; then
-    SET_FLOATING_FEATURE_CONFIG \
-        "SEC_FLOATING_FEATURE_CAMERA_CONFIG_SDK_FEATURE_INFO" \
-        "$TARGET_CAMERA_CONFIG_SDK_FEATURE_INFO_NEW"
-fi
-
-if [ "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.camera.disableHeicUltraHDR")" ]; then
-    SET_PROP "vendor" "ro.camera.disableHeicUltraHDR" \
-        "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.camera.disableHeicUltraHDR")"
-fi
-if [ "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.camera.enableCamera1MaxZsl")" ]; then
-    SET_PROP "vendor" "ro.camera.enableCamera1MaxZsl" \
-        "$(GET_PROP "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/build.prop" "ro.camera.enableCamera1MaxZsl")"
-fi
+SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO")"
+TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_CONFIG_VENDOR_LIB_INFO")"
 if [[ "$SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO" == *"aebhdr.arcsoft.v1"* ]] && \
         [[ "$TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO" != *"aebhdr.arcsoft.v1"* ]]; then
     DELETE_FROM_WORK_DIR "system" "system/lib64/libAEBHDR_wrapper.camera.samsung.so"
@@ -527,7 +432,7 @@ if [[ "$SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO" == *"super_resolution_raw.arcsoft"
     DELETE_FROM_WORK_DIR "system" "system/lib64/libsuperresolutionraw_wrapper_v2.camera.samsung.so"
     DELETE_FROM_WORK_DIR "system" "system/lib64/libsuperresolution_raw.arcsoft.so"
 fi
-SOURCE_CAMERA_DOCUMENTSCAN_SOLUTIONS="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml"  "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS")"
+SOURCE_CAMERA_DOCUMENTSCAN_SOLUTIONS="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS")"
 TARGET_CAMERA_DOCUMENTSCAN_SOLUTIONS="$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_CAMERA_DOCUMENTSCAN_SOLUTIONS")"
 if [[ "$SOURCE_CAMERA_DOCUMENTSCAN_SOLUTIONS" == *"AI_DEWARPING"* ]] && \
         [[ "$TARGET_CAMERA_DOCUMENTSCAN_SOLUTIONS" != *"AI_DEWARPING"* ]]; then
@@ -546,12 +451,18 @@ fi
 while IFS= read -r f; do
     HEX_PATCH "$f" "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
 done < <(grep -r -w -l "ro.product.model" "$WORK_DIR/vendor" | grep "camera")
-[ -f "$WORK_DIR/system/system/lib/libstagefright.so" ] && \
-    HEX_PATCH "$WORK_DIR/system/system/lib/libstagefright.so" \
-        "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
-[ -f "$WORK_DIR/system/system/lib64/libstagefright.so" ] && \
-    HEX_PATCH "$WORK_DIR/system/system/lib64/libstagefright.so" \
-        "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
+for f in \
+    "$WORK_DIR/system/system/lib/libstagefright.so" \
+    "$WORK_DIR/system/system/lib64/libstagefright.so"; do
+    # Android 17 Samsung flagships are 64-bit-only and no longer ship the
+    # 32-bit stagefright library. Patch each ABI only when that stock binary is
+    # present; HEX_PATCH remains strict for every existing copy.
+    if [ -f "$f" ]; then
+        HEX_PATCH "$f" \
+            "726f2e70726f647563742e6d6f64656c00" "726f2e626f6f742e656d2e6d6f64656c00"
+    fi
+done
+unset f
 
 # Fix object capture
 if [[ "$TARGET_OS_SINGLE_SYSTEM_IMAGE" == "essi" ]]; then
@@ -616,11 +527,8 @@ unset SOURCE_FIRMWARE_PATH TARGET_FIRMWARE_PATH \
     SOURCE_CAMERA_CONFIG_ACTION_CLASSIFIER TARGET_CAMERA_CONFIG_ACTION_CLASSIFIER \
     SOURCE_CAMERA_CONFIG_GPPM_SOLUTIONS TARGET_CAMERA_CONFIG_GPPM_SOLUTIONS \
     SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION \
+    STOCK_TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION \
     SOURCE_SAIV_CONFIG_ARDOODLE_LIB TARGET_SAIV_CONFIG_ARDOODLE_LIB \
-    SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO_RAW \
-    SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO VENDOR_CAMERA_CONFIG_VENDOR_LIB_INFO \
-    CAMERA_IMAGE_CODEC_FEATURE \
+    SOURCE_CAMERA_CONFIG_VENDOR_LIB_INFO TARGET_CAMERA_CONFIG_VENDOR_LIB_INFO \
     SOURCE_CAMERA_DOCUMENTSCAN_SOLUTIONS TARGET_CAMERA_DOCUMENTSCAN_SOLUTIONS
-unset -f _LOG LOG_MISSING_PATCHES SET_FLOATING_FEATURE_CONFIG_IN_FILE \
-    NORMALIZE_CAMERA_VENDOR_LIB_INFO GET_CAMERA_VENDOR_LIB_FEATURE REPLACE_CAMERA_VENDOR_LIB_FEATURE \
-    APPEND_CAMERA_VENDOR_LIB_INFO
+unset -f _LOG LOG_MISSING_PATCHES VALIDATE_CAMERA_MODEL_MANIFEST IS_PORTABLE_TFLITE

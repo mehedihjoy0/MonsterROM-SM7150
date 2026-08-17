@@ -3,6 +3,7 @@ From: Salvo Giangreco <giangrecosalvo9@gmail.com>
 Date: Sun, 31 Aug 2025 16:18:33 +0200
 Subject: [PATCH] Enable MOBILEAP_WIFI_CONCURRENCY support
 
+UN1CA: this patch is not complete! Please check unica/patches/product_feature/customize.sh for more info.
 ---
  .../com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali  | 2 ++
  1 file changed, 2 insertions(+)
@@ -11,14 +12,15 @@ diff --git a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali b/
 index 4e9fa28..fa418b4 100644
 --- a/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali
 +++ b/smali/com/samsung/android/server/wifi/ap/SemWifiApChipInfo.smali
-@@ -1318,5 +1318,7 @@
+@@ -1318,6 +1318,8 @@
  
-     move-result-object p1
-
+     :cond_3
+     :goto_0
 +    sput-boolean v5, Lcom/samsung/android/server/wifi/ap/SemWifiApChipInfo;->mSupportWifiSharing:Z
 +
-     invoke-static {p0, p1}, Landroid/os/SystemProperties;->set(Ljava/lang/String;Ljava/lang/String;)V
+     new-instance v2, Ljava/lang/StringBuilder;
  
-     return-void
+     const-string v3, "Support power save mode, SEC_PRODUCT_FEATURE_WLAN_SUPPORT_MOBILEAP_POWER_SAVEMODE : true SoftAp_PowerSave : "
 -- 
 2.51.0
+

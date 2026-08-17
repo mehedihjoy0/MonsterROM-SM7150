@@ -1,96 +1,47 @@
 _LOG() { if $DEBUG; then LOGW "$1"; else ABORT "$1"; fi }
 
-_REMOVE_VINTF_HAL_BLOCK()
+# Android 17 no longer ships the oldest framework compatibility matrices. Keep
+# the target's compatibility floor when porting a newer system to an older
+# vendor instead of silently relying on a matrix for a newer FCM level.
+TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" -f 2 -s <<< "$TARGET_FIRMWARE")"
+WORK_VINTF_DIR="$WORK_DIR/system/system/etc/vintf"
+TARGET_VINTF_DIR="$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/vintf"
+
+# RESTORE_TARGET_FCM <level>
+RESTORE_TARGET_FCM()
 {
-    local FILE="$1"
-    local FORMAT="$2"
-    local NAME="$3"
-    local TMP_FILE
+    local LEVEL="$1"
+    local FILE="compatibility_matrix.$LEVEL.xml"
 
-    [ -f "$FILE" ] || return 0
-    grep -Fq "<name>$NAME</name>" "$FILE" || return 0
-
-    LOG "- Removing unsupported VINTF HAL \"$NAME\" from ${FILE//$WORK_DIR/}"
-    TMP_FILE="${FILE}.tmp"
-    awk -v format="$FORMAT" -v name="$NAME" '
-        BEGIN {
-            in_hal = 0
-            depth = 0
-            drop = 0
-            block = ""
-        }
-        {
-            if (!in_hal && index($0, "<hal ") && index($0, "format=\"" format "\"")) {
-                in_hal = 1
-                depth = 0
-                drop = 0
-                block = ""
-            }
-
-            if (in_hal) {
-                block = block $0 ORS
-                if (index($0, "<name>" name "</name>")) {
-                    drop = 1
-                }
-                if (index($0, "<hal ") || index($0, "<hal>")) {
-                    depth++
-                }
-                if (index($0, "</hal>")) {
-                    depth--
-                    if (depth == 0) {
-                        if (!drop) {
-                            printf "%s", block
-                        }
-                        in_hal = 0
-                        drop = 0
-                        block = ""
-                    }
-                }
-                next
-            }
-
-            print
-        }
-        END {
-            if (in_hal && !drop) {
-                printf "%s", block
-            }
-        }
-    ' "$FILE" > "$TMP_FILE" && mv "$TMP_FILE" "$FILE"
+    if [ ! -f "$WORK_VINTF_DIR/$FILE" ] && [ -f "$TARGET_VINTF_DIR/$FILE" ]; then
+        LOG "- Restoring /system/system/etc/vintf/$FILE from target firmware"
+        ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/vintf/$FILE" \
+            0 0 644 "u:object_r:system_file:s0" || \
+            ABORT "Failed to restore target framework compatibility matrix $FILE"
+    fi
 }
 
-_CLEAN_LEGACY_EXYNOS_VINTF_MATRICES()
+# VALIDATE_FRAMEWORK_MATRIX <level>
+VALIDATE_FRAMEWORK_MATRIX()
 {
-    local FILE
+    local LEVEL="$1"
+    local FILE="$WORK_VINTF_DIR/compatibility_matrix.$LEVEL.xml"
 
-    [ "$TARGET_PLATFORM" = "exynos2100" ] || return 0
-
-    for FILE in "$WORK_DIR/system/system/etc/vintf"/compatibility_matrix*.xml; do
-        [ -f "$FILE" ] || continue
-        _REMOVE_VINTF_HAL_BLOCK "$FILE" "aidl" "android.hardware.boot"
-        _REMOVE_VINTF_HAL_BLOCK "$FILE" "aidl" "android.hardware.dumpstate"
-        _REMOVE_VINTF_HAL_BLOCK "$FILE" "aidl" "android.hardware.audio.core"
-        _REMOVE_VINTF_HAL_BLOCK "$FILE" "aidl" "android.hardware.audio.effect"
-        _REMOVE_VINTF_HAL_BLOCK "$FILE" "aidl" "android.hardware.graphics.allocator"
-        _REMOVE_VINTF_HAL_BLOCK "$FILE" "aidl" "android.hardware.graphics.composer3"
-        _REMOVE_VINTF_HAL_BLOCK "$FILE" "aidl" "android.hardware.security.keymint"
-    done
+    if [ ! -s "$FILE" ]; then
+        ABORT "Missing framework compatibility matrix for target FCM level $LEVEL: ${FILE//$WORK_DIR/}"
+    fi
+    if ! grep -q '<compatibility-matrix' "$FILE" || \
+            ! grep -q 'type="framework"' "$FILE" || \
+            ! grep -q "level=\"$LEVEL\"" "$FILE"; then
+        ABORT "Invalid framework compatibility matrix for target FCM level $LEVEL: ${FILE//$WORK_DIR/}"
+    fi
+    if command -v xmllint > /dev/null 2>&1 && ! xmllint --noout "$FILE"; then
+        ABORT "Malformed framework compatibility matrix: ${FILE//$WORK_DIR/}"
+    fi
 }
 
-_COPY_TARGET_VENDOR_VINTF_FRAGMENTS()
-{
-    local DIR="$SRC_DIR/target/$TARGET_CODENAME/vintf/vendor_manifest"
-    local FILE
-
-    [ -d "$DIR" ] || return 0
-
-    EVAL "mkdir -p \"$WORK_DIR/vendor/etc/vintf/manifest\""
-    for FILE in "$DIR"/*.xml; do
-        [ -f "$FILE" ] || continue
-        LOG "- Adding /vendor/etc/vintf/manifest/$(basename "$FILE")"
-        EVAL "cp -a \"$FILE\" \"$WORK_DIR/vendor/etc/vintf/manifest/$(basename "$FILE")\""
-    done
-}
+RESTORE_TARGET_FCM "5"
+RESTORE_TARGET_FCM "6"
 
 if [ -f "$SRC_DIR/target/$TARGET_CODENAME/vintf/compatibility_matrix.device.xml" ]; then
     LOG "- Adding /system/system/etc/vintf/compatibility_matrix.device.xml"
@@ -108,7 +59,11 @@ elif [[ "$SOURCE_PLATFORM_SDK_VERSION" == "$TARGET_PLATFORM_SDK_VERSION" ]]; the
     ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/vintf/manifest.xml"
 fi
 
-_COPY_TARGET_VENDOR_VINTF_FRAGMENTS
-_CLEAN_LEGACY_EXYNOS_VINTF_MATRICES
+TARGET_FCM_LEVEL="$(grep -o -m 1 'target-level="[0-9]*"' "$WORK_DIR/vendor/etc/vintf/manifest.xml" 2> /dev/null | \
+                    cut -d '"' -f 2)"
+if [ "$TARGET_FCM_LEVEL" ]; then
+    VALIDATE_FRAMEWORK_MATRIX "$TARGET_FCM_LEVEL"
+fi
 
-unset -f _LOG _REMOVE_VINTF_HAL_BLOCK _CLEAN_LEGACY_EXYNOS_VINTF_MATRICES _COPY_TARGET_VENDOR_VINTF_FRAGMENTS
+unset TARGET_FIRMWARE_PATH WORK_VINTF_DIR TARGET_VINTF_DIR TARGET_FCM_LEVEL
+unset -f _LOG RESTORE_TARGET_FCM VALIDATE_FRAMEWORK_MATRIX

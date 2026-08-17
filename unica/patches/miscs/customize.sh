@@ -1,3 +1,6 @@
+MISCS_MODULE_ROOT="$MODPATH"
+MISCS_PLATFORM_SDK="${SOURCE_PLATFORM_SDK_VERSION:-$(GET_PROP "system" "ro.build.version.sdk")}"
+
 SET_PROP_IF_DIFF "vendor" "ro.oem_unlock_supported" "0"
 
 # Better device/model detection in CoreRune
@@ -14,21 +17,20 @@ SMALI_PATCH "system" "system/framework/framework.jar" \
 
 # shellcheck disable=SC2016
 # Disable RescueParty
-SMALI_PATCH "system" "system/framework/services.jar" \
-    "smali/com/android/server/SecRescueParty.smali" "null" \
-    "executeEraseAppData(Landroid/content/Context;Ljava/lang/String;I)V"
-SMALI_PATCH "system" "system/framework/services.jar" \
-    "smali/com/android/server/SecRescueParty.smali" "null" \
-    "executeRescueRecovery(Landroid/content/Context;Ljava/lang/String;I)V"
-SMALI_PATCH "system" "system/framework/services.jar" \
-    "smali/com/android/server/SecRescueParty.smali" "null" \
-    "executeResetOthers(Landroid/content/Context;Ljava/lang/String;I)V"
-SMALI_PATCH "system" "system/framework/services.jar" \
-    "smali/com/android/server/SecRescueParty.smali" "null" \
-    "executeSecRescueLevel(Landroid/content/Context;Ljava/lang/String;I)V"
-SMALI_PATCH "system" "system/framework/services.jar" \
-    "smali/com/android/server/SecRescueParty.smali" "null" \
-    "executeWarmReboot(Landroid/content/Context;Ljava/lang/String;I)V"
+if [ "$MISCS_PLATFORM_SDK" -ge "37" ]; then
+    # Samsung replaced AOSP RescueParty with SecRescueParty in API 37. Its
+    # SystemServer entry point only registers the package-health observer, so
+    # nullifying that exact void method prevents destructive recovery actions
+    # without fabricating a class or patching unrelated boot reporting code.
+    SMALI_PATCH "system" "system/framework/services.jar" \
+        "smali/com/android/server/SecRescueParty.smali" "null" \
+        'secRescuePartyRegisterHealthObserver(Landroid/content/Context;)V'
+else
+    SMALI_PATCH "system" "system/framework/services.jar" \
+        "smali/com/android/server/RescueParty.smali" "return" \
+        '-$$Nest$smisDisabled()Z' \
+        'true'
+fi
 
 # Better model detection in FreecessController
 SMALI_PATCH "system" "system/framework/services.jar" \
@@ -36,3 +38,4 @@ SMALI_PATCH "system" "system/framework/services.jar" \
     '<clinit>()V' \
     'ro.product.model' \
     'ro.product.vendor.model'
+

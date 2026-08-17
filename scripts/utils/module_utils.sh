@@ -74,19 +74,20 @@ GET_GALAXY_STORE_DOWNLOAD_URL()
     local ONEUI
     local PROTOCOL
 
-    # Galaxy Z Fold8 Ultra EUR_OPENX
-    DEVICES=("SM-F976B")
+    # Galaxy S25 Ultra EUR_OPENX
+    # Galaxy S22 Ultra GBL_OPENX
+    DEVICES=("SM-S938B" "SM-S901E")
 
     OS="$(GET_PROP "system" "ro.build.version.sdk")"
     ONEUI="$(GET_PROP "system" "ro.build.version.oneui")"
 
     if [ ! "$OS" ]; then
-        # Fallback to Android 17
-        OS="37"
+        # Fallback to Android 16
+        OS="36"
     fi
     if [ ! "$ONEUI" ]; then
-        # Fallback to One UI 9.0
-        ONEUI="90000"
+        # Fallback to One UI 8.0
+        ONEUI="80000"
     fi
 
     PROTOCOL+="<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>"
