@@ -154,8 +154,8 @@ for i in "${FIRMWARES[@]}"; do
     # Anan's samloader stores its logs in the current working directory, let's move into OUT_DIR just for this time
     (
     cd "$OUT_DIR" || exit 1
-    curl -sSLf "https://github.com/topjohnwu/samloader-rs/releases/download/v2.0.0/samloader-v2.0.0-linux-x86_64.tar.xz" | tar -xJ
-    ./samloader -m "$MODEL" -r "$CSC" -o "$ODIN_DIR/${MODEL}_${CSC}" 1> /dev/null || exit 1
+    curl -sSLf "https://github.com/topjohnwu/samloader-rs/releases/download/2.0.0/samloader-v2.0.0-linux-x86_64.tar.xz" | tar -xJ
+    ./samloader --model "$MODEL" --region "$CSC" -o "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
     )
 
     ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
