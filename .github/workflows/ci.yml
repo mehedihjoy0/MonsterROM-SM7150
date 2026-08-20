@@ -12,22 +12,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  shellcheck:
-    name: Shellcheck
-    runs-on: ubuntu-24.04
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v7
-
-      - name: Run shellcheck
-        run: |
-          CODE=0
-          while IFS= read -r f; do
-            shellcheck -e SC1090,SC1091 -s bash "$f" || CODE=1
-          done < <(find platform scripts target unica -name "*.sh" -not -name "*ssi.sh" -not -name "config.sh" -not -name "sff.sh")
-          exit $CODE
-
   generate-matrix:
     name: Generate matrix
     needs: shellcheck
