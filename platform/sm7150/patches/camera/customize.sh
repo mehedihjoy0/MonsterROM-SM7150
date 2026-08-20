@@ -6,9 +6,6 @@ ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/public.libraries-polarr.
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libPolarrSnap.polarr.so"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libYuv.polarr.so"
 
-# Add Gallery 360 lib
-ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libdualcam_portraitlighting_gallery_360.so"
-
 # Add Snap libs
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/public.libraries-snap.samsung.txt"
 
@@ -29,19 +26,16 @@ ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libhumantracking.arcso
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libhumantracking_util.camera.samsung.so"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libimage_enhancement.arcsoft.so"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libveengine.arcsoft.so"
-ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/lib64/libdualcam_refocus_gallery_48.so"
 
 # shellcheck disable=SC2046
 wait $(jobs -p) || exit 1
 
 LOG_STEP_IN "- Replacing camera blobs"
 BLOBS_LIST="
-system/lib64/libDocShadowRemoval.arcsoft.so
 system/lib64/libhigh_dynamic_range.arcsoft.so
 system/lib64/liblow_light_hdr.arcsoft.so
 system/lib64/libPortraitDistortionCorrectionCali.arcsoft.so
 system/lib64/libsnap_aidl.snap.samsung.so
-system/lib64/libVideoClassifier.camera.samsung.so
 "
 for blob in $BLOBS_LIST
 do
