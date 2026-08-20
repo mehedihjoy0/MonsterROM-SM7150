@@ -155,7 +155,7 @@ for i in "${FIRMWARES[@]}"; do
     (
     cd "$OUT_DIR" || exit 1
     curl -sSLf "https://github.com/topjohnwu/samloader-rs/releases/download/2.0.0/samloader-v2.0.0-linux-x86_64.tar.xz" | tar -xJ
-    ./samloader --model "$MODEL" --region "$CSC" -o "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
+    ./samloader download --model "$MODEL" --region "$CSC" -o "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
     )
 
     ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
