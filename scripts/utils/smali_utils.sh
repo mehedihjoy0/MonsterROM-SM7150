@@ -72,23 +72,16 @@ SMALI_PATCH()
 
     local FILE_PATH="$APKTOOL_DIR/$PARTITION/${FILE//system\//}"
 
-    # Auto-resolve target smali across smali/smali_classes* folders
+    # Auto-resolve smali location across all smali/smali_classes* folders
     if [ ! -f "$FILE_PATH/$SMALI" ]; then
-        # Strip leading smali_classes*/ or smali/ prefix if supplied
         local SMALI_REL_PATH="${SMALI#smali*/}"
         local AUTO_MATCHES
 
         AUTO_MATCHES="$(find "$FILE_PATH" -type f -path "*/$SMALI_REL_PATH")"
 
-        if [ -n "$AUTO_MATCHES" ]; then
-            local MATCH_COUNT
-            MATCH_COUNT="$(wc -l <<< "$AUTO_MATCHES")"
-
-            if [ "$MATCH_COUNT" -eq 1 ]; then
-                # Exactly one match found: resolve relative path from FILE_PATH
-                SMALI="${AUTO_MATCHES#$FILE_PATH/}"
-                LOG "- Auto-resolved smali path to: \"$SMALI\""
-            fi
+        if [ -n "$AUTO_MATCHES" ] && [ "$(wc -l <<< "$AUTO_MATCHES")" -eq 1 ]; then
+            SMALI="${AUTO_MATCHES#$FILE_PATH/}"
+            LOG "- Auto-resolved smali path to: \"$SMALI\""
         fi
     fi
 
@@ -414,3 +407,4 @@ SMALI_PATCH()
 
     return 0
 }
+
