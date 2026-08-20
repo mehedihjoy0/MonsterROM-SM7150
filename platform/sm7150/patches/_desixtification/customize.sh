@@ -4,8 +4,8 @@ ADD_TO_WORK_DIR "$SOURCE_EXTRA_FIRMWARES" "system" "system/lib64/lib.engmode.sam
 ADD_TO_WORK_DIR "$SOURCE_EXTRA_FIRMWARES" "system" "system/lib64/lib.engmodejni.samsung.so"
 ADD_TO_WORK_DIR "$SOURCE_EXTRA_FIRMWARES" "system" "system/lib64/vendor.samsung.hardware.security.engmode@1.0.so"
 
-find "$WORK_DIR/system/system_ext/lib" -mindepth 1 | while read -r i; do
-    ADD_TO_WORK_DIR "system_ext" "lib/${i#$D/}"
+find "$WORK_DIR/system/system/system_ext/lib" -mindepth 1 | while read -r i; do
+    ADD_TO_WORK_DIR "system_ext" "lib/${i#$WORK_DIR/system/system/system_ext/lib/}"
 done
     
 BLOBS_LIST="
