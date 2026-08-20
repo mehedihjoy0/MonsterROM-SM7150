@@ -151,11 +151,11 @@ for i in "${FIRMWARES[@]}"; do
     LOG "- Downloading firmware..."
     [ -f "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" ] && rm -rf "$ODIN_DIR/${MODEL}_${CSC}"
     mkdir -p "$ODIN_DIR/${MODEL}_${CSC}"
-    # Anan's samloader stores its logs in the current working directory, let's move into OUT_DIR just for this time
+    
     (
-    cd "$OUT_DIR" || exit 1
+    cd "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
     curl -sSLf "https://github.com/topjohnwu/samloader-rs/releases/download/2.0.0/samloader-v2.0.0-linux-x86_64.tar.xz" | tar -xJ
-    ./samloader download --model "$MODEL" --region "$CSC" -o "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
+    ./samloader download --model "$MODEL" --region "$CSC" || exit 1
     )
 
     ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
