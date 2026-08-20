@@ -630,10 +630,6 @@ _PATCH_BEACONMANAGER_LOCATION_PERMISSIONS()
     LOG_STEP_OUT
 }
 
-ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/29.0.cil" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/29.0.compat.cil" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.cil" 0 0 644 "u:object_r:system_file:s0"
-ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/etc/selinux/mapping/30.0.compat.cil" 0 0 644 "u:object_r:system_file:s0"
 
 _DISABLE_STALE_KEYMASTER_WAIT
 _BACKPORT_HIDL_VAULTKEEPER_CLIENT
