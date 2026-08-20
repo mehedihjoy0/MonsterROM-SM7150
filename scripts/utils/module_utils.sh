@@ -16,7 +16,7 @@ ABORT()
 }
 
 # APPLY_PATCH <partition> <apk/jar> <patch>
-# Applies a unified diff patch to the provided APK/JAR decoded directory with dynamic smali class folder matching.
+# Applies a unified diff patch to the provided APK/JAR decoded directory.
 APPLY_PATCH()
 {
     _CHECK_NON_EMPTY_PARAM "PARTITION" "$1" || return 1
@@ -47,7 +47,7 @@ APPLY_PATCH()
     local WORKING_PATCH="$PATCH"
     local TEMP_PATCH=""
 
-    # Extract target paths from diff headers (e.g., a/smali_classes6/path/to/File.smali)
+    # Parse target paths from patch diff headers (--- a/ and +++ b/)
     local TARGET_PATHS
     TARGET_PATHS="$(grep -E "^\-\-\- a/|^\+\+\+ b/" "$PATCH" | sed -E 's/^\-\-\- a\/|^\+\+\+ b\///' | sort -u)"
 
@@ -57,18 +57,17 @@ APPLY_PATCH()
 
         local TARGET_PATH
         for TARGET_PATH in $TARGET_PATHS; do
-            # Extract relative path without smali/smali_classes* prefix
             local REL_PATH="${TARGET_PATH#smali*/}"
 
+            # Check if file path exists at declared smali folder
             if [ ! -f "$FILE_PATH/$TARGET_PATH" ]; then
                 local MATCHES
                 MATCHES="$(find "$FILE_PATH" -type f -path "*/$REL_PATH")"
 
+                # Auto-resolve path if a single matching smali file exists elsewhere
                 if [ -n "$MATCHES" ] && [ "$(wc -l <<< "$MATCHES")" -eq 1 ]; then
                     local REAL_PATH="${MATCHES#$FILE_PATH/}"
                     LOG "- Auto-resolved patch path: \"$TARGET_PATH\" -> \"$REAL_PATH\""
-
-                    # Dynamically replace path in temporary patch
                     sed -i "s|$TARGET_PATH|$REAL_PATH|g" "$TEMP_PATCH"
                 fi
             fi
@@ -77,14 +76,12 @@ APPLY_PATCH()
     fi
 
     LOG "- Applying \"$(grep "^Subject:" "$PATCH" | sed "s/.*PATCH] //")\" to /$PARTITION/$FILE"
-    
-    if EVAL "LC_ALL=C git apply --directory=\"$FILE_PATH\" --verbose --unsafe-paths \"$WORKING_PATCH\""; then
-        [ -n "$TEMP_PATCH" ] && rm -f "$TEMP_PATCH"
-        return 0
-    else
-        [ -n "$TEMP_PATCH" ] && rm -f "$TEMP_PATCH"
-        return 1
-    fi
+
+    local RET=0
+    EVAL "LC_ALL=C git apply --directory=\"$FILE_PATH\" --verbose --unsafe-paths \"$WORKING_PATCH\"" || RET=1
+
+    [ -n "$TEMP_PATCH" ] && rm -f "$TEMP_PATCH"
+    return $RET
 }
 
 # DECODE_APK <partition> <apk/jar>
