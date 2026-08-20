@@ -149,14 +149,20 @@ for i in "${FIRMWARES[@]}"; do
     fi
 
     LOG "- Downloading firmware..."
-    [ -f "$ODIN_DIR/${MODEL}_${CSC}/.downloaded" ] && rm -rf "$ODIN_DIR/${MODEL}_${CSC}"
+    # Clean up any previous attempts in the target directory
+    rm -rf "$ODIN_DIR/${MODEL}_${CSC}"
     mkdir -p "$ODIN_DIR/${MODEL}_${CSC}"
-    
+
+    # Extract samloader into OUT_DIR so the firmware folder stays clean
+    curl -sSLf "https://github.com/topjohnwu/samloader-rs/releases/download/2.0.0/samloader-v2.0.0-linux-x86_64.tar.xz" | tar -xJ -C "$TOOLS_DIR"
+
+    # Download firmware into destination folder and create completion marker
     (
-    cd "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
-    curl -sSLf "https://github.com/topjohnwu/samloader-rs/releases/download/2.0.0/samloader-v2.0.0-linux-x86_64.tar.xz" | tar -xJ
-    ./samloader download --model "$MODEL" --region "$CSC" || exit 1
+        cd "$ODIN_DIR/${MODEL}_${CSC}" || exit 1
+        "$TOOLS_DIR/samloader" download --model "$MODEL" --region "$CSC" || exit 1
+        touch .downloaded
     )
+
 
     ZIP_FILE="$(find "$ODIN_DIR/${MODEL}_${CSC}" -name "*.zip" | sort -r | head -n 1)"
     if [ ! "$ZIP_FILE" ] || [ ! -f "$ZIP_FILE" ]; then
