@@ -63,8 +63,17 @@ if ! $SOURCE_CAMERA_SUPPORT_MASS_APP_FLAVOR; then
     fi
 else
     if ! $TARGET_CAMERA_SUPPORT_MASS_APP_FLAVOR; then
-        # TODO handle this condition
-        LOG_MISSING_PATCHES "SOURCE_CAMERA_SUPPORT_MASS_APP_FLAVOR" "TARGET_CAMERA_SUPPORT_MASS_APP_FLAVOR"
+        DELETE_FROM_WORK_DIR "system" "system/priv-app/SamsungCamera/oat"
+        DELETE_FROM_WORK_DIR "system" "system/priv-app/SamsungCamera/SamsungCamera.apk.prof"
+        if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/priv-app/SamsungCamera/SamsungCamera.apk" ]; then
+            ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" 0 0 644 "u:object_r:system_file:s0"
+
+            if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/priv-app/SamsungCamera/SamsungCamera.apk.prof" ]; then
+                ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/priv-app/SamsungCamera/SamsungCamera.apk.prof" 0 0 644 "u:object_r:system_file:s0"
+            fi
+        else
+            LOG_MISSING_PATCHES "SOURCE_CAMERA_SUPPORT_MASS_APP_FLAVOR" "TARGET_CAMERA_SUPPORT_MASS_APP_FLAVOR"
+        fi
     fi
 fi
 
