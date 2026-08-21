@@ -4,15 +4,15 @@ Date: Thu, 5 Apr 2018 10:01:19 +0800
 Subject: [PATCH] Disable vendor mismatch warning
 
 ---
- ...gerService$$ExternalSyntheticLambda6.smali | 14 +---
+ ...gerService$$ExternalSyntheticLambda8.smali | 18 +---
  ...calService$$ExternalSyntheticLambda4.smali | 83 ++-----------------
- 2 files changed, 9 insertions(+), 88 deletions(-)
+ 2 files changed, 9 insertions(+), 92 deletions(-)
 
-diff --git a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda6.smali b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda6.smali
+diff --git a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali
 index a55014bf1..f80efb330 100644
---- a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda6.smali
-+++ b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda6.smali
-@@ -165,22 +165,10 @@
+--- a/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali
++++ b/smali/com/android/server/am/ActivityManagerService$$ExternalSyntheticLambda8.smali
+@@ -167,26 +167,10 @@
      :try_start_3
      const-string v2, "ActivityTaskManager"
  
@@ -29,7 +29,11 @@ index a55014bf1..f80efb330 100644
 -
 -    const/4 v5, 0x2
 -
--    invoke-direct {v4, p0, v5}, Lcom/android/server/wm/ActivityTaskManagerService$LocalService$$ExternalSyntheticLambda4;-><init>(Lcom/android/server/wm/ActivityTaskManagerService$LocalService;I)V
+-    invoke-direct {v4, v5}, Lcom/android/server/wm/ActivityTaskManagerService$LocalService$$ExternalSyntheticLambda4;-><init>(I)V
+-
+-    iput-object p0, v4, Lcom/android/server/wm/ActivityTaskManagerService$LocalService$$ExternalSyntheticLambda4;->f$0:Lcom/android/server/wm/ActivityTaskManagerService$LocalService;
+-
+-    invoke-static {}, Ljava/lang/invoke/VarHandle;->storeStoreFence()V
 -
 -    invoke-virtual {v2, v4}, Landroid/os/Handler;->post(Ljava/lang/Runnable;)Z
 -
@@ -70,7 +74,7 @@ index 7ce9f057e..7547637d2 100644
 -
 -    iget-object v1, p0, Lcom/android/server/wm/ActivityTaskManagerService;->mUiContext:Landroid/content/Context;
 -
--    const v2, 0x10401d1
+-    const v2, 0x10401eb
 -
 -    invoke-virtual {v1, v2}, Landroid/content/Context;->getText(I)Ljava/lang/CharSequence;
 -
@@ -80,7 +84,7 @@ index 7ce9f057e..7547637d2 100644
 -
 -    iget-object v1, p0, Lcom/android/server/wm/ActivityTaskManagerService;->mUiContext:Landroid/content/Context;
 -
--    const v2, 0x1040f97
+-    const v2, 0x104100f
 -
 -    invoke-virtual {v1, v2}, Landroid/content/Context;->getText(I)Ljava/lang/CharSequence;
 -
@@ -148,13 +152,13 @@ index 7ce9f057e..7547637d2 100644
 -    if-eqz v2, :cond_2
 +    if-eqz v2, :cond_1
  
-     const v3, 0x1040d07
+     const v3, 0x1040d7b
  
      goto :goto_0
  
 -    :cond_2
 +    :cond_1
-     const v3, 0x1040d06
+     const v3, 0x1040d7a
  
      :goto_0
 @@ -222,13 +155,13 @@
@@ -164,13 +168,13 @@ index 7ce9f057e..7547637d2 100644
 -    if-eqz v2, :cond_3
 +    if-eqz v2, :cond_2
  
-     const v2, 0x1040d05
+     const v2, 0x1040d79
  
      goto :goto_1
  
 -    :cond_3
 +    :cond_2
-     const v2, 0x1040d04
+     const v2, 0x1040d78
  
      :goto_1
 @@ -260,7 +193,7 @@
@@ -184,4 +188,3 @@ index 7ce9f057e..7547637d2 100644
      nop
 -- 
 2.52.0
-
