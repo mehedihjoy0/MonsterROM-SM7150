@@ -41,28 +41,47 @@ TARGET_GALLERY_CONFIG_IMAGE_TAGGER_VERSION="$(GET_FLOATING_FEATURE_CONFIG "$FW_D
 if [[ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION")" == "$SOURCE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION" ]]; then
     if [[ "$TARGET_GALLERY_CONFIG_IMAGE_TAGGER_VERSION" != "$SOURCE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION" ]] || \
             [ "$TARGET_PLATFORM_SDK_VERSION" -lt "$SOURCE_PLATFORM_SDK_VERSION" ]; then
-        if [ -d "$WORK_DIR/system/system/saiv/image_understanding/db/aig" ]; then
-            DELETE_FROM_WORK_DIR "system" "system/saiv/image_understanding/db/aig"
+        if [ -d "$WORK_DIR/system/system/saiv/image_understanding/db/aic_classifier" ]; then
+            DELETE_FROM_WORK_DIR "system" "system/saiv/image_understanding/db/aic_classifier"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" "system/saiv/image_understanding/db/aig" 0 0 755 "u:object_r:system_file:s0"
+        if [ -d "$WORK_DIR/system/system/saiv/image_understanding/db/aic_detector" ]; then
+            DELETE_FROM_WORK_DIR "system" "system/saiv/image_understanding/db/aic_detector"
+        fi
+        if [ -d "$WORK_DIR/system/system/saiv/image_understanding/db/aic_g_o_detector" ]; then
+            DELETE_FROM_WORK_DIR "system" "system/saiv/image_understanding/db/aic_g_o_detector"
+        fi
+        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" \
+            "system/saiv/image_understanding/db/aic_g_o_detector" 0 0 755 "u:object_r:system_file:s0"
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/aig_classifier" ]; then
             DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/aig_classifier"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "saiv/image_understanding/db/aig_classifier" 0 2000 755 "u:object_r:vendor_snap_file:s0"
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/aig_detector" ]; then
             DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/aig_detector"
         fi
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/aig_document_classifier" ]; then
             DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/aig_document_classifier"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "saiv/image_understanding/db/aig_document_classifier" 0 2000 755 "u:object_r:vendor_snap_file:s0"
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/aig_document_detector" ]; then
             DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/aig_document_detector"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "saiv/image_understanding/db/aig_document_detector" 0 2000 755 "u:object_r:vendor_snap_file:s0"
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/srr_interaction" ]; then
             DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/srr_interaction"
         fi
+        if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/aic_classifier" ]; then
+            DELETE_FROM_WORK_DIR "vendor" "etc/saiv/image_understanding/db/aic_classifier"
+        fi
+        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+            "etc/saiv/image_understanding/db/aic_classifier" 0 0 755 "u:object_r:vendor_configs_file:s0"
+        if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/aic_detector" ]; then
+            DELETE_FROM_WORK_DIR "vendor" "etc/saiv/image_understanding/db/aic_detector"
+        fi
+        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+            "etc/saiv/image_understanding/db/aic_detector" 0 0 755 "u:object_r:vendor_configs_file:s0"
+        if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/aic_g_o_detector" ]; then
+            DELETE_FROM_WORK_DIR "vendor" "etc/saiv/image_understanding/db/aic_g_o_detector"
+        fi
+        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+            "etc/saiv/image_understanding/db/aic_g_o_detector" 0 0 755 "u:object_r:vendor_configs_file:s0"
     fi
 fi
 
@@ -74,8 +93,8 @@ if [ -f "$WORK_DIR/system/system/priv-app/PhotoEditor_Full/PhotoEditor_Full.apk"
         if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/hs_segmenter" ]; then
             DELETE_FROM_WORK_DIR "vendor" "etc/saiv/image_understanding/db/hs_segmenter"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/saiv/image_understanding/db/hs_segmenter/hs_segmenter.info" 0 0 644 "u:object_r:vendor_configs_file:s0"
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "etc/saiv/image_understanding/db/hs_segmenter/hs_segmenter.tflite" 0 0 644 "u:object_r:vendor_configs_file:s0"
+        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+            "etc/saiv/image_understanding/db/hs_segmenter" 0 0 755 "u:object_r:vendor_configs_file:s0"
     fi
 else
     if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/hs_segmenter" ]; then
@@ -93,11 +112,14 @@ if [[ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_PET_CL
             if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/pet_detector" ]; then
                 DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/pet_detector"
             fi
-            ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "saiv/image_understanding/db/pet_detector" 0 2000 755 "u:object_r:vendor_snap_file:s0"
             if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/pet_mypetsearch" ]; then
                 DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/pet_mypetsearch"
             fi
-            ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" "saiv/image_understanding/db/pet_mypetsearch" 0 2000 755 "u:object_r:vendor_snap_file:s0"
+            if [ -d "$WORK_DIR/vendor/etc/petdetector" ]; then
+                DELETE_FROM_WORK_DIR "vendor" "etc/petdetector"
+            fi
+            ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+                "etc/petdetector" 0 0 755 "u:object_r:vendor_configs_file:s0"
         fi
     else
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/pet_detector" ]; then
@@ -105,6 +127,9 @@ if [[ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_PET_CL
         fi
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/pet_mypetsearch" ]; then
             DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/pet_mypetsearch"
+        fi
+        if [ -d "$WORK_DIR/vendor/etc/petdetector" ]; then
+            DELETE_FROM_WORK_DIR "vendor" "etc/petdetector"
         fi
     fi
 fi
