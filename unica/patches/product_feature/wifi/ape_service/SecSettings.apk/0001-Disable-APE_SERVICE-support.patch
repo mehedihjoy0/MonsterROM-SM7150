@@ -4,19 +4,31 @@ Date: Sat, 22 Aug 2026 00:42:40 +0200
 Subject: [PATCH] Disable APE_SERVICE support on QPR2
 
 ---
- .../settings/wifi/develop/ApePreferenceController.smali       | 4 ++--
- 1 file changed, 2 insertions(+), 2 deletions(-)
+ .../wifi/develop/ApePreferenceController.smali | 12 ++++++------
+ 1 file changed, 6 insertions(+), 6 deletions(-)
 
 diff --git a/smali_classes2/com/samsung/android/settings/wifi/develop/ApePreferenceController.smali b/smali_classes2/com/samsung/android/settings/wifi/develop/ApePreferenceController.smali
 index a904caa..bd1c4ef 100644
 --- a/smali_classes2/com/samsung/android/settings/wifi/develop/ApePreferenceController.smali
 +++ b/smali_classes2/com/samsung/android/settings/wifi/develop/ApePreferenceController.smali
-@@ -9 +9 @@
+@@ -7,5 +7,5 @@
+ .field private static final SETTINGS_DEVELOPER_APE:Ljava/lang/String; = "sem_wifi_ape_enabled_labs"
+-
 -.field private static final SUPPORT_APE_SERVICE:Z = true
+-
++
 +.field private static final SUPPORT_APE_SERVICE:Z = false
-@@ -60 +60 @@
++
+ .field private static final TAG:Ljava/lang/String; = "ConfigureWifiSettings.Ape"
+@@ -57,6 +57,6 @@
+ .method public getAvailabilityStatus()I
+     .locals 0
+-
 -    const/4 p0, 0x0
+-
++
 +    const/4 p0, 0x3
++
+     return p0
 -- 
 2.53.0
-
