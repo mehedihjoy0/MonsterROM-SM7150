@@ -233,17 +233,17 @@ fi
 # SEC_PRODUCT_FEATURE_BLUETOOTH_SUPPORT_XLNA_CONTROL
 if $SOURCE_BLUETOOTH_SUPPORT_XLNA_CONTROL; then
     if ! $TARGET_BLUETOOTH_SUPPORT_XLNA_CONTROL; then
-        DECODE_APK_IN_APEX "$BLUETOOTH_APK_PATH"
-        LOG "- Applying \"Disable SUPPORT_XLNA_CONTROL support\" to apex_payload/$BLUETOOTH_APK_REL_PATH"
-        APPLY_PATCH "system" "system/$BLUETOOTH_APK_REL_PATH" \
+        DECODE_APK_IN_APEX "$TMP_DIR/unknown/apex_payload/app/Bluetooth@BP2A.250605.031.A3/Bluetooth.apk"
+        LOG "- Applying \"Disable SUPPORT_XLNA_CONTROL support\" to apex_payload/app/Bluetooth@BP2A.250605.031.A3/Bluetooth.apk"
+        APPLY_PATCH "system" "system/app/Bluetooth@BP2A.250605.031.A3/Bluetooth.apk" \
             "$MODPATH/xlna/Bluetooth.apk/0001-Disable-SUPPORT_XLNA_CONTROL-support.patch" \
             > /dev/null
     fi
 else
     if $TARGET_BLUETOOTH_SUPPORT_XLNA_CONTROL; then
-        DECODE_APK_IN_APEX "$BLUETOOTH_APK_PATH"
-        LOG "- Applying \"Enable SUPPORT_XLNA_CONTROL support\" to apex_payload/$BLUETOOTH_APK_REL_PATH"
-        APPLY_PATCH "system" "system/$BLUETOOTH_APK_REL_PATH" \
+        DECODE_APK_IN_APEX "$TMP_DIR/unknown/apex_payload/app/Bluetooth@BP2A.250605.031.A3/Bluetooth.apk"
+        LOG "- Applying \"Enable SUPPORT_XLNA_CONTROL support\" to apex_payload/app/Bluetooth@BP2A.250605.031.A3/Bluetooth.apk"
+        APPLY_PATCH "system" "system/app/Bluetooth@BP2A.250605.031.A3/Bluetooth.apk" \
             "$MODPATH/xlna/Bluetooth.apk/0001-Enable-SUPPORT_XLNA_CONTROL-support.patch" \
             > /dev/null
     fi
@@ -256,7 +256,7 @@ LOG "- Patching \"8876743948050037\" to \"887674392a000014\" in apex_payload/lib
 HEX_PATCH "$TMP_DIR/unknown/apex_payload/lib64/libbluetooth_jni.so" \
     "8876743948050037" "887674392a000014" > /dev/null
 
-BUILD_APK_IN_APEX "$BLUETOOTH_APK_PATH"
+BUILD_APK_IN_APEX "$TMP_DIR/unknown/apex_payload/app/Bluetooth@BP2A.250605.031.A3/Bluetooth.apk"
 BUILD_APK_IN_APEX "$TMP_DIR/unknown/apex_payload/javalib/framework-bluetooth.jar"
 BUILD_PAYLOAD
 SIGN_PAYLOAD
@@ -265,7 +265,6 @@ SIGN_APEX "$WORK_DIR/system/system/apex/com.android.bt.apex"
 
 rm -rf "$TMP_DIR"
 
-unset SOURCE_FIRMWARE_PATH
 unset BLUETOOTH_APK_PATH BLUETOOTH_APK_REL_PATH
 unset -f BUILD_APK_IN_APEX BUILD_APEX BUILD_PAYLOAD \
     DECODE_APEX DECODE_APK_IN_APEX EXTRACT_PAYLOAD \
