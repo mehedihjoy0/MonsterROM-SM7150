@@ -180,8 +180,8 @@ if [[ "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" != "$TARGET_PRODUCT_SHIPPING_API_LEVE
         "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" \
         > /dev/null
     SMALI_PATCH "system" "system/framework/services.jar" \
-        "smali/com/android/server/enterprise/hdm/HdmVendorController.smali" "replace" \
-        "<init>()V" \
+        "smali/com/android/server/enterprise/EnterpriseDeviceManagerServiceImpl.smali" "replace" \
+        "<init>(Landroid/content/Context;)V" \
         "$TARGET_PRODUCT_SHIPPING_API_LEVEL" \
         "$SOURCE_PRODUCT_SHIPPING_API_LEVEL" \
         > /dev/null
