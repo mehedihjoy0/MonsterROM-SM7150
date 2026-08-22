@@ -23,10 +23,10 @@ Subject: [PATCH] Nuke Knox DualDAR
  ...DoScreenLockTypePreferenceController.smali |   30 +-
  17 files changed, 1963 insertions(+), 2970 deletions(-)
 
-diff --git a/smali/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali b/smali/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali
+diff --git a/smali_classes2/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali b/smali_classes2/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali
 index f4384254f..5c8ecd0e7 100644
---- a/smali/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali
-+++ b/smali/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali
+--- a/smali_classes2/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali
++++ b/smali_classes2/com/android/settings/password/ChooseLockGeneric$ChooseLockGenericFragment.smali
 @@ -83,8 +83,6 @@
  
  .field public mHierarchicalParent:Ljava/lang/String;
@@ -5501,10 +5501,10 @@ index f4384254f..5c8ecd0e7 100644
          :pswitch_7
      .end packed-switch
  .end method
-diff --git a/smali/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali b/smali/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
+diff --git a/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali b/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
 index e9257ed22..103b9803a 100644
---- a/smali/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
-+++ b/smali/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
+--- a/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
++++ b/smali_classes2/com/android/settings/password/ChooseLockPassword$ChooseLockPasswordFragment.smali
 @@ -2539,12 +2539,6 @@
      goto :goto_0
  
@@ -5954,10 +5954,10 @@ index e9257ed22..103b9803a 100644
      return-void
  .end method
  
-diff --git a/smali/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali b/smali/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali
+diff --git a/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali b/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali
 index 34924136a..e4d7b2609 100644
---- a/smali/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali
-+++ b/smali/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali
+--- a/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali
++++ b/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialActivity$1.smali
 @@ -208,7 +208,7 @@
  .end method
  
@@ -6068,10 +6068,10 @@ index 34924136a..e4d7b2609 100644
      iget-object p0, p0, Lcom/android/settings/password/ConfirmDeviceCredentialActivity$1;->this$0:Lcom/android/settings/password/ConfirmDeviceCredentialActivity;
  
      invoke-virtual {p0}, Landroid/app/Activity;->finish()V
-diff --git a/smali/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali b/smali/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali
+diff --git a/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali b/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali
 index 93271f4ca..e5ec0e3f4 100644
---- a/smali/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali
-+++ b/smali/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali
+--- a/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali
++++ b/smali_classes2/com/android/settings/password/ConfirmDeviceCredentialBaseFragment.smali
 @@ -704,7 +704,7 @@
  
      move-result v0
@@ -6121,10 +6121,10 @@ index 93271f4ca..e5ec0e3f4 100644
      invoke-direct {p1, v1}, Landroidx/activity/OnBackPressedCallback;-><init>(Z)V
  
      invoke-virtual {p0}, Ljava/lang/Object;->getClass()Ljava/lang/Class;
-diff --git a/smali/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali b/smali/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali
+diff --git a/smali_classes2/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali b/smali_classes2/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali
 index e9d38e96a..413eeac5b 100644
---- a/smali/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali
-+++ b/smali/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali
+--- a/smali_classes2/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali
++++ b/smali_classes2/com/android/settings/password/ConfirmLockPassword$ConfirmLockPasswordFragment.smali
 @@ -542,87 +542,11 @@
  
      sget-object v0, Lcom/samsung/android/settings/knox/KnoxUtils;->mDeviceType:Ljava/lang/String;
@@ -6743,10 +6743,10 @@ index e9d38e96a..413eeac5b 100644
  
      invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getActivity()Landroidx/fragment/app/FragmentActivity;
  
-diff --git a/smali/com/android/settings/password/ConfirmLockPassword.smali b/smali/com/android/settings/password/ConfirmLockPassword.smali
+diff --git a/smali_classes2/com/android/settings/password/ConfirmLockPassword.smali b/smali_classes2/com/android/settings/password/ConfirmLockPassword.smali
 index 61a2c7637..6a90604bf 100644
---- a/smali/com/android/settings/password/ConfirmLockPassword.smali
-+++ b/smali/com/android/settings/password/ConfirmLockPassword.smali
+--- a/smali_classes2/com/android/settings/password/ConfirmLockPassword.smali
++++ b/smali_classes2/com/android/settings/password/ConfirmLockPassword.smali
 @@ -165,11 +165,11 @@
  
      const/4 v0, 0x0
@@ -6939,10 +6939,10 @@ index 61a2c7637..6a90604bf 100644
      invoke-super {p0, p1}, Lcom/android/settings/password/ConfirmDeviceCredentialBaseActivity;->onOptionsItemSelected(Landroid/view/MenuItem;)Z
  
      move-result p0
-diff --git a/smali/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali b/smali/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali
+diff --git a/smali_classes2/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali b/smali_classes2/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali
 index a4ec82434..9186f0035 100644
---- a/smali/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali
-+++ b/smali/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali
+--- a/smali_classes2/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali
++++ b/smali_classes2/com/android/settings/password/ConfirmLockPattern$ConfirmLockPatternFragment.smali
 @@ -1333,21 +1333,11 @@
  
      iget p4, p0, Lcom/android/settings/password/ConfirmDeviceCredentialBaseFragment;->mUserId:I
@@ -6967,10 +6967,10 @@ index a4ec82434..9186f0035 100644
  
      invoke-virtual {p0}, Landroidx/fragment/app/Fragment;->getActivity()Landroidx/fragment/app/FragmentActivity;
  
-diff --git a/smali/com/android/settings/security/LockUnificationPreferenceController.smali b/smali/com/android/settings/security/LockUnificationPreferenceController.smali
+diff --git a/smali_classes2/com/android/settings/security/LockUnificationPreferenceController.smali b/smali_classes2/com/android/settings/security/LockUnificationPreferenceController.smali
 index 4c049c515..824670752 100644
---- a/smali/com/android/settings/security/LockUnificationPreferenceController.smali
-+++ b/smali/com/android/settings/security/LockUnificationPreferenceController.smali
+--- a/smali_classes2/com/android/settings/security/LockUnificationPreferenceController.smali
++++ b/smali_classes2/com/android/settings/security/LockUnificationPreferenceController.smali
 @@ -250,12 +250,6 @@
  
      if-eqz p0, :cond_0
@@ -6984,10 +6984,10 @@ index 4c049c515..824670752 100644
      const/4 p0, 0x1
  
      return p0
-diff --git a/smali_classes2/com/android/settings/Utils.smali b/smali_classes2/com/android/settings/Utils.smali
+diff --git a/smali/com/android/settings/Utils.smali b/smali/com/android/settings/Utils.smali
 index a674d72c7..2915c109f 100644
---- a/smali_classes2/com/android/settings/Utils.smali
-+++ b/smali_classes2/com/android/settings/Utils.smali
+--- a/smali/com/android/settings/Utils.smali
++++ b/smali/com/android/settings/Utils.smali
 @@ -710,37 +710,29 @@
  
      invoke-virtual {p0, v0}, Landroid/content/Context;->getSystemService(Ljava/lang/Class;)Ljava/lang/Object;
@@ -7035,10 +7035,10 @@ index a674d72c7..2915c109f 100644
      new-instance p0, Ljava/lang/SecurityException;
  
      const-string v0, "Given user id "
-diff --git a/smali_classes3/com/samsung/android/settings/password/LockTypePolicy.smali b/smali_classes3/com/samsung/android/settings/password/LockTypePolicy.smali
+diff --git a/smali_classes5/com/samsung/android/settings/password/LockTypePolicy.smali b/smali_classes5/com/samsung/android/settings/password/LockTypePolicy.smali
 index 488b8c882..9140e7c92 100644
---- a/smali_classes3/com/samsung/android/settings/password/LockTypePolicy.smali
-+++ b/smali_classes3/com/samsung/android/settings/password/LockTypePolicy.smali
+--- a/smali_classes5/com/samsung/android/settings/password/LockTypePolicy.smali
++++ b/smali_classes5/com/samsung/android/settings/password/LockTypePolicy.smali
 @@ -22,10 +22,6 @@
  
  .field public final mIsDOEnabled:Z
@@ -7297,10 +7297,10 @@ index b8dda236e..96bf3ca9f 100644
  
      return v0
  .end method
-diff --git a/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali b/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali
+diff --git a/smali_classes5/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali b/smali_classes5/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali
 index 4eb798235..7037a8081 100644
---- a/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali
-+++ b/smali_classes4/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali
+--- a/smali_classes5/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali
++++ b/smali_classes5/com/samsung/android/settings/deviceinfo/softwareinfo/KnoxVersionPreferenceController.smali
 @@ -346,7 +346,7 @@
  
      move-result-object v7
@@ -7501,10 +7501,10 @@ index 4eb798235..7037a8081 100644
      return-object v5
  .end method
  
-diff --git a/smali_classes4/com/samsung/android/settings/knox/KnoxUtils.smali b/smali_classes4/com/samsung/android/settings/knox/KnoxUtils.smali
+diff --git a/smali_classes5/com/samsung/android/settings/knox/KnoxUtils.smali b/smali_classes5/com/samsung/android/settings/knox/KnoxUtils.smali
 index 307df42da..8e6649a64 100644
---- a/smali_classes4/com/samsung/android/settings/knox/KnoxUtils.smali
-+++ b/smali_classes4/com/samsung/android/settings/knox/KnoxUtils.smali
+--- a/smali_classes5/com/samsung/android/settings/knox/KnoxUtils.smali
++++ b/smali_classes5/com/samsung/android/settings/knox/KnoxUtils.smali
 @@ -6,6 +6,8 @@
  # static fields
  .field public static appRestrictionState:Z
@@ -8207,10 +8207,10 @@ index 307df42da..8e6649a64 100644
  .end method
  
  .method public static isMultifactorEnabledForWork(Landroid/content/Context;I)Z
-diff --git a/smali_classes4/com/samsung/android/settings/lockscreen/LockScreenSettings.smali b/smali_classes4/com/samsung/android/settings/lockscreen/LockScreenSettings.smali
+diff --git a/smali_classes5/com/samsung/android/settings/lockscreen/LockScreenSettings.smali b/smali_classes5/com/samsung/android/settings/lockscreen/LockScreenSettings.smali
 index 0c821545c..950f93397 100644
---- a/smali_classes4/com/samsung/android/settings/lockscreen/LockScreenSettings.smali
-+++ b/smali_classes4/com/samsung/android/settings/lockscreen/LockScreenSettings.smali
+--- a/smali_classes5/com/samsung/android/settings/lockscreen/LockScreenSettings.smali
++++ b/smali_classes5/com/samsung/android/settings/lockscreen/LockScreenSettings.smali
 @@ -18,8 +18,6 @@
  
  .field public mEditorLunarCalendar:Landroidx/preference/SecSwitchPreference;
@@ -8284,10 +8284,10 @@ index 0c821545c..950f93397 100644
      const-class p1, Lcom/samsung/android/settings/lockscreen/controller/SecureLockPreferenceController;
  
      invoke-virtual {p0, p1}, Lcom/android/settings/dashboard/DashboardFragment;->use(Ljava/lang/Class;)Lcom/android/settingslib/core/AbstractPreferenceController;
-diff --git a/smali_classes4/com/samsung/android/settings/lockscreen/LockUtils.smali b/smali_classes4/com/samsung/android/settings/lockscreen/LockUtils.smali
+diff --git a/smali_classes5/com/samsung/android/settings/lockscreen/LockUtils.smali b/smali_classes5/com/samsung/android/settings/lockscreen/LockUtils.smali
 index 58d1bdafd..a40681bc6 100644
---- a/smali_classes4/com/samsung/android/settings/lockscreen/LockUtils.smali
-+++ b/smali_classes4/com/samsung/android/settings/lockscreen/LockUtils.smali
+--- a/smali_classes5/com/samsung/android/settings/lockscreen/LockUtils.smali
++++ b/smali_classes5/com/samsung/android/settings/lockscreen/LockUtils.smali
 @@ -1808,159 +1808,111 @@
  .method public static updateSetUpCredentialIfNeeded(Landroid/content/Context;I)V
      .locals 7
@@ -8723,10 +8723,10 @@ index 58d1bdafd..a40681bc6 100644
      new-instance p0, Ljava/lang/IllegalStateException;
  
      const-string p1, "Unable to load UserManager"
-diff --git a/smali_classes4/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali b/smali_classes4/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali
+diff --git a/smali_classes5/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali b/smali_classes5/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali
 index d06379a53..c8e9aaebb 100644
---- a/smali_classes4/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali
-+++ b/smali_classes4/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali
+--- a/smali_classes5/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali
++++ b/smali_classes5/com/samsung/android/settings/lockscreen/controller/DualDarDoScreenLockTypePreferenceController.smali
 @@ -37,9 +37,9 @@
  
      invoke-static {p2, v0}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
