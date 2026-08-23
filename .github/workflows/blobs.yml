@@ -16,6 +16,9 @@ jobs:
   update:
     runs-on: ubuntu-24.04
 
+    env:
+      UNICA_FIRMWARE_TOOLS_ONLY: "true"
+
     strategy:
       fail-fast: false
       matrix:
@@ -120,8 +123,23 @@ jobs:
       - name: Update prebuilt blobs
         run: |
           source ./buildenv.sh a52sxq
-          ./scripts/internal/update_prebuilt_blobs.sh "${{ matrix.device }}" "${{ matrix.firmware }}"
-          echo "PDA_BUILD=$(cat "./prebuilts/samsung/${{ matrix.device }}/.current" | cut -d "/" -f "1")" >> "$GITHUB_ENV"
+
+          for attempt in 1 2 3 4 5; do
+            if ./scripts/internal/update_prebuilt_blobs.sh "${{ matrix.device }}" "${{ matrix.firmware }}"; then
+              echo "PDA_BUILD=$(cat "./prebuilts/samsung/${{ matrix.device }}/.current" | cut -d "/" -f "1")" >> "$GITHUB_ENV"
+              exit 0
+            fi
+
+            if [ "$attempt" -eq 5 ]; then
+              break
+            fi
+
+            echo "Update attempt $attempt failed for prebuilts/samsung/${{ matrix.device }}, retrying..." >&2
+            sleep "$((attempt * 60))"
+          done
+
+          echo "Failed to update prebuilts/samsung/${{ matrix.device }} after 5 attempts" >&2
+          exit 1
 
       - name: Commit updated prebuilts
         run: |
