@@ -1,6 +1,4 @@
 out/
-__pycache__/
-*.py[cod]
 
 # Cert
 security/unica_ota.x509.pem

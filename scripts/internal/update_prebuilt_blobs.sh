@@ -4,7 +4,6 @@
 
 # [
 source "$SRC_DIR/scripts/utils/firmware_utils.sh" || exit 1
-source "$SRC_DIR/scripts/utils/prebuilt_utils.sh" || exit 1
 
 DEVICE=""
 MODEL=""
@@ -18,6 +17,7 @@ UPDATE_BLOBS()
     local BLOBS
     local PREBUILTS_DIR="$SRC_DIR/prebuilts/samsung/$DEVICE"
     local FILE_PATH
+    local CHUNK_PATH
 
     if [ -d "$PREBUILTS_DIR/system" ]; then
         BLOBS+="$(find "$PREBUILTS_DIR/system" ! -type d)"
@@ -57,7 +57,12 @@ UPDATE_BLOBS()
         # A blob can cross the 50 MiB split threshold between firmware builds.
         # Remove the unsplit file and every sibling with an all-numeric suffix;
         # GNU split expands beyond two digits after chunk .89.
-        REMOVE_EXISTING_SPLIT_FILE "$FILE_PATH" || exit 1
+        rm -f -- "$FILE_PATH" || exit 1
+        for CHUNK_PATH in "$FILE_PATH".*; do
+            [ -e "$CHUNK_PATH" ] || [ -L "$CHUNK_PATH" ] || continue
+            [[ "${CHUNK_PATH##*.}" =~ ^[0-9]+$ ]] || continue
+            rm -f -- "$CHUNK_PATH" || exit 1
+        done
 
         if [ ! -L "$FW_DIR/${MODEL}_${CSC}/$i" ] && \
                 [ "$(wc -c "$FW_DIR/${MODEL}_${CSC}/$i" | cut -d " " -f 1)" -gt "52428800" ]; then

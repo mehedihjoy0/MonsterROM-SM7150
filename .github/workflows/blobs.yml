@@ -9,57 +9,64 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-permissions:
-  contents: read
-
 jobs:
-  audit:
-    runs-on: ubuntu-24.04
-
-    outputs:
-      matrix: ${{ steps.audit.outputs.matrix }}
-      has_updates: ${{ steps.audit.outputs.has_updates }}
-      update_count: ${{ steps.audit.outputs.update_count }}
-      blocked_count: ${{ steps.audit.outputs.blocked_count }}
-      error_count: ${{ steps.audit.outputs.error_count }}
-      attention_count: ${{ steps.audit.outputs.attention_count }}
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
-
-      - name: Test prebuilt audit helpers
-        run: |
-          python3 -m unittest discover -s scripts/internal/tests -p 'test_*.py' -v
-          bash scripts/internal/tests/test_prebuilt_utils.sh
-
-      - name: Audit Samsung firmware feeds
-        id: audit
-        run: |
-          python3 scripts/internal/check_prebuilt_updates.py \
-            --github-output "$GITHUB_OUTPUT" \
-            --markdown-summary "$GITHUB_STEP_SUMMARY"
-
   update:
-    name: Update ${{ matrix.module }}
-    needs: audit
-    if: ${{ needs.audit.outputs.has_updates == 'true' }}
     runs-on: ubuntu-24.04
-    timeout-minutes: 180
-
-    permissions:
-      contents: write
-      pull-requests: write
 
     strategy:
       fail-fast: false
-      matrix: ${{ fromJSON(needs.audit.outputs.matrix) }}
+      matrix:
+        include:
+          - module: "Galaxy A17 5G (a17xxx)"
+            device: "a17xxx"
+            firmware: "SM-A176B/INS/350042791234568"
+          - module: "Galaxy A53 5G (a53xtfn)"
+            device: "a53xtfn"
+            firmware: "SM-S536DL/TFA/352574701234567"
+          - module: "Galaxy A54 5G (a54xnsxx)"
+            device: "a54xnsxx"
+            firmware: "SM-A546E/EGY/350090711234564"
+          - module: "Galaxy A56 5G (a56xnaxx)"
+            device: "a56xnaxx"
+            firmware: "SM-A566B/EUX/352371191234565"
+          - module: "Galaxy A73 5G (a73xqxx)"
+            device: "a73xqxx"
+            firmware: "SM-A736B/XME/352828291234563"
+          - module: "Galaxy S22 Ultra (Snapdragon) (b0qxxx)"
+            device: "b0qxxx"
+            firmware: "SM-S908E/TUR/350280381234560"
+          - module: "Galaxy S22 Ultra (Exynos) (b0sxxx)"
+            device: "b0sxxx"
+            firmware: "SM-S908B/EUX/353074281234565"
+          - module: "Galaxy Z Flip4 (b4qxxx)"
+            device: "b4qxxx"
+            firmware: "SM-F721B/BTE/350525851234569"
+          - module: "Galaxy S23 (dm1qxxx)"
+            device: "dm1qxxx"
+            firmware: "SM-S911B/EUX/352404911234563"
+          - module: "Galaxy Tab A9+ 5G (gta9pxxx)"
+            device: "gta9pxxx"
+            firmware: "SM-X216B/EUX/352862571234563"
+          - module: "Galaxy Tab S11 5G (gts11xx)"
+            device: "gts11xx"
+            firmware: "SM-X736B/EUX/R52Y8065XJM"
+          - module: "Galaxy S25+ (pa2qxxx)"
+            device: "pa2qxxx"
+            firmware: "SM-S936B/EUX/350634601234562"
+          - module: "Galaxy S23 FE (r11sxxx)"
+            device: "r11sxxx"
+            firmware: "SM-S711B/EUX/358615311234564"
+          - module: "Galaxy S21 FE 5G (Snapdragon) (r9qxxx)"
+            device: "r9qxxx"
+            firmware: "SM-G990B/EUX/353718681234563"
+          - module: "Galaxy S21 FE 5G (Exynos) (r9sxxx)"
+            device: "r9sxxx"
+            firmware: "SM-G990E/THL/355798871234563"
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        uses: actions/checkout@v7
         with:
-          persist-credentials: false
           submodules: 'recursive'
 
       - name: Free disk space (1/3)
@@ -69,12 +76,12 @@ jobs:
           sudo docker builder prune -a
 
       - name: Free disk space (2/3)
-        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        uses: jlumbroso/free-disk-space@main
         with:
           tool-cache: true
 
       - name: Free disk space (3/3)
-        uses: rokibhasansagar/slimhub_actions@c2a6e4317d3de2b623ac7395b05e9d2149e8289b
+        uses: rokibhasansagar/slimhub_actions@main
         with:
           retain: 'compiler_cmake'
 
@@ -88,9 +95,11 @@ jobs:
           sudo modprobe erofs f2fs
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          echo -n "${{ secrets.PLATFORM_KEY_PK8 }}" | base64 --decode > security/unica_platform.pk8
+          echo -n "${{ secrets.PLATFORM_KEY_PEM }}" | base64 --decode > security/unica_platform.x509.pem
 
       - name: Set up JDK 17
-        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
           java-version: '17'
@@ -102,17 +111,13 @@ jobs:
           ./scripts/build_dependencies.sh
 
       - name: Update prebuilt blobs
-        env:
-          DEVICE: ${{ matrix.device }}
-          FIRMWARE: ${{ matrix.firmware }}
         run: |
           source ./buildenv.sh a52sxq
-          ./scripts/internal/update_prebuilt_blobs.sh "$DEVICE" "$FIRMWARE"
-          PDA_BUILD="$(cut -d / -f 1 "./prebuilts/samsung/$DEVICE/.current")"
-          printf 'PDA_BUILD=%s\n' "$PDA_BUILD" >> "$GITHUB_ENV"
+          ./scripts/internal/update_prebuilt_blobs.sh "${{ matrix.device }}" "${{ matrix.firmware }}"
+          echo "PDA_BUILD=$(cat "./prebuilts/samsung/${{ matrix.device }}/.current" | cut -d "/" -f "1")" >> "$GITHUB_ENV"
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8
+        uses: peter-evans/create-pull-request@v8
         with:
           add-paths: |
             prebuilts/samsung/${{ matrix.device }}
@@ -121,17 +126,5 @@ jobs:
           author: 'github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>'
           branch: 'prebuilts/samsung/${{ matrix.device }}'
           delete-branch: true
-          draft: true
           title: 'Update prebuilts/samsung/${{ matrix.device }} blobs to ${{ env.PDA_BUILD }}'
-          body: |
-            Samsung FOTA audit found a newer stable firmware:
-
-            - Current: `${{ matrix.current }}`
-            - Latest: `${{ matrix.latest }}`
-            - Android: `${{ matrix.android_version }}`
-            - Compatibility boundary: `${{ matrix.compatibility_boundary || 'none' }}`
-            - Source note: `${{ matrix.note || 'none' }}`
-
-            Compatibility review is required. This job replaces only blob paths
-            already present in the prebuilt directory; it does not update the
-            qssi/essi system-image donor or make the complete ROM One UI 8.5.
+          body: ''
