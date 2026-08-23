@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "sources": [
+    {
+      "device": "a17xxx",
+      "module": "Galaxy A17 5G (a17xxx)",
+      "model": "SM-A176B",
+      "csc": "INS",
+      "credential": "350042791234568",
+      "compatibility_boundary": "One UI 8.5",
+      "note": "The historical INS source now resolves to ODM instead of the tracked OXM CSC family."
+    },
+    {
+      "device": "a34xxx",
+      "module": "Galaxy A34 5G (a34xxx)",
+      "model": "SM-A346B",
+      "csc": "EUX",
+      "credential": null,
+      "auto_update": false,
+      "compatibility_boundary": "One UI 8.5",
+      "note": "A model-matching FUS IMEI or serial number is not available yet."
+    },
+    {
+      "device": "a53xtfn",
+      "module": "Galaxy A53 5G (a53xtfn)",
+      "model": "SM-S536DL",
+      "csc": "TFA",
+      "credential": "352574701234567"
+    },
+    {
+      "device": "a54xnsxx",
+      "module": "Galaxy A54 5G (a54xnsxx)",
+      "model": "SM-A546E",
+      "csc": "EGY",
+      "credential": "350090711234564",
+      "compatibility_boundary": "One UI 8.5"
+    },
+    {
+      "device": "a56xnaxx",
+      "module": "Galaxy A56 5G (a56xnaxx)",
+      "model": "SM-A566B",
+      "csc": "EUX",
+      "credential": "352371191234565",
+      "compatibility_boundary": "One UI 8.5"
+    },
+    {
+      "device": "a73xqxx",
+      "module": "Galaxy A73 5G (a73xqxx)",
+      "model": "SM-A736B",
+      "csc": "XME",
+      "credential": "352828291234563"
+    },
+    {
+      "device": "b0qxxx",
+      "module": "Galaxy S22 Ultra (Snapdragon) (b0qxxx)",
+      "model": "SM-S908E",
+      "csc": "TUR",
+      "credential": "350280381234560"
+    },
+    {
+      "device": "b0sxxx",
+      "module": "Galaxy S22 Ultra (Exynos) (b0sxxx)",
+      "model": "SM-S908B",
+      "csc": "EUX",
+      "credential": "353074281234565"
+    },
+    {
+      "device": "b4qxxx",
+      "module": "Galaxy Z Flip4 (b4qxxx)",
+      "model": "SM-F721B",
+      "csc": "BTE",
+      "credential": "350525851234569"
+    },
+    {
+      "device": "dm1qxxx",
+      "module": "Galaxy S23 (dm1qxxx)",
+      "model": "SM-S911B",
+      "csc": "EUX",
+      "credential": "352404911234563",
+      "compatibility_boundary": "One UI 8.5"
+    },
+    {
+      "device": "gta9pxxx",
+      "module": "Galaxy Tab A9+ 5G (gta9pxxx)",
+      "model": "SM-X216B",
+      "csc": "EUX",
+      "credential": "352862571234563"
+    },
+    {
+      "device": "gts11xx",
+      "module": "Galaxy Tab S11 5G (gts11xx)",
+      "model": "SM-X736B",
+      "csc": "EUX",
+      "credential": "R52Y8065XJM",
+      "compatibility_boundary": "One UI 8.5"
+    },
+    {
+      "device": "pa2qxxx",
+      "module": "Galaxy S25+ (pa2qxxx)",
+      "model": "SM-S936B",
+      "csc": "EUX",
+      "credential": "350634601234562",
+      "compatibility_boundary": "One UI 8.5"
+    },
+    {
+      "device": "r11sxxx",
+      "module": "Galaxy S23 FE (r11sxxx)",
+      "model": "SM-S711B",
+      "csc": "EUX",
+      "credential": "358615311234564",
+      "compatibility_boundary": "One UI 8.5"
+    },
+    {
+      "device": "r9qxxx",
+      "module": "Galaxy S21 FE 5G (Snapdragon) (r9qxxx)",
+      "model": "SM-G990B",
+      "csc": "EUX",
+      "credential": "353718681234563"
+    },
+    {
+      "device": "r9sxxx",
+      "module": "Galaxy S21 FE 5G (Exynos) (r9sxxx)",
+      "model": "SM-G990E",
+      "csc": "THL",
+      "credential": "355798871234563"
+    }
+  ]
+}
