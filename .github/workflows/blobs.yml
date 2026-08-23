@@ -115,7 +115,7 @@ jobs:
       - name: Build dependencies
         run: |
           source ./buildenv.sh a52sxq
-          ./scripts/build_dependencies.sh
+          ./scripts/build_dependencies.sh --firmware-tools
 
       - name: Update prebuilt blobs
         run: |
