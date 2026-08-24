@@ -38,6 +38,12 @@ fi
 # SEC_PRODUCT_FEATURE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION
 SOURCE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION")"
 TARGET_GALLERY_CONFIG_IMAGE_TAGGER_VERSION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION")"
+AIC_MODEL_FIRMWARE="$SOURCE_FIRMWARE"
+if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/vendor/bin/hw/vendor.samsung_slsi.hardware.eden_runtime@1.0-service" ] && \
+        [ ! -f "$FW_DIR/$SOURCE_FIRMWARE_PATH/vendor/bin/hw/vendor.samsung_slsi.hardware.eden_runtime@1.0-service" ]; then
+    # Keep EDEN models paired with the target vendor runtime.
+    AIC_MODEL_FIRMWARE="$TARGET_FIRMWARE"
+fi
 if [[ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION")" == "$SOURCE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION" ]]; then
     if [[ "$TARGET_GALLERY_CONFIG_IMAGE_TAGGER_VERSION" != "$SOURCE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION" ]] || \
             [ "$TARGET_PLATFORM_SDK_VERSION" -lt "$SOURCE_PLATFORM_SDK_VERSION" ]; then
@@ -50,7 +56,7 @@ if [[ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_IMAGE_
         if [ -d "$WORK_DIR/system/system/saiv/image_understanding/db/aic_g_o_detector" ]; then
             DELETE_FROM_WORK_DIR "system" "system/saiv/image_understanding/db/aic_g_o_detector"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" \
+        ADD_TO_WORK_DIR "$AIC_MODEL_FIRMWARE" "system" \
             "system/saiv/image_understanding/db/aic_g_o_detector" 0 0 755 "u:object_r:system_file:s0"
         if [ -d "$WORK_DIR/vendor/saiv/image_understanding/db/aig_classifier" ]; then
             DELETE_FROM_WORK_DIR "vendor" "saiv/image_understanding/db/aig_classifier"
@@ -70,17 +76,17 @@ if [[ "$(GET_FLOATING_FEATURE_CONFIG "SEC_FLOATING_FEATURE_GALLERY_CONFIG_IMAGE_
         if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/aic_classifier" ]; then
             DELETE_FROM_WORK_DIR "vendor" "etc/saiv/image_understanding/db/aic_classifier"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+        ADD_TO_WORK_DIR "$AIC_MODEL_FIRMWARE" "vendor" \
             "etc/saiv/image_understanding/db/aic_classifier" 0 0 755 "u:object_r:vendor_configs_file:s0"
         if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/aic_detector" ]; then
             DELETE_FROM_WORK_DIR "vendor" "etc/saiv/image_understanding/db/aic_detector"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+        ADD_TO_WORK_DIR "$AIC_MODEL_FIRMWARE" "vendor" \
             "etc/saiv/image_understanding/db/aic_detector" 0 0 755 "u:object_r:vendor_configs_file:s0"
         if [ -d "$WORK_DIR/vendor/etc/saiv/image_understanding/db/aic_g_o_detector" ]; then
             DELETE_FROM_WORK_DIR "vendor" "etc/saiv/image_understanding/db/aic_g_o_detector"
         fi
-        ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "vendor" \
+        ADD_TO_WORK_DIR "$AIC_MODEL_FIRMWARE" "vendor" \
             "etc/saiv/image_understanding/db/aic_g_o_detector" 0 0 755 "u:object_r:vendor_configs_file:s0"
     fi
 fi
@@ -243,6 +249,7 @@ if [ -f "$WORK_DIR/system/system/lib64/libSmartScan.camera.samsung.so" ]; then
 fi
 
 unset SOURCE_FIRMWARE_PATH TARGET_FIRMWARE_PATH \
+    AIC_MODEL_FIRMWARE \
     SOURCE_VISION_CONFIG_FACE_RECOGNITION_SOLUTION TARGET_VISION_CONFIG_FACE_RECOGNITION_SOLUTION \
     SOURCE_GALLERY_CONFIG_IMAGE_TAGGER_VERSION TARGET_GALLERY_CONFIG_IMAGE_TAGGER_VERSION \
     SOURCE_GALLERY_CONFIG_PET_CLUSTER_VERSION TARGET_GALLERY_CONFIG_PET_CLUSTER_VERSION \
