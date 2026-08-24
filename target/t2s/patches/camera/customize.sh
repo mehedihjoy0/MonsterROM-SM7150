@@ -4,6 +4,13 @@ HEX_PATCH "$WORK_DIR/system/system/lib64/libtensorflowlite_jni_voicecommand.so" 
     "080140f9290140b90851208b1f00096b00319f9ac0035fd6" \
     "080140f9290140b91f00096b00309f1a0051208bc0035fd6"
 
+# Use XNNPACK's built-in generic cache configuration when cpuinfo initializes
+# without a processor table. Rapid Camera restarts can expose this state; the
+# topology walker otherwise dereferences a null processor record.
+HEX_PATCH "$WORK_DIR/system/system/lib64/libtensorflowlite_jni_voicecommand.so" \
+    "f30300aa5d040094e0080036" \
+    "f30300aa4e000014e0080036"
+
 # Fall back to the first CPU topology record when the donor TFLite runtime requests
 # an index that is not exposed by the target Exynos2100 cpuinfo implementation.
 HEX_PATCH "$WORK_DIR/system/system/lib64/libtensorflowlite_c.2.16.1.camera.samsung.so" \
