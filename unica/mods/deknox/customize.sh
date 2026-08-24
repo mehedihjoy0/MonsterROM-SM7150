@@ -93,7 +93,8 @@ DELETE_FROM_WORK_DIR "system" "system/lib/libsdp_kekm.so"
 DELETE_FROM_WORK_DIR "system" "system/lib/libsdp_sdk.so"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib/libsqlite.so" 0 0 644 "u:object_r:system_lib_file:s0"
 DELETE_FROM_WORK_DIR "system" "system/lib/vendor.samsung.hardware.tlc.ddar@1.0.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/android.hardware.weaver@1.0.so"
+# Target hermesd and the retained 64-bit libhermes_cred.so both link this
+# Android HIDL interface. Keeping the interface does not restore Knox services.
 DELETE_FROM_WORK_DIR "system" "system/lib64/hidl_comm_ddar_client.so"
 ADD_TO_WORK_DIR "$DONOR" "system" "system/lib64/libandroid_servers.so" 0 0 644 "u:object_r:system_lib_file:s0"
 DELETE_FROM_WORK_DIR "system" "system/lib64/libdualdar.so"
@@ -120,19 +121,18 @@ DELETE_FROM_WORK_DIR "system" "system/etc/init/ztd.rc"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.knox.vpn.proxyhandler.xml"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.analytics.uploader.xml"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.app.networkfilter.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.attestation.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.containercore.xml"
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.er.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.android.knox.kpecore.xml"
-DELETE_FROM_WORK_DIR "system" "system/etc/permissions/privapp-permissions-com.samsung.knox.securefolder.xml"
+# EnhancedAttestationAgent, KPECore, the patched KnoxCore, and SecureFolder are
+# retained below. Keep their matching source allowlists as a package/XML pair;
+# removing only the XML makes PackageManager deny their privileged permissions.
 DELETE_FROM_WORK_DIR "system" "system/etc/permissions/signature-permissions-com.sec.enterprise.knox.cloudmdm.smdms.xml"
+# libandroid_servers.so has a hard ELF dependency on the UCM API and HIDL
+# interface libraries even when the UCM policy service is disabled below.
+# Keep these load-time ABI libraries; the UCM daemon, HAL implementation,
+# manifests, apps, and Java service remain removed.
 DELETE_FROM_WORK_DIR "system" "system/lib/libucm_esecomm_adapter.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/libucm_tlc_hidl_api.so"
-DELETE_FROM_WORK_DIR "system" "system/lib/vendor.samsung.hardware.tlc.ucm@2.0.so"
 DELETE_FROM_WORK_DIR "system" "system/lib64/libjni_knoxnwfilterparser.so"
 DELETE_FROM_WORK_DIR "system" "system/lib64/libucm_esecomm_adapter.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/libucm_tlc_hidl_api.so"
-DELETE_FROM_WORK_DIR "system" "system/lib64/vendor.samsung.hardware.tlc.ucm@2.0.so"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxERAgent"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/KnoxNetworkFilter"
 DELETE_FROM_WORK_DIR "system" "system/priv-app/knoxanalyticsagent"
@@ -152,8 +152,10 @@ DELETE_FROM_WORK_DIR "vendor" "lib64/libtlc_direct_comm_ddar.so"
 DELETE_FROM_WORK_DIR "vendor" "lib64/libucm_tlc_comm.so"
 DELETE_FROM_WORK_DIR "vendor" "lib64/libucm_tlc_direct_comm.so"
 DELETE_FROM_WORK_DIR "vendor" "lib64/libucm_tlc_tz_esecomm.so"
-DELETE_FROM_WORK_DIR "vendor" "lib64/libucsengine.so"
-DELETE_FROM_WORK_DIR "vendor" "lib64/vendor.samsung.frameworks.security.ucm.crypto@1.0.so"
+# Keep the passive Wi-Fi/UCM ABI chain loadable:
+# wpa_supplicant -> libucsengine.so ->
+# vendor.samsung.frameworks.security.ucm.crypto@1.0.so.
+# The UCM daemon, implementation, manifest, and policy services remain removed.
 DELETE_FROM_WORK_DIR "vendor" "lib64/vendor.samsung.hardware.tlc.ddar@1.0-impl.so"
 DELETE_FROM_WORK_DIR "vendor" "lib64/vendor.samsung.hardware.tlc.ddar@1.0.so"
 DELETE_FROM_WORK_DIR "vendor" "lib64/vendor.samsung.hardware.tlc.ucm@2.0-impl.so"
