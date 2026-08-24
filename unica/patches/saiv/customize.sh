@@ -4,6 +4,41 @@ TARGET_FIRMWARE_PATH="$(cut -d "/" -f 1 -s <<< "$TARGET_FIRMWARE")_$(cut -d "/" 
 DELETE_FROM_WORK_DIR "system" "system/saiv"
 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/saiv" 0 0 755 "u:object_r:system_file:s0"
 
+if [[ "$TARGET_CODENAME" == "t2s" ]] && \
+        [ ! -d "$WORK_DIR/system/system/saiv/localtm" ] && \
+        [ -d "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/saiv/localtm" ]; then
+    # Pair the target LocalTM runtime with source tuning data and target sensor aliases.
+    ADD_TO_WORK_DIR "$SOURCE_FIRMWARE" "system" \
+        "system/saiv/localtm" 0 0 755 "u:object_r:system_file:s0"
+    if ! grep -q "1_2_0_S5K2LD" "$WORK_DIR/system/system/saiv/localtm/pcc_tunefile_map.txt"; then
+        {
+            echo
+            echo "1_0_0_S5K2LD   pcc_wide_night.dat"
+            echo "1_2_0_S5K2LD   pcc_wide_night.dat"
+            echo "31_0_0_S5K2LD  pcc_wide_night.dat"
+            echo "31_2_0_S5K2LD  pcc_wide_night.dat"
+            echo "21_0_0_S5K2LD  pcc_wide_night.dat"
+            echo "21_2_0_S5K2LD  pcc_wide_night.dat"
+            echo "39_0_0_S5K2LD  pcc_wide_night.dat"
+            echo "39_2_0_S5K2LD  pcc_wide_night.dat"
+            echo
+            echo "1_0_2_S5KGW2   pcc_tele_night.dat"
+            echo "1_2_2_S5KGW2   pcc_tele_night.dat"
+            echo "31_0_2_S5KGW2  pcc_tele_night.dat"
+            echo "31_2_2_S5KGW2  pcc_tele_night.dat"
+            echo "21_0_2_S5KGW2  pcc_tele_night.dat"
+            echo "21_2_2_S5KGW2  pcc_tele_night.dat"
+            echo
+            echo "1_0_4_IMX563   pcc_uw_night.dat"
+            echo "1_2_4_IMX563   pcc_uw_night.dat"
+            echo "31_0_4_IMX563  pcc_uw_night.dat"
+            echo "31_2_4_IMX563  pcc_uw_night.dat"
+            echo "21_0_4_IMX563  pcc_uw_night.dat"
+            echo "21_2_4_IMX563  pcc_uw_night.dat"
+        } >> "$WORK_DIR/system/system/saiv/localtm/pcc_tunefile_map.txt"
+    fi
+fi
+
 # SEC_PRODUCT_FEATURE_VISION_CONFIG_FACE_RECOGNITION_SOLUTION
 SOURCE_VISION_CONFIG_FACE_RECOGNITION_SOLUTION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$SOURCE_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_FACE_CLUSTER_VERSION")"
 TARGET_VISION_CONFIG_FACE_RECOGNITION_SOLUTION="$(GET_FLOATING_FEATURE_CONFIG "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/etc/floating_feature.xml" "SEC_FLOATING_FEATURE_GALLERY_CONFIG_FACE_CLUSTER_VERSION")"
