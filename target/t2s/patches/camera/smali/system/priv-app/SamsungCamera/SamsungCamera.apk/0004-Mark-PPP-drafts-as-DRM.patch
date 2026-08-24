@@ -1,0 +1,38 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Devcore94 <devcore94@users.noreply.github.com>
+Date: Mon, 24 Aug 2026 22:28:00 +0200
+Subject: [PATCH] camera: mark PPP drafts as DRM
+
+SecMediaProvider requires post-processing draft rows to set is_drm=1 so
+unfinished images cannot be uploaded to cloud providers. Camera marked the
+rows with _data_draft and the PPP SEF type but omitted the DRM flag, causing
+every draft insert to fail and the post-processor to enter recovery.
+
+Set the required value only for PPP draft rows. Final media rows keep their
+normal metadata when the post-processing sequence completes.
+---
+ .../processor/database/PostProcessDBHelper.smali   | 10 ++++++++++
+ 1 file changed, 10 insertions(+)
+
+diff --git a/smali_classes3/com/samsung/android/camera/core2/processor/database/PostProcessDBHelper.smali b/smali_classes3/com/samsung/android/camera/core2/processor/database/PostProcessDBHelper.smali
+--- a/smali_classes3/com/samsung/android/camera/core2/processor/database/PostProcessDBHelper.smali
++++ b/smali_classes3/com/samsung/android/camera/core2/processor/database/PostProcessDBHelper.smali
+@@ -2535,6 +2535,16 @@
+ 
+     invoke-virtual {p0, p2, p1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
+ 
++    const/4 p1, 0x1
++
++    invoke-static {p1}, Ljava/lang/Integer;->valueOf(I)Ljava/lang/Integer;
++
++    move-result-object p1
++
++    const-string p2, "is_drm"
++
++    invoke-virtual {p0, p2, p1}, Landroid/content/ContentValues;->put(Ljava/lang/String;Ljava/lang/Integer;)V
++
+     :cond_0
+     return-void
+ .end method
+-- 
+2.53.0
