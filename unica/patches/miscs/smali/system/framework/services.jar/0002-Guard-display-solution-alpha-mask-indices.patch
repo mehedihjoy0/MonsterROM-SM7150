@@ -1,0 +1,67 @@
+From 8b9f0a88224fc31de73f2923b8a89eb61a3bfe82 Mon Sep 17 00:00:00 2001
+From: Devcore94 <devcore94@users.noreply.github.com>
+Date: Mon, 24 Aug 2026 23:45:00 +0200
+Subject: [PATCH] Guard display solution alpha mask indices
+
+The target product RRO does not provide the source display solution's
+brightness-to-nits table.  Keep the existing biometric fallback instead of
+indexing the one-entry framework default with a platform brightness value.
+---
+ .../SemDisplaySolutionManagerService.smali    | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali b/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali
+index 6135d7702..bc0944291 100644
+--- a/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali
++++ b/smali_classes2/com/samsung/android/displaysolution/SemDisplaySolutionManagerService.smali
+@@ -3787,31 +3787,47 @@
+     iget-object v3, p0, Lcom/samsung/android/displaysolution/SemDisplaySolutionManagerService;->mBrightnessNitsValueStringArray:[Ljava/lang/String;
+ 
+     float-to-int p1, p1
+ 
++    array-length v0, v3
++
++    if-lt p1, v0, :alpha_current_in_bounds
++
++    return v6
++
++    :alpha_current_in_bounds
+     aget-object p1, v3, p1
+ 
+     invoke-static {p1}, Ljava/lang/Float;->parseFloat(Ljava/lang/String;)F
+ 
+     move-result p1
+ 
+     goto :goto_0
+ 
+     :cond_0
+     move p1, v6
+ 
+     :goto_0
++    const/4 v0, 0x0
++
+     cmpl-float v0, p2, v0
+ 
+     if-ltz v0, :cond_1
+ 
+     iget-object v0, p0, Lcom/samsung/android/displaysolution/SemDisplaySolutionManagerService;->mBrightnessNitsValueStringArray:[Ljava/lang/String;
+ 
+     float-to-int p2, p2
+ 
++    array-length v3, v0
++
++    if-lt p2, v3, :alpha_target_in_bounds
++
++    return v6
++
++    :alpha_target_in_bounds
+     aget-object p2, v0, p2
+ 
+     invoke-static {p2}, Ljava/lang/Float;->parseFloat(Ljava/lang/String;)F
+ 
+     move-result v6
+ 
+     :cond_1
+-- 
+2.43.0
+
