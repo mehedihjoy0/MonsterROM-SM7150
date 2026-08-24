@@ -14,6 +14,35 @@ ADD_TO_WORK_DIR "$DONOR" "system" "system/bin/vdc" 0 2000 755 "u:object_r:vdc_ex
 ADD_TO_WORK_DIR "$DONOR" "system" "system/bin/vold" 0 2000 755 "u:object_r:vold_exec:s0"
 SET_PROP_IF_DIFF "vendor" "ro.crypto.set_dun" "true"
 
+# Keep Samsung's vold-linked UCM helper loadable, but disable the UCM ODE/WPC
+# paths that can request "reboot,recovery" after UCM/Knox services are nuked.
+# Patterns below are unique in pristine S711B helper
+# SHA-256 c8ae4d55a0d79241b2a6d1713b9effcd87d0d2b7db7f04acb1d041c0e42f9e55.
+# is_ucm_ode_mode (ELF file offset 0x2014)
+HEX_PATCH "$WORK_DIR/system/system/lib64/libucmvoldhelper.so" \
+    "ffc302d1fd7b08a9f65709a9f44f0aa9" \
+    "00008052c0035fd61f2003d51f2003d5"
+# is_ucm_wpc_mode (ELF file offset 0x2104)
+HEX_PATCH "$WORK_DIR/system/system/lib64/libucmvoldhelper.so" \
+    "ffc301d1fd7b04a9f52b00f9f44f06a9" \
+    "00008052c0035fd61f2003d51f2003d5"
+# delete_UCM_reboot_count_file (ELF file offset 0x2220)
+HEX_PATCH "$WORK_DIR/system/system/lib64/libucmvoldhelper.so" \
+    "ff4301d1fd7b02a9f51b00f9f44f04a9" \
+    "00008052c0035fd61f2003d51f2003d5"
+# reboot_device_UCM_fail (ELF file offset 0x232c)
+HEX_PATCH "$WORK_DIR/system/system/lib64/libucmvoldhelper.so" \
+    "ff4303d1fd7b09a9f75300f9f6570ba9" \
+    "00008052c0035fd61f2003d51f2003d5"
+# migrate_ucm_ode_flag_from_Q_to_R (ELF file offset 0x2b3c)
+HEX_PATCH "$WORK_DIR/system/system/lib64/libucmvoldhelper.so" \
+    "ffc304d1fd7b0fa9fc5f10a9f65711a9" \
+    "00008052c0035fd61f2003d51f2003d5"
+# init_ucm_ode_flag (ELF file offset 0x3398)
+HEX_PATCH "$WORK_DIR/system/system/lib64/libucmvoldhelper.so" \
+    "ff8306d1fd7b16a9fcbb00f9f65718a9" \
+    "00008052c0035fd61f2003d51f2003d5"
+
 # Some Samsung vold builds ship with reboot_on_failure in vold.rc. If vold exits
 # while adapting old/new framework, FBE, or UCM state, init immediately reboots
 # with "vold-failed", which turns a recoverable storage failure into a bootloop.
