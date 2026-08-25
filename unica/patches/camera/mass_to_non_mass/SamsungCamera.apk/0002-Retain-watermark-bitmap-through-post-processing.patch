@@ -1,0 +1,77 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Devcore94 <devcore94@users.noreply.github.com>
+Date: Mon, 24 Aug 2026 20:45:00 +0200
+Subject: [PATCH] camera: retain watermark bitmap through post-processing
+
+Super Night sends both an early non-destruction result and the final fused
+result through WatermarkNode with the same WatermarkInfo instance. The node
+recycled that instance's bitmap after the early pass, so the final pass died
+in Bitmap.createBitmap with "cannot use a recycled source".
+
+Keep the sequence-owned source bitmap alive for every pass. Its owner releases
+the WatermarkInfo after the sequence, so WatermarkNode must not recycle it.
+---
+ .../android/camera/core2/node/WatermarkNode.smali  | 33 ----------------------
+ 1 file changed, 33 deletions(-)
+
+diff --git a/smali_classes3/com/samsung/android/camera/core2/node/WatermarkNode.smali b/smali_classes3/com/samsung/android/camera/core2/node/WatermarkNode.smali
+--- a/smali_classes3/com/samsung/android/camera/core2/node/WatermarkNode.smali
++++ b/smali_classes3/com/samsung/android/camera/core2/node/WatermarkNode.smali
+@@ -1269,17 +1269,6 @@
+ 
+     invoke-static {v1, p2}, Lcom/samsung/android/camera/core2/util/CLog;->e(Lcom/samsung/android/camera/core2/util/CLog$Tag;Ljava/lang/String;)V
+ 
+-    iget-object p2, v2, Lcom/samsung/android/camera/core2/container/WatermarkInfo;->a:Landroid/graphics/Bitmap;
+-
+-    invoke-virtual {p2}, Landroid/graphics/Bitmap;->isRecycled()Z
+-
+-    move-result v0
+-
+-    if-nez v0, :cond_2
+-
+-    invoke-virtual {p2}, Landroid/graphics/Bitmap;->recycle()V
+-
+-    :cond_2
+     iget-object p2, p0, Lcom/samsung/android/camera/core2/node/WatermarkNode;->mNodeCallback:Lcom/samsung/android/camera/core2/node/WatermarkNode$WatermarkNodeCallback;
+ 
+     invoke-interface {p2}, Lcom/samsung/android/camera/core2/node/WatermarkNode$WatermarkNodeCallback;->onError()V
+@@ -1439,17 +1428,6 @@
+ 
+     invoke-virtual {p1, v3}, Lcom/samsung/android/camera/core2/util/DirectBuffer;->returnByteBuffer(Ljava/nio/ByteBuffer;)V
+ 
+-    iget-object p1, v2, Lcom/samsung/android/camera/core2/container/WatermarkInfo;->a:Landroid/graphics/Bitmap;
+-
+-    invoke-virtual {p1}, Landroid/graphics/Bitmap;->isRecycled()Z
+-
+-    move-result p2
+-
+-    if-nez p2, :cond_6
+-
+-    invoke-virtual {p1}, Landroid/graphics/Bitmap;->recycle()V
+-
+-    :cond_6
+     iget-object p1, p0, Lcom/samsung/android/camera/core2/node/WatermarkNode;->mNodeCallback:Lcom/samsung/android/camera/core2/node/WatermarkNode$WatermarkNodeCallback;
+ 
+     invoke-interface {p1}, Lcom/samsung/android/camera/core2/node/WatermarkNode$WatermarkNodeCallback;->onError()V
+@@ -1487,19 +1465,8 @@
+     :cond_8
+     :goto_1
+     :try_start_3
+     invoke-virtual {p1, v3}, Lcom/samsung/android/camera/core2/util/DirectBuffer;->returnByteBuffer(Ljava/nio/ByteBuffer;)V
+ 
+-    iget-object p2, v2, Lcom/samsung/android/camera/core2/container/WatermarkInfo;->a:Landroid/graphics/Bitmap;
+-
+-    invoke-virtual {p2}, Landroid/graphics/Bitmap;->isRecycled()Z
+-
+-    move-result v0
+-
+-    if-nez v0, :cond_9
+-
+-    invoke-virtual {p2}, Landroid/graphics/Bitmap;->recycle()V
+-
+-    :cond_9
+     const-string/jumbo p2, "processPictureYuv X"
+ 
+     invoke-static {v1, p2}, Lcom/samsung/android/camera/core2/util/CLog;->i(Lcom/samsung/android/camera/core2/util/CLog$Tag;Ljava/lang/String;)V
+-- 
+2.53.0

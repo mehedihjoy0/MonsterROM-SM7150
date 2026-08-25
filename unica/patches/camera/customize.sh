@@ -71,6 +71,15 @@ else
             if [ -f "$FW_DIR/$TARGET_FIRMWARE_PATH/system/system/priv-app/SamsungCamera/SamsungCamera.apk.prof" ]; then
                 ADD_TO_WORK_DIR "$TARGET_FIRMWARE" "system" "system/priv-app/SamsungCamera/SamsungCamera.apk.prof" 0 0 644 "u:object_r:system_file:s0"
             fi
+
+            APPLY_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" \
+                "$MODPATH/mass_to_non_mass/SamsungCamera.apk/0001-Accept-One-UI-8.5-platform-version.patch"
+            APPLY_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" \
+                "$MODPATH/mass_to_non_mass/SamsungCamera.apk/0002-Retain-watermark-bitmap-through-post-processing.patch"
+            APPLY_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" \
+                "$MODPATH/mass_to_non_mass/SamsungCamera.apk/0003-Retain-SoundPool-across-camera-pauses.patch"
+            APPLY_PATCH "system" "system/priv-app/SamsungCamera/SamsungCamera.apk" \
+                "$MODPATH/mass_to_non_mass/SamsungCamera.apk/0004-Mark-PPP-drafts-as-DRM.patch"
         else
             LOG_MISSING_PATCHES "SOURCE_CAMERA_SUPPORT_MASS_APP_FLAVOR" "TARGET_CAMERA_SUPPORT_MASS_APP_FLAVOR"
         fi
