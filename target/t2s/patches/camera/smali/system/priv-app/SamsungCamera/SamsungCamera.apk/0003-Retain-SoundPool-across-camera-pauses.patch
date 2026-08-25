@@ -16,9 +16,9 @@ AudioTrack/Binder use-after-free without leaving Camera worker tasks running.
  .../sec/android/app/camera/audio/SoundManager.smali | 32 ---------------------
  1 file changed, 32 deletions(-)
 
-diff --git a/smali_classes3/com/sec/android/app/camera/audio/SoundManager.smali b/smali_classes3/com/sec/android/app/camera/audio/SoundManager.smali
---- a/smali_classes3/com/sec/android/app/camera/audio/SoundManager.smali
-+++ b/smali_classes3/com/sec/android/app/camera/audio/SoundManager.smali
+diff --git a/smali_classes4/com/sec/android/app/camera/audio/SoundManager.smali b/smali_classes4/com/sec/android/app/camera/audio/SoundManager.smali
+--- a/smali_classes4/com/sec/android/app/camera/audio/SoundManager.smali
++++ b/smali_classes4/com/sec/android/app/camera/audio/SoundManager.smali
 @@ -692,37 +692,5 @@
  
      invoke-static {v1, v3}, Landroid/util/Log;->d(Ljava/lang/String;Ljava/lang/String;)I
